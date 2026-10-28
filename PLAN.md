@@ -56,34 +56,17 @@
 - текст предмета в буфері розпізнається за `Item Class:` **або** `Rarity:` (неогранені / мета-геми), обома мовами;
 - ширина панелей інвентаря / сховища для «Opposite the cursor» (F-58) — виміряти в PoE2.
 
-### 2.3 Спільний Rust-хост (рішення власника)
+### 2.3 Свій Rust у кожного застосунку (рішення власника)
 
-Rust-хост виноситься в **окремий крейт `overlay-host`** в окремому репозиторії `ArtemNA/poe-overlay-host`: hotkeys, clipboard, popup, platform, browser, chat, stash, toast, tray, state. Ігрові відмінності — у структурі `GameProfile`:
+Rust-хост Price of Exile скопійовано в `src-tauri/src` і змінено під PoE2; спільного коду між застосунками немає, тож зміна в одному не може зламати інший. Ігрові значення — у `constants.rs`, як в еталоні: назва вікна гри, перші рядки предмета, конфіг гри й клавіша розширеного копіювання, затримка 10 мс, хости trade, назва вікна браузера, ширина панелей. Міграції ярликів PoE1 (F-56 еталона) немає.
 
-```rust
-pub struct GameProfile {
-    pub window_title: &'static str,            // "Path of Exile" | "Path of Exile 2"
-    pub item_first_lines: &'static [&'static str],
-    pub copy_keys: CopyKeys,                   // Ctrl+C | Ctrl+<showModsKey>+C
-    pub copy_release_delay: Duration,          // 0 | 10 ms
-    pub trade_hosts: &'static [&'static str],
-    pub panel_width_ratio: f64,
-    pub browser_title: &'static str,
-    pub legacy_shortcuts: Option<LegacyShortcuts>, // F-56, лише PoE1
-}
-```
-
-`src-tauri/src/lib.rs` застосунку — кілька рядків: профіль + `overlay_host::run(...)`. Застосунки підключають крейт як git-залежність за тегом (`host-vX.Y.Z`); для локальної розробки — `[patch]` на шлях у `.cargo/config.toml` (поза git). Фікс хоста: коміт і тег у `poe-overlay-host` → підняти тег в обох застосунках.
-
-Порядок: крейт створюється з хоста Price of Exile на етапі 0 і перевіряється в PoE2. PoE1 переходить на нього **окремим етапом** (H) з релізом і перевіркою в грі — лише з дозволу власника на зміни в репо PoE1.
-
-Відкрите: видимість репо крейта. Раджу **публічний** (MIT): код уже публічний у Price of Exile, а CI публічного PoE1 тоді тягне крейт без токенів. Якщо приватний — потрібен deploy key для CI обох застосунків.
+Корисні фікси переносяться вручну між репо (`git format-patch` / `git am -3`, шляхи файлів однакові); кожна знахідка в FINDINGS має позначку «PoE1: так / ні». Спроба зі спільним крейтом — у [F-01](docs/FINDINGS.md).
 
 ### 2.4 Структура проєкту
 
 ```
 price-of-exile-2/
-├─ src-tauri/              # тонка обгортка: GameProfile + overlay_host::run, tauri.conf, іконки
+├─ src-tauri/              # Rust-хост (копія з Price of Exile, змінена під PoE2), tauri.conf, іконки
 ├─ src/
 │  ├─ app/                 # Angular, з еталона (ті самі шляхи — для git am -3)
 │  │  ├─ core/  price-check/  item-check/  map-check/  stash-search/  settings/
@@ -98,7 +81,7 @@ price-of-exile-2/
 └─ _upstream/              # клони EE2 і APT, поза git
 ```
 
-Статичні значення — лише в `src/app/constants.ts` і `GameProfile` / `constants.rs` застосунку (правило еталона, F-17).
+Статичні значення — лише в `src/app/constants.ts` і `src-tauri/src/constants.rs` (правило еталона, F-17).
 
 ---
 
@@ -117,7 +100,7 @@ price-of-exile-2/
 | `background/Leagues.ts` | ~210 | Сервіс; челендж-ліга — перша не-постійна, не `result[2]` | низькі |
 | `trends/getDetailsId.ts`, `related-items`, `stack-value`, `unidentified-resolver` | ~1 100 | TS — копія, UI — Angular | середні |
 | `item-check/hotkeyable-actions.ts`, `map-check/{common,prepare-map-stats}.ts` | ~600 | Копія + shim | середні |
-| `main/src/shortcuts/*` | 613 | Ідеї → `overlay-host` (копіювання, 10 мс, `Rarity:`) | середні |
+| `main/src/shortcuts/*` | 613 | Ідеї → Rust-хост (копіювання, 10 мс, `Rarity:`) | середні |
 
 Код еталона (`src/app`, ~5 300 рядків): 18 % як є, 63 % з правками, 19 % переписати (курси й poe.ninja, bulk, unidentified, map check) — [code-reuse.md](docs/analysis/code-reuse.md).
 
@@ -145,7 +128,7 @@ price-of-exile-2/
 
 | Етап | Зміст | Критерій «готово» | Обсяг |
 |---|---|---|---|
-| **0. Скелет і хост** | Новий проєкт з модулів еталона (identifier `com.artemna.price-of-exile-2`, `.dev`, productName, іконки, User-Agent з версією). Репо `poe-overlay-host`: хост еталона як крейт з `GameProfile`; PoE2-профіль (Ctrl+Alt+C, 10 мс, `Rarity:`, конфіг гри). Fake game відповідає на Ctrl+Alt+C | Хоткей над fake game показує сирий текст PoE2-предмета в popup без втрати фокусу; `measure-popup.ps1` дає час; cargo test крейта зелений | M |
+| **0. Скелет і хост** | Новий проєкт з модулів еталона (identifier `com.artemna.price-of-exile-2`, `.dev`, productName, іконки, User-Agent з версією). Rust-хост еталона в `src-tauri` під PoE2 (Ctrl+Alt+C з конфігу гри, 10 мс, `Rarity:`). Fake game відповідає на Ctrl+Alt+C | Хоткей над fake game показує сирий текст PoE2-предмета в popup без втрати фокусу; `measure-popup.ps1` дає час; cargo test зелений | M |
 | **1. Дані + парсер** | `sync-ee2.mjs`, дані en/ru, `src/lib/ee2/parser`, `assets/data`, shim'и Config / TradeData; тести EE2 + 22 фікстури | Усі фікстури розбираються; тести парсера EE2 зелені | M |
 | **2. HTTP-шар** | trade2-шляхи в `constants.ts`, ліги з `/api/trade2/data/leagues`, лімітер (порт еталона), Cloudflare-помилка, TradeData з кешем | Ліги в popup; перший живий trade2-пошук з реальними заголовками лімітів (F-12, F-23 закрито) | S–M |
 | **3. Прайс-чек ядро** | Фільтри EE2, UI A+B під PoE2: групи (без Eldritch; Rune, Enchant, Skill, Desecrated, Mutated), тіри, Fractured, Σ totals, Hidden, Any / Prefix / Suffix, Mods-вкладка, Sockets ≥ N, нові чипи, `listingType`, лістинги з колонкою «≈ ex · c» | **MVP:** рідкісний, унікальний, gem, waystone — пошук і лістинги на живому API; знімки станів | L |
@@ -160,13 +143,12 @@ price-of-exile-2/
 | **12. Мови** | uk / ru інтерфейс (словники еталона + нові рядки), ru гра, ru.pathofexile.com | Знімки ru-гри й uk / ru інтерфейсу | S–M |
 | **13. Системне** | Трей, single instance, лог, toast, NSIS і портабл через GitHub Actions (артефакти збірки, без підписаного фіду) | Встановлена збірка стартує, toast показується | S–M |
 | **14. Стабілізація і гра** | Крайові випадки; **список сценаріїв для власника** в справжній PoE2; швидкість проти ~65 мс еталона (F-53) | Сценарії пройдено власником; заміри записано | M |
-| **H. PoE1 на спільному крейті** | Price of Exile переходить на `overlay-host` | Реліз PoE1 з перевіркою в грі (F-52). Лише з дозволу власника | S–M |
-| **Пізніше** | Автооновлення разом з оголошенням нової версії в кутку екрана й автовстановленням на старті, як Price of Exile 0.1.10 (`23f5d48`, F-62) — бриф у [FEATURE_UPDATE_NOTICE_PROMPT.md](FEATURE_UPDATE_NOTICE_PROMPT.md); робиться, коли репо стане публічним або знайдеться спосіб оновлень із приватного; механізм повідомлень у toast (`toast_message`, `TOAST_UPDATE_DURATION`) — у крейт `overlay-host`; редактор рун і Extraction value (з дизайном); tooltip предмета в лістингах; інші мови гри; власні групи предметів (етап 16 еталона) | — | — |
+| **Пізніше** | Автооновлення разом з оголошенням нової версії в кутку екрана й автовстановленням на старті, як Price of Exile 0.1.10 (`23f5d48`, F-62) — бриф у [FEATURE_UPDATE_NOTICE_PROMPT.md](FEATURE_UPDATE_NOTICE_PROMPT.md); робиться, коли репо стане публічним або знайдеться спосіб оновлень із приватного; механізм повідомлень у toast (`toast_message`, `TOAST_UPDATE_DURATION`) — у Rust-хост; редактор рун і Extraction value (з дизайном); tooltip предмета в лістингах; інші мови гри; власні групи предметів (етап 16 еталона) | — | — |
 
 ### Стан етапу 0 (28.10.2026)
-Новий проєкт зібрано з модулів Price of Exile з власною ідентичністю (`com.artemna.price-of-exile-2`, `.dev`). Rust-хост винесено в крейт [poe-overlay-host](https://github.com/ArtemNA/poe-overlay-host) (`host-v0.1.0`, 24 тести). На фейковій грі: Ctrl+D → Ctrl+Alt+C (клавіша з конфігу PoE2) → текст предмета за 61 мс → popup без втрати фокусу. Повний замір швидкості відкладено (F-05). Налаштування — у розділах 0.1.11. 97 тестів TS. Деталі — F-01…F-06 у [docs/FINDINGS.md](docs/FINDINGS.md).
+Новий проєкт зібрано з модулів Price of Exile з власною ідентичністю (`com.artemna.price-of-exile-2`, `.dev`). Rust-хост — власна копія під PoE2 у `src-tauri` (23 тести; спершу був спільний крейт, від нього відмовились, F-01). На фейковій грі: Ctrl+D → Ctrl+Alt+C (клавіша з конфігу PoE2) → текст предмета за 61 мс → popup без втрати фокусу. Повний замір швидкості відкладено (F-05). Налаштування — у розділах 0.1.11. 97 тестів TS. Деталі — F-01…F-06 у [docs/FINDINGS.md](docs/FINDINGS.md).
 
-Порядок: 0 → 1 → 2 → 3 (**MVP**) → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14; H — коли хост перевірено в PoE2.
+Порядок: 0 → 1 → 2 → 3 (**MVP**) → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14.
 Незалежні шматки (наприклад, 6, 9 і 11, або адаптер poe.ninja паралельно з UI етапу 3) делегуються субагентам з вузьким брифом і перевіряються мною перед прийняттям.
 
 ---
@@ -180,7 +162,6 @@ price-of-exile-2/
 | R-3 | Ядро EE2 зв'язане з Vue (Config, Prices, TradeData) | середня | Shim'и-сервіси на signals до копіювання парсера й trade (етап 1) |
 | R-4 | poe.ninja: немає dense-ендпоінта, порада ходити через бекенд, викиди цін | середня | Поступове завантаження, ETag, кеш, фільтр за кількістю лістингів; власний проксі — запасний варіант |
 | R-5 | Cloudflare на trade2 (сторінка дала challenge для curl) | середня | Вбудований браузер з етапу 10; зрозуміла помилка з «Open browser» (F-45) |
-| R-6 | Спільний крейт ламає PoE1 | низька–середня | PoE1 переходить окремим етапом H з перевіркою в грі; теги крейта |
 | R-7 | Ctrl+Alt+C і затримки буфера змінюють швидкість (F-53) | низька | Заміри на етапі 0 і 14 |
 | R-8 | Ліміти GGG / бан | низька | Лімітер еталона, власний User-Agent, тести на фікстурах, мало живих запитів |
 | R-9 | Ширина панелей PoE2 інша (F-58) | низька | Виміряти в грі на етапі 14 |
@@ -199,5 +180,3 @@ price-of-exile-2/
 ## 9. Відкриті питання
 
 1. **Назва застосунку** і identifier. Робочі: «Price of Exile 2», `com.artemna.price-of-exile-2`. Перейменувати теку й репо під назву?
-2. **Видимість репо крейта `poe-overlay-host`**: раджу публічний (див. 2.3).
-3. Дозвіл на етап H (зміни в репо Price of Exile) — коли до нього дійде.

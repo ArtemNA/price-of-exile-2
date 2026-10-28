@@ -18,13 +18,14 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2.7.4", features = [] }
 
 [dependencies]
-# The host: hotkeys, clipboard, popup windows, built-in browser, tray.
-overlay-host = { git = "https://github.com/ArtemNA/poe-overlay-host", tag = "host-v0.1.0" }
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
 tauri = { version = "2.12.5", features = ["tray-icon"] }
-# The host registers these plugins. They are listed here too: tauri-build finds the plugin
-# permissions that the capabilities name only among the app's direct dependencies.
 tauri-plugin-log = "2"
 tauri-plugin-global-shortcut = "2.4.1"
+arboard = "3.7.0"
+windows = { version = "0.62.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_Accessibility", "Win32_Graphics_Gdi", "Win32_UI_HiDpi", "Win32_UI_Shell", "Win32_System_LibraryLoader", "Win32_System_Threading", "Win32_System_Com", "Win32_Storage_FileSystem"] }
 tauri-plugin-http = "2"
 tauri-plugin-opener = "2"
 tauri-plugin-store = "2"
