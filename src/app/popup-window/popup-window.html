@@ -1,0 +1,96 @@
+<section [attr.aria-label]="title()" class="relative flex h-full flex-col border border-frame bg-panel font-sans text-xs text-text shadow-[0_0_0_1px_#000]"
+  (mousedown.capture)="pointerDown($event)">
+  <header class="flex h-[34px] flex-none items-center gap-2 border-b border-line bg-chrome pr-2 pl-3">
+    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0l6 6-6 6-6-6z" fill="var(--color-gold)" /></svg>
+    <span class="font-semibold text-bright">{{ title() }}</span>
+    <span class="flex-1"></span>
+
+    @if (target() === 'price-check') {
+
+    <button class="flex h-6 items-center gap-1.5 border border-line bg-raised px-2 hover:border-line-strong" (click)="toggleMenu('league')">
+      {{ settings().leagueId ?? ('No league' | tr) }}
+      <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 2.5l3 3 3-3" fill="none" stroke="var(--color-muted)" stroke-width="1.3" /></svg>
+    </button>
+
+    <button
+      class="flex h-6 items-center gap-1.5 border px-2"
+      [class]="menu() === 'divine' ? 'border-gold bg-[#2a2218]' : 'border-line bg-raised hover:border-line-strong'"
+      [disabled]="!divine()"
+      (click)="toggleMenu('divine')"
+    >
+      <app-currency tag="divine" />
+      @if (divine(); as rate) {
+        = <b class="font-semibold tabular-nums">{{ formatChaos(rate) }}</b> <app-currency tag="chaos" />
+      } @else {
+        <span class="text-muted">Divine —</span>
+      }
+      <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path [attr.d]="menu() === 'divine' ? 'M1 5.5l3-3 3 3' : 'M1 2.5l3 3 3-3'" fill="none" stroke="var(--color-muted)" stroke-width="1.3" /></svg>
+    </button>
+    }
+
+    <button [attr.aria-label]="'Close' | tr" class="flex h-6 w-[26px] items-center justify-center text-muted hover:text-bright" (click)="close()">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M1 1l8 8M9 1L1 9" /></svg>
+    </button>
+  </header>
+
+  @if (menu() === 'league') {
+    <div class="absolute top-[33px] right-[150px] z-10 flex w-56 flex-col border border-bronze bg-[#12100d] shadow-[0_12px_30px_rgba(0,0,0,0.8)]">
+      @for (league of leagues.list(); track league.id) {
+        <button class="px-2.5 py-1.5 text-left hover:bg-raised" [class.text-gold-soft]="league.id === settings().leagueId" (click)="selectLeague(league.id)">
+          {{ league.id }}
+        </button>
+      } @empty {
+        <span class="px-2.5 py-1.5 text-muted">{{ leagues.error() ?? ('Loading leagues…' | tr) }}</span>
+      }
+    </div>
+  }
+
+  @if (menu() === 'divine' && divine(); as rate) {
+    <div class="absolute top-[33px] right-[36px] z-10 flex w-[200px] flex-col border border-bronze bg-[#12100d] shadow-[0_12px_30px_rgba(0,0,0,0.8)]">
+      <div class="flex justify-between border-b border-line px-2.5 py-1.5 text-[11px] text-muted"><span>Divine</span><span>Chaos</span></div>
+      @for (row of fractions(rate); track row.divine) {
+        <div class="flex justify-between border-b border-[#1f1c18] px-2.5 py-[3px] tabular-nums" [class.bg-gold/[0.08]]="row.divine === 1">
+          <span class="flex items-center gap-1 text-bright">{{ row.divine === 1 ? '1' : row.divine.toFixed(1) }} <app-currency tag="divine" [size]="14" /></span>
+          <span class="flex items-center gap-1" [class]="row.divine === 1 ? 'text-gold-soft' : 'text-bright'">{{ row.chaos }} <app-currency tag="chaos" [size]="14" /></span>
+        </div>
+      }
+      <div class="px-2.5 py-1.5 text-[11px] text-muted">poe.ninja · {{ settings().leagueId }} · {{ minutesAgo(ratesUpdated()) }}</div>
+    </div>
+  }
+
+  @if (target() === 'stash-search') {
+    <div class="min-h-0 flex-1 overflow-y-auto">
+      <div #fitContent class="flex flex-col">
+        <app-stash-panel />
+      </div>
+    </div>
+  } @else if (parsed(); as parsedItem) {
+    @if (target() === 'item-check') {
+      <div class="min-h-0 flex-1 overflow-y-auto">
+        <div #fitContent class="flex flex-col">
+          @if (mapCheck()) {
+            <app-map-check [item]="parsedItem" [view]="item()!" />
+          } @else {
+            <app-item-check [item]="parsedItem" [view]="item()!" />
+          }
+        </div>
+      </div>
+    } @else {
+      @if (variants().length) {
+        <app-unidentified-picker [baseName]="parsedItem.info.name" [variants]="variants()" (picked)="identify($event)" />
+      } @else {
+        <app-price-check [item]="parsedItem" [view]="item()!" />
+      }
+    }
+  } @else {
+    <div class="flex flex-1 items-center justify-center p-6 text-center">
+      @if (languageMismatch(); as lang) {
+        <p class="text-warn">{{ 'The game copied this item in {0}, but the game language in the settings is {1}. Change it in Settings → General → Game language.' | tr: lang.copied : lang.chosen }}</p>
+      } @else if (error(); as message) {
+        <p class="text-bad">{{ 'Cannot read this item: {0}' | tr: message }}</p>
+      } @else {
+        <p class="text-muted">{{ 'Hover an item in the game and press the price check or item check hotkey.' | tr }}</p>
+      }
+    </div>
+  }
+</section>

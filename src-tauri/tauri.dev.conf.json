@@ -1,0 +1,5 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Price of Exile 2 Dev",
+  "identifier": "com.artemna.price-of-exile-2.dev"
+}

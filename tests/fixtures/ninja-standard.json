@@ -1,0 +1,468 @@
+{
+ "currencyOverviews": [
+  {
+   "type": "Currency",
+   "lines": [
+    {
+     "name": "Divine Orb",
+     "chaos": 673.0,
+     "graph": [
+      -0.16,
+      -1.25,
+      -0.7,
+      0.53,
+      -0.4,
+      -1.86,
+      -3.45
+     ]
+    },
+    {
+     "name": "Chaos Orb",
+     "chaos": 1,
+     "graph": [
+      0.15,
+      1.3,
+      0.71,
+      -0.54,
+      0.43,
+      1.88,
+      3.55
+     ]
+    }
+   ]
+  },
+  {
+   "type": "Fragment",
+   "lines": [
+    {
+     "name": "Sacrifice at Dusk",
+     "chaos": 3,
+     "graph": [
+      11.22,
+      -0.04,
+      -39.72,
+      -33.01,
+      21.46,
+      22.66,
+      31.64
+     ]
+    },
+    {
+     "name": "Mortal Ignorance",
+     "chaos": 349,
+     "graph": [
+      10.55,
+      5.0,
+      13.2,
+      20.51,
+      1112,
+      682.2,
+      1296
+     ]
+    },
+    {
+     "name": "Sacrifice at Midnight",
+     "chaos": 4,
+     "graph": [
+      51.14,
+      138.7,
+      130.4,
+      37.88,
+      50.15,
+      73.36,
+      -42.86
+     ]
+    },
+    {
+     "name": "Sacrifice at Noon",
+     "chaos": 1,
+     "graph": [
+      96.11,
+      43.84,
+      10.42,
+      170.7,
+      108.2,
+      85.86,
+      -71.84
+     ]
+    },
+    {
+     "name": "Sacrifice at Dawn",
+     "chaos": 3,
+     "graph": [
+      74.83,
+      71.74,
+      99.04,
+      -79.8,
+      134.2,
+      179.3,
+      185.3
+     ]
+    }
+   ]
+  }
+ ],
+ "itemOverviews": [
+  {
+   "type": "Currency",
+   "lines": [
+    {
+     "name": "Divine Orb",
+     "chaos": 673.0,
+     "graph": [
+      -0.16,
+      -1.25,
+      -0.7,
+      0.53,
+      -0.4,
+      -1.86,
+      -3.45
+     ]
+    },
+    {
+     "name": "Chaos Orb",
+     "chaos": 1,
+     "graph": [
+      0.15,
+      1.3,
+      0.71,
+      -0.54,
+      0.43,
+      1.88,
+      3.55
+     ]
+    }
+   ]
+  },
+  {
+   "type": "UniqueFlask",
+   "lines": [
+    {
+     "name": "Atziri's Promise",
+     "chaos": 53.24,
+     "graph": [
+      0,
+      -48.45,
+      -1.55,
+      3.09,
+      129.4,
+      58.14,
+      174.4
+     ]
+    }
+   ]
+  },
+  {
+   "type": "UniqueWeapon",
+   "lines": [
+    {
+     "name": "Doryani's Catalyst",
+     "variant": "Vaal Sceptre",
+     "chaos": 37.0,
+     "graph": [
+      0,
+      -4.35,
+      -4.35,
+      0,
+      -26.96,
+      -35.65,
+      -35.65
+     ]
+    }
+   ]
+  },
+  {
+   "type": "UniqueArmour",
+   "lines": [
+    {
+     "name": "Tabula Rasa",
+     "variant": "Simple Robe, 6L",
+     "chaos": 4.0,
+     "graph": [
+      0,
+      0,
+      -20,
+      -20,
+      0,
+      -10,
+      -20
+     ]
+    }
+   ]
+  },
+  {
+   "type": "SkillGem",
+   "lines": [
+    {
+     "name": "Arc",
+     "variant": "21/23c",
+     "chaos": 4038,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "20c",
+     "chaos": 613.8,
+     "graph": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      0
+     ]
+    },
+    {
+     "name": "Arc",
+     "variant": "20",
+     "chaos": 404.3,
+     "graph": [
+      null,
+      null,
+      0,
+      0,
+      -11.87,
+      -11.87,
+      null
+     ]
+    },
+    {
+     "name": "Arc",
+     "variant": "20/20",
+     "chaos": 399.0,
+     "graph": [
+      0,
+      1.0,
+      1.0,
+      -8.01,
+      -9.01,
+      -9.01,
+      -9.24
+     ]
+    },
+    {
+     "name": "Arc",
+     "variant": "1/23c",
+     "chaos": 300.0,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "20/20c",
+     "chaos": 186.0,
+     "graph": [
+      0,
+      -2.4,
+      -7.36,
+      1211,
+      -65.82,
+      1192,
+      -65.45
+     ]
+    },
+    {
+     "name": "Arc",
+     "variant": "21/20c",
+     "chaos": 47.5,
+     "graph": [
+      0,
+      -3.0,
+      -77.89,
+      null,
+      -80.75,
+      -80.75,
+      -80.55
+     ]
+    },
+    {
+     "name": "Arc",
+     "variant": "20/23c",
+     "chaos": 20.0,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "21c",
+     "chaos": 5.7,
+     "graph": [
+      0,
+      5.4,
+      6.75,
+      7.24,
+      6.87,
+      10.92,
+      -30.06
+     ]
+    },
+    {
+     "name": "Arc",
+     "variant": "1",
+     "chaos": 1.0,
+     "graph": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "type": "Fragment",
+   "lines": [
+    {
+     "name": "Sacrifice at Dusk",
+     "chaos": 3,
+     "graph": [
+      11.22,
+      -0.04,
+      -39.72,
+      -33.01,
+      21.46,
+      22.66,
+      31.64
+     ]
+    },
+    {
+     "name": "Mortal Ignorance",
+     "chaos": 349,
+     "graph": [
+      10.55,
+      5.0,
+      13.2,
+      20.51,
+      1112,
+      682.2,
+      1296
+     ]
+    },
+    {
+     "name": "Sacrifice at Midnight",
+     "chaos": 4,
+     "graph": [
+      51.14,
+      138.7,
+      130.4,
+      37.88,
+      50.15,
+      73.36,
+      -42.86
+     ]
+    },
+    {
+     "name": "Sacrifice at Noon",
+     "chaos": 1,
+     "graph": [
+      96.11,
+      43.84,
+      10.42,
+      170.7,
+      108.2,
+      85.86,
+      -71.84
+     ]
+    },
+    {
+     "name": "Sacrifice at Dawn",
+     "chaos": 3,
+     "graph": [
+      74.83,
+      71.74,
+      99.04,
+      -79.8,
+      134.2,
+      179.3,
+      185.3
+     ]
+    }
+   ]
+  },
+  {
+   "type": "ImbuedGem",
+   "lines": [
+    {
+     "name": "Arc",
+     "variant": "Arcane Surge",
+     "chaos": 1083334,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "Ignite Proliferation",
+     "chaos": 1083334,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "Energy Leech",
+     "chaos": 673000,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "Increased Critical Damage",
+     "chaos": 673000,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "Power Charge On Critical",
+     "chaos": 262470,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "Elemental Focus",
+     "chaos": 120447,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "Item Rarity",
+     "chaos": 80760,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "Blastchain Mine",
+     "chaos": 80760,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "Iron Will",
+     "chaos": 38361,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "Summon Phantasm",
+     "chaos": 35332,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "Spell Totem",
+     "chaos": 13460,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "Cold to Fire",
+     "chaos": 6730,
+     "graph": []
+    },
+    {
+     "name": "Arc",
+     "variant": "Added Fire Damage",
+     "chaos": 90.0,
+     "graph": []
+    }
+   ]
+  }
+ ]
+}

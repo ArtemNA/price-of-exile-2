@@ -1,0 +1,41 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "noImplicitOverride": true,
+    // Off for ported APT code (src/lib/apt), which is kept identical to upstream
+    // and is written against plain `strict` without these two checks.
+    "noPropertyAccessFromIndexSignature": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve",
+    // Ported APT code keeps its original imports, so upstream files can be copied over as-is.
+    // APT modules we replace with our own code live in src/app/apt-shims.
+    "paths": {
+      "@/assets/data": ["./src/lib/apt/data"],
+      "@/parser": ["./src/lib/apt/parser"],
+      "@/parser/*": ["./src/lib/apt/parser/*"],
+      "@/web/Config": ["./src/app/apt-shims/web-config"],
+      "@/web/map-check/*": ["./src/lib/apt/web/map-check/*"],
+      "@/web/background/IPC": ["./src/app/apt-shims/ipc"],
+      "@/web/overlay/interfaces": ["./src/app/apt-shims/overlay-interfaces"]
+    }
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ]
+}

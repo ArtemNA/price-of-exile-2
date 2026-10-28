@@ -1,0 +1,79 @@
+@if (!compact()) {
+  <div class="flex flex-col items-center border-b px-2.5 pt-2 pb-1.5" [style.background]="plate().plate" [style.border-color]="plate().rule">
+    <span class="font-display text-lg leading-tight font-medium" [style.color]="plate().text">{{ view().name }}</span>
+    @if (view().baseType) {
+      <span class="font-display text-[15px] leading-tight" [style.color]="plate().text">{{ view().baseType }}</span>
+    }
+  </div>
+  @if (view().itemLevel || flags().length) {
+    <div class="flex justify-center gap-3 py-1.5 font-display text-[13px] text-muted">
+      @if (view().itemLevel) {
+        <span>{{ 'Item Level:' | tr }} <span class="text-bright">{{ view().itemLevel }}</span></span>
+      }
+      @for (flag of flags(); track flag) {
+        <span class="text-bad">{{ flag }}</span>
+      }
+    </div>
+  }
+}
+
+<div class="flex gap-1.5 px-2.5" [class.pt-2]="compact() || (!view().itemLevel && !flags().length)">
+  <button class="h-7 flex-1 border border-line-strong bg-raised hover:border-gold" [title]="'Open on poewiki.net' | tr" (click)="openWiki()">Wiki ↗</button>
+  <button class="h-7 flex-1 border border-line-strong bg-raised hover:border-gold" [title]="'Open on poedb.tw' | tr" (click)="openPoedb()">PoEDB ↗</button>
+  @if (showCoE()) {
+    <button class="h-7 flex-1 border border-line-strong bg-raised whitespace-nowrap hover:border-gold" [title]="'Open in Craft of Exile' | tr" (click)="openCoE()">Craft of Exile ↗</button>
+  }
+</div>
+<div class="px-2.5 pt-1.5">
+  <button class="h-8 w-full border border-gold bg-linear-to-b from-[#a7823f] to-[#7a5c26] text-[13px] font-semibold text-[#1a1208]"
+    [title]="'Type the item name into the stash search in the game' | tr" (click)="findInStash()">
+    {{ 'item.find_in_stash' | t }}
+  </button>
+  @if (stashError(); as message) {
+    <p class="mt-1 bg-[#3a1a14] px-2 py-1 text-bad">{{ message }}</p>
+  }
+</div>
+
+<div class="mx-2.5 my-2.5 flex flex-col border border-line bg-well">
+  @if (!compact() && ninja(); as quote) {
+    <button class="flex items-center gap-2 px-2.5 py-1.5 text-left not-last:border-b not-last:border-line enabled:hover:bg-raised disabled:cursor-default"
+      [disabled]="!quote.url" [title]="quote.url ? ('Open on poe.ninja' | tr) : ''" (click)="openNinja()">
+      <span class="text-muted">poe.ninja</span>
+      @if (quote.value; as value) {
+        @if (quote.baseOnly) {
+          <span class="text-[11px] text-muted">{{ 'base' | tr }}</span>
+        }
+        <span class="flex-1"></span>
+        @if (quote.trend; as trend) {
+          <span class="tabular-nums text-[11px]" [class]="trend.change > 0 ? 'text-good' : trend.change < 0 ? 'text-bad' : 'text-muted'">
+            {{ '{0} · 7d' | tr: percent(trend.change) }}
+          </span>
+        }
+        <b class="font-semibold tabular-nums" [class]="value.currency === 'div' ? 'text-gold-soft' : 'text-bright'">{{ price(value) }}</b>
+      } @else {
+        <span class="flex-1"></span>
+        <span class="text-muted">{{ 'no price' | tr }}</span>
+      }
+    </button>
+  }
+  @if (dps(); as weapon) {
+    <div class="grid grid-cols-[1fr_auto] gap-x-4 px-2.5 py-1.5 tabular-nums not-last:border-b not-last:border-line"
+      [title]="weapon.q20 ? ('In brackets: at 20 % quality, as the trade site and the price check filters count it' | tr) : ''">
+      <span class="text-muted">{{ 'Physical DPS' | tr }}</span>
+      <span class="text-right text-bright">{{ weapon.phys }}@if (weapon.q20; as q20) {<span class="ml-1 text-muted">{{ '({0} at Q20)' | tr: q20.phys }}</span>}</span>
+      <span class="text-muted">{{ 'Elemental DPS' | tr }}</span><span class="text-right text-bright">{{ weapon.elem }}</span>
+      <span class="text-muted">{{ 'Total DPS' | tr }}</span>
+      <span class="text-right"><b class="font-semibold text-gold-soft">{{ weapon.total }}</b>@if (weapon.q20; as q20) {<span class="ml-1 text-muted">{{ '({0} at Q20)' | tr: q20.total }}</span>}</span>
+    </div>
+  }
+  @if (item().dustEquivalent; as dust) {
+    <div class="flex items-center gap-2 px-2.5 py-1.5 not-last:border-b not-last:border-line">
+      <span class="text-muted">{{ 'item.disenchanting' | t }}</span>
+      <span class="flex-1"></span>
+      <b class="font-semibold text-bright tabular-nums">{{ dust.toLocaleString('en') }}</b><span class="text-muted">{{ 'dust' | tr }}</span>
+    </div>
+  }
+  @if ((compact() || !ninja()) && !dps() && !item().dustEquivalent) {
+    <p class="px-2.5 py-1.5 text-muted">{{ 'Nothing more to show for this item.' | tr }}</p>
+  }
+</div>

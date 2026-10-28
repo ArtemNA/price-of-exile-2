@@ -1,0 +1,93 @@
+<div class="relative border-b" [style.border-color]="plate().rule">
+  @if (map().image; as image) {
+    <img class="block aspect-[21/8] w-full object-cover" [src]="image" alt="" />
+    <div class="absolute inset-x-0 bottom-0 flex flex-col items-center bg-linear-to-t from-black/90 via-black/70 to-transparent px-2.5 pt-6 pb-1.5">
+      <ng-container *ngTemplateOutlet="nameplate" />
+    </div>
+  } @else {
+    <div class="flex flex-col items-center px-2.5 pt-2 pb-1.5" [style.background]="plate().plate">
+      <ng-container *ngTemplateOutlet="nameplate" />
+    </div>
+  }
+</div>
+
+<ng-template #nameplate>
+  <span class="font-display text-lg leading-tight font-medium" [style.color]="plate().text">{{ map().name }}</span>
+  <span class="font-display text-[13px] leading-tight text-text">
+    @if (view().rarity === 'Rare' && view().name !== map().name) {
+      <span [style.color]="plate().text">{{ view().name }}</span> ·
+    }
+    @if (item().mapTier; as tier) {
+      {{ 'Tier {0}' | tr: tier }}
+    }
+  </span>
+</ng-template>
+
+<div class="flex items-center gap-3 px-2.5 py-1.5 text-[11px] text-muted">
+  @for (prop of areaProps(); track prop.label) {
+    <span>{{ prop.label }} <span class="text-bright tabular-nums">+{{ prop.value }}%</span></span>
+  }
+  <span class="flex-1"></span>
+  <span>{{ 'map_check.profile' | t }}</span>
+  <div class="flex gap-0.5">
+    @for (profile of profiles; track profile; let i = $index) {
+      <button class="h-5 w-7 border font-display text-[12px]"
+        [class]="config().profile === i + 1 ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line bg-raised text-text hover:border-line-strong'"
+        [attr.aria-pressed]="config().profile === i + 1" (click)="selectProfile(i + 1)">{{ profile }}</button>
+    }
+  </div>
+</div>
+
+@if (map().mavenReminder) {
+  <div class="mx-2.5 mb-1.5 flex items-center gap-2 text-[12px] leading-tight text-muted italic">
+    <img src="images/maven-witness.png" alt="" class="w-7" />
+    <span class="whitespace-pre-line">{{ 'map_check.maven_reminder' | t }}</span>
+  </div>
+}
+
+<div class="mx-2.5 mb-2.5 flex flex-col border border-line bg-well">
+  @for (stat of map().stats; track stat.matcher) {
+    <div class="flex border-l-[3px] not-last:border-b not-last:border-b-line" [class]="rowClass(stat.decision)">
+      <button class="flex min-w-0 flex-1 items-center gap-2 py-1.5 pr-1 pl-2 text-left" [title]="'Mark: deadly → warning → good → seen → none' | tr"
+        (click)="cycle(stat.matcher)">
+        <span class="flex w-3.5 flex-none justify-center" aria-hidden="true">
+          @switch (stat.decision) {
+            @case ('d') {
+              <svg width="13" height="13" viewBox="0 0 14 14"><path d="M7 1C3.7 1 1.5 3.3 1.5 6.2c0 1.8.9 3 2 3.7V12h2v-1.3h1V12h1v-1.3h1V12h2V9.9c1.1-.7 2-1.9 2-3.7C12.5 3.3 10.3 1 7 1z" fill="#ff8a76"/><circle cx="4.9" cy="6.4" r="1.3" fill="#3f1813"/><circle cx="9.1" cy="6.4" r="1.3" fill="#3f1813"/></svg>
+            }
+            @case ('w') {
+              <svg width="13" height="13" viewBox="0 0 14 14"><path d="M7 1l6.5 11.5h-13z" fill="var(--color-warn)"/><path d="M7 5v3.5M7 10v.8" stroke="#38290f" stroke-width="1.6"/></svg>
+            }
+            @case ('g') {
+              <svg width="13" height="13" viewBox="0 0 14 14"><path d="M2 7.5l3.2 3.2L12 3.5" fill="none" stroke="var(--color-good)" stroke-width="2.2"/></svg>
+            }
+          }
+        </span>
+        <span class="truncate" [class.text-muted]="stat.decision === 's'" [title]="stat.matcher">
+          @for (part of parts(stat.matcher, stat.roll); track $index) {@if (part.value) {<b class="font-semibold text-bright tabular-nums">{{ part.text }}</b>} @else {<span>{{ part.text }}</span>}}
+        </span>
+      </button>
+      @if (config().showNewStats) {
+        <button class="flex w-7 flex-none items-center justify-center text-muted hover:text-bright"
+          [title]="(stat.decision === '-' ? 'New mod: mark as seen' : stat.decision === 's' ? 'Seen: mark as new' : '') | tr"
+          [disabled]="stat.decision !== '-' && stat.decision !== 's'" (click)="toggleSeen(stat.matcher)">
+          @if (stat.decision === '-') {
+            <svg width="14" height="12" viewBox="0 0 14 12" [attr.aria-label]="'New mod' | tr"><circle cx="7" cy="6" r="3.2" fill="var(--color-gold)"/></svg>
+          }
+        </button>
+      }
+    </div>
+  }
+  @for (text of map().unknown; track text) {
+    <div class="border-l-[3px] border-l-transparent px-2 py-1.5 not-last:border-b not-last:border-b-line">
+      <span class="text-warn">{{ 'Not recognized modifier —' | tr }}</span> {{ text }}
+    </div>
+  }
+  @if (!map().stats.length && !map().unknown.length) {
+    <p class="px-2.5 py-1.5 text-muted">{{ 'map_check.no_mods' | t }}</p>
+  }
+</div>
+
+@if (map().hasOutdated) {
+  <p class="mx-2.5 mb-2.5 border border-[#5a3a12] bg-[#2a1f0e] px-2.5 py-1.5 text-[12px] leading-snug text-warn">{{ 'map_check.has_outdated' | t }}</p>
+}

@@ -1,0 +1,35 @@
+@for (group of settings().stashSearch; track group.id) {
+  <section class="flex flex-col gap-1">
+    <div class="flex items-center gap-2 px-0.5">
+      <span class="flex-1 truncate font-display text-[14px] text-gold-soft">{{ group.title || ('Untitled' | tr) }}</span>
+      @if (hasHotkeys(group)) {
+        <!-- A button, not a checkbox: focusing a real input would activate the popup and take the game's focus. -->
+        <button class="flex items-center gap-1.5 text-[11px] text-muted hover:text-bright" [title]="'The presets\' own hotkeys' | tr"
+          [attr.aria-pressed]="group.enableHotkeys" (mousedown)="$event.preventDefault()" (click)="toggleHotkeys(group.id, !group.enableHotkeys)">
+          <span class="flex size-3 items-center justify-center border" [class]="group.enableHotkeys ? 'border-gold bg-gold' : 'border-line-strong bg-well'">
+            @if (group.enableHotkeys) {
+              <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 4l2 2 4-4" fill="none" stroke="#1a1208" stroke-width="1.6" /></svg>
+            }
+          </span>
+          {{ 'Hotkeys' | tr }}
+        </button>
+      }
+    </div>
+    @for (entry of group.entries; track entry.id) {
+      @if (entry.text.trim()) {
+        <button class="flex h-8 items-center gap-2 border border-line-strong bg-raised px-2.5 text-left hover:border-gold hover:bg-[#2a2218]"
+          [title]="entry.text" (click)="search(entry.text)">
+          <span class="min-w-0 flex-1 truncate text-bright">{{ entry.name || entry.text }}</span>
+          @if (entry.hotkey && group.enableHotkeys) {
+            <span class="flex-none border border-line bg-well px-1.5 text-[11px] text-muted tabular-nums">{{ label(entry.hotkey) }}</span>
+          }
+        </button>
+      }
+    }
+  </section>
+} @empty {
+  <p class="px-1 py-2 text-muted">{{ 'No presets yet: add them in the settings, Stash search.' | tr }}</p>
+}
+@if (error(); as message) {
+  <p class="bg-[#3a1a14] px-2 py-1 text-bad">{{ message }}</p>
+}

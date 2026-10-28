@@ -1,0 +1,38 @@
+@import 'tailwindcss';
+
+/* Design tokens of the price check window (design canvas "R3 · 1 developed — window states"). */
+@theme {
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-display: 'Alegreya SC', Georgia, serif;
+
+  --color-chrome: #0f0e0c; /* title and status bars */
+  --color-panel: #151311; /* window body */
+  --color-raised: #1c1915; /* active tab, summary row */
+  --color-well: #0d0c0b; /* inputs */
+  --color-line: #2e2820;
+  --color-line-strong: #3a3226;
+  --color-frame: #4a3c28; /* window border */
+  --color-bronze: #7a5f36; /* name plate rules */
+  --color-gold: #c9a15a; /* primary action, focus */
+  --color-gold-soft: #f0d48a; /* highlighted prices */
+  --color-text: #ddd6c9;
+  --color-bright: #e8e4dc;
+  --color-muted: #8f887c;
+  --color-mod: #9a9aff; /* enabled stat filter, PoE mod blue */
+  --color-mod-off: #6f6fb8;
+  --color-good: #6fbf73;
+  --color-warn: #d9a441;
+  --color-bad: #e0806a;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+/* The popup window is transparent; only its panel is painted. */
+html.popup,
+html.popup body {
+  background: transparent;
+}

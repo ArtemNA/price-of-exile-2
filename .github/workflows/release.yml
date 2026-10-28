@@ -1,0 +1,89 @@
+# Builds the Windows installer and the portable exe and publishes a GitHub release with the
+# updater's latest.json, checksums and notes (.github/RELEASE_NOTES.md + this tag's CHANGELOG.md section).
+# Start it by pushing a tag: git tag v0.1.2 && git push origin v0.1.2
+# The tag must match "version" in src-tauri/tauri.conf.json.
+#
+# Repository secrets: TAURI_SIGNING_PRIVATE_KEY (contents of the updater key file) and
+# TAURI_SIGNING_PRIVATE_KEY_PASSWORD (empty if the key has none).
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - run: npm ci
+
+      - run: npm test
+
+      - uses: tauri-apps/tauri-action@v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: ${{ github.ref_name }}
+          releaseBody: What is new is on the release page.
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true
+
+      - name: Portable exe, checksums and release notes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart("v")
+          $product = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).productName
+          $base = $product -replace ' ', '.'
+
+          # The installer as tauri-action uploaded it (spaces become dots in asset names).
+          $setupFile = Get-ChildItem "src-tauri/target/release/bundle/nsis/*_x64-setup.exe" | Select-Object -First 1
+          $setup = $setupFile.Name -replace ' ', '.'
+          # Portable: the bare exe; without the installer's uninstaller next to it the app does not update itself.
+          $portable = "${base}_${version}_x64-portable.exe"
+          Copy-Item src-tauri/target/release/price-of-exile.exe $portable
+
+          function Size($file) {
+            [string]::Format([cultureinfo]::InvariantCulture, "{0:0.0} MB", (Get-Item $file).Length / 1MB)
+          }
+          @(
+            "$((Get-FileHash $setupFile -Algorithm SHA256).Hash.ToLower())  $setup",
+            "$((Get-FileHash $portable -Algorithm SHA256).Hash.ToLower())  $portable"
+          ) | Out-File -Encoding ascii SHA256SUMS.txt
+
+          $changelog = Get-Content CHANGELOG.md -Raw
+          $m = [regex]::Match($changelog, "(?ms)^## $([regex]::Escape($tag))\s*\r?\n(.*?)(?=^## |\z)")
+          $changes = if ($m.Success) { $m.Groups[1].Value.Trim() } else { "See [CHANGELOG.md](CHANGELOG.md)." }
+          (Get-Content .github/RELEASE_NOTES.md -Raw).
+            Replace("{{TAG}}", $tag).
+            Replace("{{SETUP}}", $setup).
+            Replace("{{SETUP_SIZE}}", (Size $setupFile)).
+            Replace("{{PORTABLE}}", $portable).
+            Replace("{{PORTABLE_SIZE}}", (Size $portable)).
+            Replace("{{CHANGES}}", $changes) | Out-File -Encoding utf8 release-notes.md
+
+          gh release upload $tag $portable SHA256SUMS.txt --clobber
+          gh release edit $tag --title "$product $tag" --notes-file release-notes.md

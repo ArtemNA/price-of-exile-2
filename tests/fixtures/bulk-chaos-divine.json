@@ -1,0 +1,177 @@
+{
+ "id": "H4sIAAAAAAAAA6tWKi5JLCktVrKqVsovKMnMz1OyUsrPy8nMS1Wq1VHKSCxLVbKKVkrOSMwvVorVUSpPzCsBCaRkloGUxNYCAI9KQ6JBAAAA",
+ "complexity": null,
+ "result": {
+  "46daf867aac0815daf5775ecf97015eb725b60db3eb2fa3c193982": {
+   "id": "5d4e46973a46daf867aac0815daf5775ecf97015eb725b60db3eb2fa3c193982",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-26T19:05:01+00:00",
+    "account": {
+     "name": "seller1",
+     "lastCharacterName": "seller1_char",
+     "online": {
+      "league": "Allflame"
+     }
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "chaos",
+       "amount": 5
+      },
+      "item": {
+       "currency": "divine",
+       "amount": 1,
+       "stock": 4,
+       "id": "5d4e46973a46daf867aac0815daf5775ecf97015eb725b60db3eb2fa3c193982"
+      }
+     }
+    ]
+   }
+  },
+  "3c2ec90e3d1fdb20089de2c8d71bbc53814e7b75ab77b084f67285": {
+   "id": "5a0351c9423c2ec90e3d1fdb20089de2c8d71bbc53814e7b75ab77b084f67285",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-25T18:48:19+00:00",
+    "account": {
+     "name": "seller2",
+     "lastCharacterName": "seller2_char",
+     "online": {
+      "league": "Allflame",
+      "status": "afk"
+     }
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "chaos",
+       "amount": 320
+      },
+      "item": {
+       "currency": "divine",
+       "amount": 1,
+       "stock": 1,
+       "id": "5a0351c9423c2ec90e3d1fdb20089de2c8d71bbc53814e7b75ab77b084f67285"
+      }
+     }
+    ]
+   }
+  },
+  "e0b4ecdf8f0716e177f1f461e685c51aef97f816af8202f1e37a3a": {
+   "id": "ee49af4f0fe0b4ecdf8f0716e177f1f461e685c51aef97f816af8202f1e37a3a",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-26T19:03:18+00:00",
+    "account": {
+     "name": "seller3",
+     "lastCharacterName": "seller3_char",
+     "online": {
+      "league": "Allflame"
+     }
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "chaos",
+       "amount": 330
+      },
+      "item": {
+       "currency": "divine",
+       "amount": 1,
+       "stock": 148,
+       "id": "ee49af4f0fe0b4ecdf8f0716e177f1f461e685c51aef97f816af8202f1e37a3a"
+      }
+     }
+    ]
+   }
+  },
+  "a59cea19f92cb34eebb164556f28f315e10f7732e9fbd19f14c89d": {
+   "id": "fd5a78bda8a59cea19f92cb34eebb164556f28f315e10f7732e9fbd19f14c89d",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-26T19:08:13+00:00",
+    "account": {
+     "name": "seller4",
+     "lastCharacterName": "seller4_char",
+     "online": {
+      "league": "Allflame"
+     }
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "chaos",
+       "amount": 350
+      },
+      "item": {
+       "currency": "divine",
+       "amount": 1,
+       "stock": 25,
+       "id": "fd5a78bda8a59cea19f92cb34eebb164556f28f315e10f7732e9fbd19f14c89d"
+      }
+     }
+    ]
+   }
+  },
+  "05d8554c8bbac6f59d4192754daec5c734a6f1342a9c617e660676": {
+   "id": "d72ad3d6b705d8554c8bbac6f59d4192754daec5c734a6f1342a9c617e660676",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-26T18:32:05+00:00",
+    "account": {
+     "name": "seller5",
+     "lastCharacterName": "seller5_char",
+     "online": {
+      "league": "Allflame"
+     }
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "chaos",
+       "amount": 370
+      },
+      "item": {
+       "currency": "divine",
+       "amount": 1,
+       "stock": 8,
+       "id": "d72ad3d6b705d8554c8bbac6f59d4192754daec5c734a6f1342a9c617e660676"
+      }
+     }
+    ]
+   }
+  },
+  "447fa0f40b4af3cf5538124ff1e5859afc5abfe98ac727f099bef1": {
+   "id": "a6177cb8df447fa0f40b4af3cf5538124ff1e5859afc5abfe98ac727f099bef1",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-26T18:32:01+00:00",
+    "account": {
+     "name": "seller6",
+     "lastCharacterName": "seller6_char",
+     "online": {
+      "league": "Allflame",
+      "status": "afk"
+     }
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "chaos",
+       "amount": 380
+      },
+      "item": {
+       "currency": "divine",
+       "amount": 1,
+       "stock": 1144,
+       "id": "a6177cb8df447fa0f40b4af3cf5538124ff1e5859afc5abfe98ac727f099bef1"
+      }
+     }
+    ]
+   }
+  }
+ },
+ "total": 6
+}

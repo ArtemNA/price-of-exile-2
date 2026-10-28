@@ -1,0 +1,79 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Price of Exile 2",
+  "version": "0.0.1",
+  "identifier": "com.artemna.price-of-exile-2",
+  "build": {
+    "frontendDist": "../dist/price-of-exile-2/browser",
+    "devUrl": "http://localhost:4200",
+    "beforeDevCommand": "npm run start",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Price of Exile 2",
+        "width": 900,
+        "height": 640,
+        "visible": false,
+        "resizable": true
+      },
+      {
+        "label": "popup",
+        "title": "Price of Exile 2 — popup",
+        "width": 820,
+        "height": 590,
+        "visible": false,
+        "focus": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false
+      },
+      {
+        "label": "toast",
+        "title": "Price of Exile 2 — started",
+        "width": 340,
+        "height": 92,
+        "visible": false,
+        "focus": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "createUpdaterArtifacts": false,
+    "publisher": "ArtemNA",
+    "shortDescription": "Path of Exile 2 price check overlay",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico"
+      }
+    },
+    "license": "MIT",
+    "licenseFile": "../LICENSE"
+  }
+}
