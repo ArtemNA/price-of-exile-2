@@ -98,25 +98,6 @@
             </label>
 
             <div class="flex flex-col gap-1.5">
-              <span class="text-bright">{{ 'Popup position' | tr }}</span>
-              <div class="flex gap-1">
-                @for (option of positions; track option.value) {
-                  <button class="h-8 border px-3"
-                    [class]="settings().popupPosition === option.value ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
-                    [attr.aria-pressed]="settings().popupPosition === option.value" (click)="setPopupPosition(option.value)">{{ option.label | tr }}</button>
-                }
-              </div>
-              <span class="text-[12px] text-muted">{{ 'Opposite the cursor is how Awakened PoE Trade places it: the popup never covers the item.' | tr }} {{ 'A click into the game outside the popup closes it.' | tr }}</span>
-            </div>
-
-            <label class="flex items-start gap-2.5">
-              <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().startMessage"
-                (change)="setStartMessage($any($event.target).checked)" />
-              <span class="flex flex-col"><span class="text-bright">{{ 'Show a message when the overlay starts' | tr }}</span>
-                <span class="text-[12px] text-muted">{{ 'A few seconds in the corner of the screen: the overlay runs, its hotkeys, where the settings are.' | tr }}</span></span>
-            </label>
-
-            <div class="flex flex-col gap-1.5">
               <span class="text-bright">{{ 'League' | tr }}</span>
               <div class="flex gap-2">
                 <select class="h-8 flex-1 border border-line-strong bg-well px-1.5 text-bright outline-none focus:border-gold"
@@ -139,7 +120,34 @@
                 placeholder="Name#1234" [value]="settings().accountName" (blur)="setAccountName(account.value)" (keydown.enter)="setAccountName(account.value)" />
               <span class="text-[12px] text-muted">{{ 'Your own listings are marked in the price check.' | tr }}</span>
             </label>
+          </div>
+        }
 
+        @case ('overlay') {
+          <div class="flex max-w-xl flex-col gap-5">
+            <div class="flex flex-col gap-1.5">
+              <span class="text-bright">{{ 'Popup position' | tr }}</span>
+              <div class="flex gap-1">
+                @for (option of positions; track option.value) {
+                  <button class="h-8 border px-3"
+                    [class]="settings().popupPosition === option.value ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [attr.aria-pressed]="settings().popupPosition === option.value" (click)="setPopupPosition(option.value)">{{ option.label | tr }}</button>
+                }
+              </div>
+              <span class="text-[12px] text-muted">{{ 'Opposite the cursor is how Awakened PoE Trade places it: the popup never covers the item.' | tr }} {{ 'A click into the game outside the popup closes it.' | tr }}</span>
+            </div>
+
+            <label class="flex items-start gap-2.5">
+              <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().startMessage"
+                (change)="setStartMessage($any($event.target).checked)" />
+              <span class="flex flex-col"><span class="text-bright">{{ 'Show a message when the overlay starts' | tr }}</span>
+                <span class="text-[12px] text-muted">{{ 'A few seconds in the corner of the screen: the overlay runs, its hotkeys, where the settings are.' | tr }}</span></span>
+            </label>
+          </div>
+        }
+
+        @case ('about') {
+          <div class="flex max-w-xl flex-col gap-5">
             <div class="flex flex-col gap-1.5">
               <span class="text-bright">{{ 'Version' | tr }}</span>
               <div class="flex items-center gap-3">
@@ -155,6 +163,14 @@
                   @case ('available') { <span class="text-gold-soft">{{ '{0} is out: install it from the left' | tr: updates.version() ?? '' }}</span> }
                   @case ('error') { <span class="text-bad" [title]="updates.error() ?? ''">{{ 'Could not check for updates' | tr }}</span> }
                 }
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <span class="text-bright">{{ 'Source code' | tr }}</span>
+              <div class="flex items-center gap-3">
+                <button class="text-gold hover:text-[#e6c88a]" (click)="openRepository()">github.com/ArtemNA/price-of-exile-2 ↗</button>
+                <span class="text-[12px] text-muted">{{ 'MIT license' | tr }}</span>
               </div>
             </div>
           </div>

@@ -6,6 +6,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { openUrl, revealItemInDir } from '@tauri-apps/plugin-opener';
 import { poeWebApi } from '@/web/Config';
 import {
+  APP_CONTACT,
   DEFAULT_CURRENCY_OPTIONS,
   GAME_LANGS,
   HotkeyAction,
@@ -34,17 +35,19 @@ interface LogLine {
 
 const MAX_LOG_LINES = 200;
 
-type Section = 'general' | 'hotkeys' | 'chat' | 'stash-search' | 'price-check' | 'map-check' | 'log';
+type Section = 'general' | 'overlay' | 'hotkeys' | 'chat' | 'stash-search' | 'price-check' | 'map-check' | 'log' | 'about';
 
 // Labels and hints are English texts: the template translates them with `tr`.
 const SECTIONS: Array<{ id: Section; label: string }> = [
   { id: 'general', label: 'General' },
+  { id: 'overlay', label: 'Overlay' },
   { id: 'hotkeys', label: 'Hotkeys' },
   { id: 'chat', label: 'Chat' },
   { id: 'stash-search', label: 'Stash search' },
   { id: 'price-check', label: 'Price check' },
   { id: 'map-check', label: 'Map check' },
   { id: 'log', label: 'Log' },
+  { id: 'about', label: 'About' },
 ];
 
 const HOTKEYS: Array<{ action: HotkeyAction; label: string; hint: string }> = [
@@ -165,6 +168,10 @@ export class SettingsWindow {
   /** The release page of `version`: what changed in it. */
   protected openRelease(version: string): void {
     void openUrl(releaseUrl(version));
+  }
+
+  protected openRepository(): void {
+    void openUrl(APP_CONTACT);
   }
 
   protected setUseIntlSite(useIntlSite: boolean): void {

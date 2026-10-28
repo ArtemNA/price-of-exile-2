@@ -1,0 +1,3 @@
+# The overlay-host crate is a private GitHub repo: let git (and its credential manager) fetch it.
+[net]
+git-fetch-with-cli = true

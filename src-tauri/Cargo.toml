@@ -1,0 +1,33 @@
+[package]
+name = "price-of-exile-2"
+version = "0.0.1"
+description = "Price of Exile 2: a Path of Exile 2 price check overlay"
+authors = ["ArtemNA"]
+license = "MIT"
+repository = "https://github.com/ArtemNA/price-of-exile-2"
+edition = "2024"
+rust-version = "1.90"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "price_of_exile_2_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.4", features = [] }
+
+[dependencies]
+# The host: hotkeys, clipboard, popup windows, built-in browser, tray.
+overlay-host = { git = "https://github.com/ArtemNA/poe-overlay-host", tag = "host-v0.1.0" }
+tauri = { version = "2.12.5", features = ["tray-icon"] }
+# The host registers these plugins. They are listed here too: tauri-build finds the plugin
+# permissions that the capabilities name only among the app's direct dependencies.
+tauri-plugin-log = "2"
+tauri-plugin-global-shortcut = "2.4.1"
+tauri-plugin-http = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-store = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
