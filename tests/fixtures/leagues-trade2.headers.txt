@@ -1,0 +1,16 @@
+HTTP/1.1 200 OK
+Date: Wed, 28 Oct 2026 10:10:12 GMT
+Content-Type: application/json
+Transfer-Encoding: chunked
+Connection: keep-alive
+Server: cloudflare
+X-Frame-Options: SAMEORIGIN
+Strict-Transport-Security: max-age=63115200; includeSubDomains; preload
+vary: accept-encoding
+Age: 5797
+last-modified: Wed, 28 Oct 2026 08:35:56 GMT
+expires: Wed, 28 Oct 2026 14:10:12 GMT
+Cache-Control: public, max-age=14400
+cf-cache-status: HIT
+CF-RAY: a519263b1c43a5ef-VIE
+

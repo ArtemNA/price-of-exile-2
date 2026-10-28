@@ -1,0 +1,9 @@
+Item Class: Helmets
+Rarity: Unique
+Felt Cap
+--------
+Evasion Rating: 58
+--------
+Item Level: 34
+--------
+Unidentified

@@ -1,0 +1,15 @@
+Item Class: Augment
+Rarity: Currency
+Greater Iron Rune
+--------
+Stack Size: 1/10
+--------
+Requires: Level 30
+--------
+Martial Weapon: 18% increased Physical Damage
+Wand or Staff: 30% increased Spell Damage
+Armour: 18% increased Armour, Evasion and Energy Shield
+--------
+Place into an empty Augment Socket in a Weapon or Armour to apply its effect to that item. Once socketed it cannot be retrieved but can be replaced by other Augment items.
+--------
+Shift click to unstack.

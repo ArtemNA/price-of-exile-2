@@ -1,0 +1,17 @@
+Item Class: Jewels
+Rarity: Rare
+Kraken Spark
+Ruby
+--------
+Item Level: 81
+--------
+{ Prefix Modifier "Brutal" — Damage, Attack }
+12(10-15)% increased Melee Damage
+{ Prefix Modifier "Reinforced" — Defences }
+16(10-20)% increased Armour
+{ Suffix Modifier "of Steadiness" }
+14(10-15)% increased Stun Threshold
+{ Suffix Modifier "of Celebration" — Attack, Speed }
+3(2-4)% increased Attack Speed
+--------
+Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.
