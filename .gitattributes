@@ -1,0 +1,4 @@
+# Game data is indexed by character offsets: never rewrite its line endings.
+public/data/** -text
+# Item texts are copied from the game with LF.
+tests/fixtures/** -text
