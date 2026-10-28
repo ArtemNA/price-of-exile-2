@@ -169,7 +169,7 @@ Fractured Item
 |---|---|---|
 | **Price check** (`/api/trade2/search`, `/fetch`) | `trade2`-ендпоїнти, realm `poe2`. Спосіб продажу Instant buyout (`securable`) | Порт, плюс перемикач Instant / Online / Any [V] |
 | **Bulk** (`/api/trade2/exchange`) | Валюта, руни, soul cores, omens, essences, fragments, splinters, liquid emotions, catalysts, uncut gems. Ціни в exalted / divine / chaos | Порт; «Pay with» exalted / divine [V] |
-| **poe.ninja** | `poe.ninja/poe2/economy/<league>/<type>/<detailsId>`. Дані йдуть через проксі `api.exiledexchange2.dev/proxy/<league>/overviewData.json` (+`namespaceMap.json`). Основна валюта — **exalted**, курс divine | Беремо пряме API poe2 (фікстура `ninja-poe2-exchange-currency.raw.json` уже є) або проксі EE2 [V] |
+| **poe.ninja** | `poe.ninja/poe2/economy/<league>/<type>/<detailsId>`. Дані йдуть через проксі `api.exiledexchange2.dev/proxy/<league>/overviewData.json` (+`namespaceMap.json`). Головна валюта — divine; дрібні торгові — exalted і chaos (обидві) | Беремо пряме API poe2 (фікстура `ninja-poe2-exchange-currency.raw.json` уже є) або проксі EE2 [V] |
 | **Related items** | `public/data/item-drop.jsonc` (116 груп: Fragments, Boss Drops, Lineage gem groups, Reliquary Keys, League currency, Uniques, Tiered Currencies, Crafting items used together, Trials, Legacy of the * augments). Онлайн-копія — `…/proxy/data/item-drop.json` | Порт як у PoE1 (ліва колонка) [V] |
 | **Item check** | poe2wiki: `https://www.poe2wiki.net/wiki/<refName>`; PoEDB: `https://poe2db.tw/<us/ru/tw/kr/jp/de/sp/pt/fr>/<шлях за категорією>`; Craft of Exile: `https://craftofexile.com/?game=poe2&eimport=<rawText>`. Ще «search similar» (stash за назвою) і «same priced» (за `Note:`) | Порт; CoE лише для модифікованих [V] `hotkeyable-actions.ts` |
 | **Map check** | `isMapLike`: Waystone (не unique), Logbook (+ legacy Heist / Invitation). **Tablet іде в item check**. Позначки тих самих 3 профілів; стати з `statsByType` | Map check для waystones. Для tablets — розглянути власний вигляд. Скриншота локації немає: waystone не має області [V]/[I] |
@@ -194,7 +194,7 @@ Fractured Item
 | Чип iLvl / база «Any <cat> / This base» | Лишаються. Нові чипи: **Waystone Tier**, **Gem level** (Uncut ±1), **Unid Tier ≥**, **Spirit**, **Area level** (trials / logbook), **Requires** |
 | Corrupted у 3 стани, Mirrored | Лишаються; додати **Sanctified** |
 | «Not unique» | Лишається |
-| Іконки валют | exalted (основна), divine, chaos — з `icon` / `tradeTag` у `items.ndjson` EE2. Курс у заголовку: «1 div = N ex» замість «div = N chaos» |
+| Іконки валют | divine (головна), exalted і chaos (дві дрібні торгові) — з `icon` / `tradeTag` у `items.ndjson` EE2. Курс у заголовку: «1 div = N ex · M c» замість «div = N chaos» (виправлено за словами власника 28.10.2026) |
 | Правий бік: Trade / Bulk / poe.ninja / Wiki | Лишається; Wiki → poe2wiki + PoE2DB + CoE `game=poe2` |
 | Online-підсумок «online · instant buyout» | 4 стани: Instant / Instant or Online / Online / Any |
 | Related items | Те саме місце; дані з `item-drop.jsonc` EE2 |

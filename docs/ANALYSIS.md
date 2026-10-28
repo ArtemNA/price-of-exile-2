@@ -61,7 +61,7 @@
 | Ліги | `/api/trade2/data/leagues`: Forbidden Rites, HC Forbidden Rites, Runes of Aldur, HC Runes of Aldur, Standard, Hardcore | постійні — `Standard` / `Hardcore`; челендж-лігу вибирати не за індексом (EE2 бере `result[2]`) |
 | Ліміти | ті самі `X-Rate-Limit-*`; відповідь ліг прийшла з кешу Cloudflare без них | F-51 переноситься; відсутність заголовків — норма |
 | Cloudflare | сторінка `/trade2` віддала curl'у 403 `cf-mitigated: challenge` | вбудований браузер (F-45) потрібен так само або більше |
-| Валюти | базова — **exalted**; divine, chaos | курс у заголовку «1 div = N ex» |
+| Валюти | головна — **divine**; дрібних торгових **дві**, exalted і chaos, обидві ходять паралельно (poe.ninja дає курси `rates: {exalted, chaos}` до divine; EE2 має перемикач `coreCurrency`) | у заголовку — divine в обох: «1 div = N ex · M c»; «≈» у лістингах — у валюті, яку обрав користувач (exalted або chaos) |
 | poe.ninja | `/poe2/api/economy/{leagues, exchange/current/overview (14 типів), stash/current/item/overview (9 типів)}`, ціни в divine, `sparkline` / `sparkLine` (7-денна накопичена зміна, як F-34), ETag, оновлення ~щогодини | немає dense: 23 запити; викиди → фільтр за кількістю лістингів |
 | Wiki / PoEDB / CoE | `poe2wiki.net/wiki/<refName>`, `poe2db.tw/<us,ru,tw,kr,jp,de,sp,pt,fr>/...`, `craftofexile.com/?game=poe2&eimport=<текст>` | лише URL |
 | ML-ціни | немає (poeprices закритий) | — |
@@ -85,7 +85,7 @@
 | Функція еталона | PoE2 |
 |---|---|
 | Price check | trade2; групи: без Eldritch, нові Rune, Enchant, Skill, Desecrated, Mutated; «Sockets ≥ N» замість «Links ≥ 6»; чипи Waystone tier, Gem level, Unid tier, Spirit, Sanctified; онлайн-фільтр у 4 стани |
-| Bulk | trade2 exchange, валюти в exalted |
+| Bulk | trade2 exchange; оптимістичний пошук за divine і дрібною валютою (exalted або chaos), як F-30 |
 | poe.ninja + related items | свій адаптер; related — `item-drop.jsonc` EE2 (116 груп); dust прибрано |
 | Item check | poe2wiki / PoE2DB / CoE `game=poe2`; Find in Stash |
 | Map check | для waystones (і logbook): тір, revives, pack size, drop chance, rarity; без скриншота локації й Maven; tablets — item check |
@@ -128,13 +128,13 @@
 | F-20 | `revision`-сигнал на мутабельні фільтри | так | Тримається |
 | F-21 | Колесо миші замість клавіатури | так | Тримається (вже замінено F-27) |
 | F-22 | Групування лістингів не обрізати | так | Тримається |
-| F-23 | Перевірка на живому trade API | перевірити | **Відповідь (код):** `/api/trade2/search|fetch`, `listingType` у 4 стани, нові групи фільтрів, сортування за еквівалентом у exalted. **Ще перевірити:** живий пошук |
+| F-23 | Перевірка на живому trade API | перевірити | **Відповідь (код):** `/api/trade2/search|fetch`, `listingType` у 4 стани, нові групи фільтрів, сортування за еквівалентом (валюти змішані: divine, exalted, chaos). **Ще перевірити:** живий пошук |
 | F-24 | «Відкрити на сайті» | так | Тримається; `/trade2/search/poe2/<league>` |
 | F-25 | Вікно на дві колонки | так | Тримається |
 | F-26 | Bulk-приманки | так | Тримається (перевірити на trade2 exchange) |
 | F-27 | Три пастки фокусу | так | Тримається |
 | F-28 | Фейкова гра замість Блокнота | так | Тримається; фейкова гра має відповідати на **Ctrl+Alt+C** |
-| F-29 | Курс divine у заголовку | перевірити | **Відповідь:** базова валюта exalted; заголовок «1 div = N ex», тултип у ex; poe.ninja PoE2 віддає ціни в divine — перераховувати |
+| F-29 | Курс divine у заголовку | перевірити | **Відповідь:** головна валюта, як і в PoE1, divine, але дрібних торгових дві — exalted і chaos. Заголовок «1 div = N ex · M c», тултип 0.1…1 div в обох; poe.ninja PoE2 віддає ціни в divine з курсами exalted і chaos в одній відповіді |
 | F-30 | Bulk: порт APT + приманки | перевірити | **Відповідь:** `/api/trade2/exchange` є, EE2 використовує; типи poe.ninja для стеків — 14 exchange-типів |
 | F-31 | Тести без computer-use | так | Тримається |
 | F-32 | Esc під час вводу | так | Тримається |
@@ -193,6 +193,17 @@
 ---
 
 ## 7. Рішення власника (для фази 2)
+
+**Прийнято 28.10.2026:**
+- Валюти: головна divine, дрібних торгових дві — exalted і chaos; враховувати обидві (заголовок, «≈», bulk, poe.ninja).
+- Автооновлення відкладаємо на пізніше: репо лишається приватним, ключ підпису поки не потрібен.
+- Мови — як у Price of Exile: інтерфейс en / uk / ru, гра en / ru.
+- poe.ninja — прямі запити до офіційного API з поступовим завантаженням (3а).
+- Решта рекомендацій аналізу прийнята (новий репо з копією модулів, MVP на 0.5, оновлення даних після 1.0).
+
+**Відкрите:** назва й identifier (пункт 1), спільний Rust-крейт (4), редактор рун і Extraction value (5).
+
+Початковий список:
 
 1. **Назва застосунку**, назва репо (зараз `price-of-exile-2`, приватний) і Tauri identifier (не `com.artemna.poe-trade-overlay`; dev — `<identifier>.dev`). Перейменувати теку під назву?
 2. **Ключ підпису updater** — новий; генеруєш і кладеш у секрет репо сам. Для автооновлення з приватного репо релізи недоступні без токена (F-48) — тож або репо стане публічним до першого релізу, або оновлення без автооновлення.
