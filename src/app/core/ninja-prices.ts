@@ -4,7 +4,7 @@
 
 import { BaseType, ITEM_BY_REF, ITEM_DROP } from '@/assets/data';
 import type { ParsedItem } from '@/parser';
-import { getDetailsId, isValuableBasetype } from '../../lib/apt/web/price-check/trends/getDetailsId';
+import { getDetailsId, isValuableBasetype } from '../../lib/ee2/web/price-check/trends/getDetailsId';
 import { NINJA_DIVINE_ROUNDING, POE_NINJA_NAMESPACES, POE_NINJA_SITE } from '../constants';
 
 export interface NinjaLine {

@@ -4,7 +4,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "noImplicitOverride": true,
-    // Off for ported APT code (src/lib/apt), which is kept identical to upstream
+    // Off for ported EE2 code (src/lib/ee2), which is kept identical to upstream
     // and is written against plain `strict` without these two checks.
     "noPropertyAccessFromIndexSignature": false,
     "noImplicitReturns": false,
@@ -14,17 +14,19 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "ES2022",
+    // EE2 code uses ES2023 `toSorted` and ES2025 Set methods (WebView2 and Node 22+ have them).
+    "lib": ["ES2025", "DOM", "DOM.Iterable"],
     "module": "preserve",
-    // Ported APT code keeps its original imports, so upstream files can be copied over as-is.
-    // APT modules we replace with our own code live in src/app/apt-shims.
+    // Ported EE2 code keeps its original imports (`@/` = EE2 renderer/src), so upstream files can be
+    // copied over as-is. EE2 modules we replace with our own code live in src/app/ee2-shims.
+    // Same aliases in vitest.config.mts.
     "paths": {
-      "@/assets/data": ["./src/lib/apt/data"],
-      "@/parser": ["./src/lib/apt/parser"],
-      "@/parser/*": ["./src/lib/apt/parser/*"],
-      "@/web/Config": ["./src/app/apt-shims/web-config"],
-      "@/web/map-check/*": ["./src/lib/apt/web/map-check/*"],
-      "@/web/background/IPC": ["./src/app/apt-shims/ipc"],
-      "@/web/overlay/interfaces": ["./src/app/apt-shims/overlay-interfaces"]
+      "@/web/Config": ["./src/app/ee2-shims/web-config"],
+      "@/web/background/IPC": ["./src/app/ee2-shims/ipc"],
+      "@/web/background/Prices": ["./src/app/ee2-shims/prices"],
+      "@/web/background/TradeData": ["./src/app/ee2-shims/trade-data"],
+      "@/web/overlay/interfaces": ["./src/app/ee2-shims/overlay-interfaces"],
+      "@/*": ["./src/lib/ee2/*"]
     }
   },
   "angularCompilerOptions": {

@@ -1,7 +1,7 @@
 // @ts-check
 // Builds *.index.bin lookup tables for public/data/<lang>/{items,stats}.ndjson.
-// Port of APT renderer/src/assets/make-index-files.mjs (MIT © 2020 Alexander Drozdov);
-// languages are detected from the data folders instead of a hardcoded list.
+// Port of EE2 renderer/src/assets/make-index-files.mjs (MIT © 2020 Alexander Drozdov and EE2
+// contributors); languages are detected from the data folders instead of a hardcoded list.
 
 import fnv1a from '@sindresorhus/fnv1a'
 import fs from 'node:fs'
@@ -38,12 +38,13 @@ function * ndjsonLines (file) {
 function makeStatsIndexes (langDir) {
   const byRef = []
   const matchers = []
-  for (const { start, record } of ndjsonLines(path.join(langDir, 'stats.ndjson'))) {
-    const stats = ('stats' in record) ? record.stats : [record]
-    for (const stat of stats) {
-      byRef.push({ start, hash: hash(stat.ref) })
-      for (const matcher of stat.matchers) {
-        matchers.push({ start, hash: hash(matcher.advanced ?? matcher.string) })
+  for (const { start, record: stat } of ndjsonLines(path.join(langDir, 'stats.ndjson'))) {
+    byRef.push({ start, hash: hash(stat.ref) })
+    // Unlike APT, EE2 indexes a matcher by both texts: the plain one and the advanced (Ctrl+Alt+C) one.
+    for (const matcher of stat.matchers) {
+      matchers.push({ start, hash: hash(matcher.string) })
+      if (matcher.advanced) {
+        matchers.push({ start, hash: hash(matcher.advanced) })
       }
     }
   }

@@ -1,8 +1,9 @@
 // Map check: the item's map mods with the user's marks per profile.
 // Port of APT `map-check/MapCheck.vue`, `MapStatButton.vue`, `settings-maps.vue` and the `isMapLike`
 // check of `item-check/WidgetItemCheck.vue`. Decision strings and their helpers come unchanged
-// from `lib/apt/web/map-check/common.ts`; APT mutates the config in place, here every change
+// from EE2 `web/map-check/common.ts`; APT mutates the config in place, here every change
 // returns a new config for the settings signal.
+// stage 7: rewritten for waystones, tablets and PoE2 defaults (PLAN §6).
 
 import { STATS_ITERATOR } from '@/assets/data';
 import { ItemCategory, ItemRarity, type ParsedItem } from '@/parser';
@@ -16,8 +17,7 @@ import {
   isOutdated,
   nextDecision,
 } from '@/web/map-check/common';
-import { prepareMapStat } from '@/web/map-check/prepare-map-stats';
-import { MEMORY_MAPS } from '../constants';
+import { prepareMapStats } from '@/web/map-check/prepare-map-stats';
 
 /** One character of the decision string: d(eadly), w(arning), g(ood), s(een) or - (none). */
 export type Decision = 'd' | 'w' | 'g' | 's' | '-';
@@ -40,15 +40,11 @@ export interface MapCheckView {
   hasOutdated: boolean;
 }
 
-/** Maps, contracts, blueprints, invitations, charts and logbooks open the map check instead of the item check. */
+/** Waystones and logbooks open the map check instead of the item check. */
 export function isMapLike(item: ParsedItem): boolean {
   const { category, rarity, info } = item;
   return (
-    (category === ItemCategory.Map && rarity !== ItemRarity.Unique) ||
-    category === ItemCategory.HeistContract ||
-    category === ItemCategory.HeistBlueprint ||
-    category === ItemCategory.Invitation ||
-    category === ItemCategory.Chart ||
+    ((category === ItemCategory.Waystone || category === ItemCategory.Map) && rarity !== ItemRarity.Unique) ||
     info.refName === 'Expedition Logbook'
   );
 }
@@ -81,16 +77,15 @@ export function toggleSeen(config: MapCheckConfig, matcher: string): MapCheckCon
 }
 
 export function mapCheckView(item: ParsedItem, config: MapCheckConfig): MapCheckView {
-  const blighted = Boolean(item.info.area?.blighted);
-  const hideImage = (item.rarity === ItemRarity.Unique && item.isUnidentified) || blighted;
+  const hideImage = (item.rarity === ItemRarity.Unique && item.isUnidentified) || Boolean(item.mapBlighted);
   return {
-    name: blighted ? item.info.name : (item.mapArea?.name ?? item.info.name),
-    image: hideImage ? undefined : (item.info.area?.screenshot ?? item.mapArea?.area?.screenshot),
-    mavenReminder: Boolean(item.mapArea && MEMORY_MAPS.includes(item.mapArea.refName)),
-    stats: item.statsByType
-      .filter((calc) => calc.type === ModifierType.Explicit)
-      .map(prepareMapStat)
-      .map((stat) => ({ ...stat, decision: decisionOf(config, stat.matcher) })),
+    name: item.info.name,
+    image: hideImage ? undefined : item.info.map?.screenshot,
+    // PoE2 has no Maven.
+    mavenReminder: false,
+    stats: prepareMapStats(item)
+      .filter((stat) => stat.type === ModifierType.Explicit)
+      .map(({ matcher, roll }) => ({ matcher, roll, decision: decisionOf(config, matcher) })),
     unknown: item.unknownModifiers.filter((mod) => mod.type === ModifierType.Explicit).map((mod) => mod.text),
     hasOutdated: config.selectedStats.some((entry) => isOutdated(config.profile, entry)),
   };
@@ -121,11 +116,12 @@ function tagToShowOrder(tag?: StatTag): number {
 export function allAreaMods(): StatMatcher[] {
   const out: StatMatcher[] = [];
   for (const stat of STATS_ITERATOR('AreaMods')) {
-    if (!stat.fromAreaMods) continue;
+    // EE2 `settings-maps.vue findAllAreaMods`.
+    if (!stat.fromAreaMods && !stat.fromUberAreaMods && !stat.fromHeistAreaMods) continue;
     const tag =
-      stat.fromAreaMods === 'heist_exclusive'
+      stat.fromHeistAreaMods && !stat.fromAreaMods
         ? StatTag.HeistExclusive
-        : stat.fromAreaMods === 'ubermap_exclusive'
+        : stat.fromUberAreaMods && !stat.fromAreaMods
           ? StatTag.UberMapExclusive
           : undefined;
     for (const matcher of stat.matchers) out.push({ matchStr: matcher.string, tag });

@@ -22,13 +22,12 @@ export class MapCheckPanel {
   protected readonly map = computed(() => mapCheckView(this.item(), this.config()));
   protected readonly plate = computed(() => RARITY_COLORS[this.view().rarity] ?? RARITY_COLORS['Normal']);
   protected readonly profiles = MAP_CHECK_PROFILES;
-  /** Quantity, rarity and pack size of the map, when it has them. */
+  /** Rarity and pack size of the waystone, when it has them (stage 7: revives, drop chance…). */
   protected readonly areaProps = computed(() => {
     const item = this.item();
     return [
-      item.areaItemQuantity && { label: tr('Quantity'), value: item.areaItemQuantity },
-      item.areaItemRarity && { label: tr('Rarity'), value: item.areaItemRarity },
-      item.areaPackSize && { label: tr('Pack size'), value: item.areaPackSize },
+      item.mapItemRarity && { label: tr('Rarity'), value: item.mapItemRarity },
+      item.mapPackSize && { label: tr('Pack size'), value: item.mapPackSize },
     ].filter((prop): prop is { label: string; value: number } => Boolean(prop));
   });
 

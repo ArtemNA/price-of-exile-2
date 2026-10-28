@@ -1,13 +1,17 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { parseClipboard, type ParsedItem } from '@/parser';
-import type { StatFilter } from '../src/lib/apt/web/price-check/filters/interfaces';
+import type { StatFilter } from '../src/lib/ee2/web/price-check/filters/interfaces';
 import { activePreset, createItemPresets } from '../src/app/price-check/price-check';
 import {
   baseSwitch,
   corruptedState,
   groupStats,
+  instantOnly,
+  onlineOnly,
   setCorrupted,
   setExactBase,
+  setInstantOnly,
+  setOnlineOnly,
   sourceLines,
   statCounts,
   statLine,
@@ -20,54 +24,44 @@ beforeAll(loadGameDataFromDisk);
 
 const parse = (text: string): ParsedItem => parseClipboard(text)._unsafeUnwrap();
 const preset = (text: string, id?: string) => {
-  const presets = createItemPresets(parse(text), 'Allflame');
+  const presets = createItemPresets(parse(text), 'Standard');
   if (id) presets.active = id;
   return activePreset(presets);
 };
-const texts = (entries: unknown[]) => (entries as StatFilter[]).map((s) => s.text.trim());
-
-const LIFE_RING = `Item Class: Rings
-Rarity: Rare
-Doom Band
-Coral Ring
---------
-Item Level: 80
---------
-{ Implicit Modifier — Life }
-+25(20-30) to maximum Life
---------
-{ Prefix Modifier "Rotund" (Tier: 4) — Life }
-+68(60-69) to maximum Life
-{ Suffix Modifier "of the Lion" (Tier: 2) — Attribute }
-+48(43-50) to Strength
-`;
+const texts = (entries: StatFilter[]) => entries.map((s) => s.text.trim());
 
 describe('groupStats', () => {
   it('puts pseudo totals under Totals and hidden filters apart', () => {
     const { groups, hidden } = groupStats(preset(items.RARE_RING).stats);
-    expect(groups.map((g) => g.name)).toEqual(['Totals']);
-    expect(texts(groups[0].entries)).toContain('+# total maximum Life');
-    expect(texts(hidden)).toEqual(['+#% total to Fire Resistance']);
-    expect((hidden[0] as StatFilter).hidden).toBe('filters.hide_ele_res');
+    expect(groups.map((g) => g.name)).toEqual(['Totals', 'Explicit']);
+    expect(texts(groups[0].entries)).toEqual(['#% total Elemental Resistance', '+# total to Strength']);
+    expect(texts(hidden)).toEqual(['#% total to all Elemental Resistances', '#% total to Cold Resistance', '# Empty Modifier']);
+    expect(hidden.map((filter) => filter.hidden)).toEqual(['filters.hide_total_all_res', 'filters.hide_ele_res', 'filters.hide_empty_mod']);
   });
 
   it('groups the Mods preset by mod kind, in a fixed order', () => {
     const { groups } = groupStats(preset(items.RARE_RING, 'mods').stats);
     expect(groups.map((g) => g.name)).toEqual(['Implicit', 'Explicit']);
-    expect(texts(groups[1].entries)).toEqual(['# to maximum Life', '#% to Fire Resistance', '#% to Lightning Resistance', '# to Dexterity']);
+    expect(texts(groups[1].entries)).toEqual([
+      '# to Evasion Rating',
+      '# to Strength',
+      '#% increased Mana Regeneration Rate',
+      '#% increased Light Radius',
+      '#% to Cold Resistance',
+    ]);
   });
 });
 
 describe('statTier and statCounts', () => {
   it('reads the tier of the mod behind a filter', () => {
-    const explicit = groupStats(preset(items.RARE_RING, 'mods').stats).groups[1].entries as StatFilter[];
-    expect(explicit.map(statTier)).toEqual([4, 3, 4, 4]);
-    const implicit = groupStats(preset(items.RARE_RING, 'mods').stats).groups[0].entries as StatFilter[];
-    expect(statTier(implicit[0])).toBeNull();
+    const { groups } = groupStats(preset(items.RARE_RING, 'mods').stats);
+    // Mana regeneration and light radius are one mod, so one tier.
+    expect(groups[1].entries.map(statTier)).toEqual([3, 7, 3, 3, 7]);
+    expect(statTier(groups[0].entries[0])).toBeNull();
   });
 
   it('counts the filters that are on', () => {
-    expect(statCounts(preset(items.RARE_RING).stats)).toEqual({ on: 2, all: 4 });
+    expect(statCounts(preset(items.RARE_RING).stats)).toEqual({ on: 1, all: 8 });
   });
 });
 
@@ -79,17 +73,17 @@ describe('statLine and sourceLines', () => {
   });
 
   it('lists the mods behind a pseudo total, with what each adds', () => {
-    const stats = preset(LIFE_RING).stats as StatFilter[];
+    const stats = preset(items.RARE_BELT).stats;
     const life = stats.find((s) => s.statRef === '+# total maximum Life')!;
+    // stage 3: EE2 stat refs carry no "+", so the sign does not come back here.
     expect(sourceLines(life)).toEqual([
-      { text: '+25 to maximum Life', kind: 'implicit', adds: undefined },
-      { text: '+68 to maximum Life', kind: undefined, adds: undefined },
-      { text: '+48 to Strength', kind: undefined, adds: 24 },
+      { text: '161 to maximum Life', kind: undefined, adds: undefined },
+      { text: '33 to Strength', kind: undefined, adds: 66 },
     ]);
   });
 });
 
-describe('corrupted and base switches', () => {
+describe('corrupted, base and listing switches', () => {
   it('maps the corrupted filter to any / not / only and back', () => {
     const { filters } = preset(items.RARE_RING);
     expect(corruptedState(filters)).toBe('not');
@@ -104,9 +98,19 @@ describe('corrupted and base switches', () => {
 
   it('switches between the whole category and the exact base', () => {
     const { filters } = preset(items.RARE_RING);
-    expect(baseSwitch(filters)).toMatchObject({ base: 'Sapphire Ring', exact: false });
-    expect(baseSwitch(filters)!.category).toMatch(/^Any /);
+    expect(baseSwitch(filters)).toEqual({ category: 'Any Ring', base: 'Prismatic Ring', exact: false });
     setExactBase(filters, true);
     expect(baseSwitch(filters)!.exact).toBe(true);
+  });
+
+  it('maps the instant buyout and online switches onto the listing type', () => {
+    const { trade } = preset(items.RARE_RING).filters;
+    expect(trade.listingType).toBe('securable');
+    expect([instantOnly(trade), onlineOnly(trade)]).toEqual([true, true]);
+    setInstantOnly(trade, false);
+    expect(trade.listingType).toBe('online');
+    setOnlineOnly(trade, false);
+    expect(trade.listingType).toBe('any');
+    expect([instantOnly(trade), onlineOnly(trade)]).toEqual([false, false]);
   });
 });

@@ -1,7 +1,7 @@
 /**
  * Static, tunable values of the app in one place. Rust counterparts: src-tauri/src/constants.rs.
  * Which hosts the app may call at all is the HTTP allowlist in src-tauri/capabilities/default.json.
- * Ported APT code (src/lib/apt) keeps its own constants, identical to upstream.
+ * Ported EE2 code (src/lib/ee2) keeps its own constants, identical to upstream.
  */
 
 import tauriConfig from '../../src-tauri/tauri.conf.json';
@@ -14,7 +14,7 @@ export const APP_CONTACT = 'https://github.com/ArtemNA/price-of-exile-2';
 export const USER_AGENT = `${APP_NAME}/${APP_VERSION} (+${APP_CONTACT})`;
 
 /**
- * Game data language: the language the game copies items in (public/data/<id>, from APT) and the
+ * Game data language: the language the game copies items in (public/data/<id>, from EE2) and the
  * trade site that goes with it. Apart from the interface language below.
  */
 export type Lang = 'en' | 'ru';
@@ -107,13 +107,10 @@ export const STAT_GROUP_OTHER = 'Other';
 /** Short labels of the item filter chips in the price check header. */
 export const ITEM_CHIP_SHORT_LABELS: Record<string, string> = {
   itemLevel: 'iLvl',
-  linkedSockets: 'Links',
-  whiteSockets: 'White sockets',
   gemLevel: 'Gem level',
   mapTier: 'Tier',
   areaLevel: 'Area level',
   stackSize: 'Stack',
-  sentinelCharge: 'Charge',
 };
 
 /** The leagues list is loaded again on a check when it is older than this (ms). */
@@ -142,6 +139,11 @@ export const TRADE_LISTING = {
   minGrouped: 10,
 };
 
+/**
+ * stage 4: shown on the poe.ninja tab instead of loading prices, until the PoE2 poe.ninja adapter
+ * replaces the PoE1 API below (it has no PoE2 leagues). null loads them.
+ */
+export const NINJA_PENDING_MESSAGE: string | null = 'prices for Path of Exile 2 are not connected yet';
 /** poe.ninja currency and item prices (APT `Prices.ts` endpoint), host + path without scheme. */
 export const POE_NINJA_OVERVIEWS = 'poe.ninja/poe1/api/economy/current/dense/overviews';
 /** Re-fetch poe.ninja prices this often while the app runs. */
@@ -202,9 +204,9 @@ export const POE_NINJA_NAMESPACES: ReadonlyArray<{ ns: string; url: string; type
   { ns: 'GEM', url: 'skill-gems', type: 'SkillGem' },
 ];
 
-/** Item check links (APT `item-check/hotkeyable-actions.ts`). */
-export const POE_WIKI_SITE = 'https://www.poewiki.net/wiki';
-export const POEDB_SITE = 'https://poedb.tw';
+/** Item check links (EE2 `item-check/hotkeyable-actions.ts`). */
+export const POE_WIKI_SITE = 'https://www.poe2wiki.net/wiki';
+export const POEDB_SITE = 'https://poe2db.tw';
 /** PoEDB language segment per game language. */
 export const POEDB_LANGS: Record<Lang, string> = { en: 'us', ru: 'ru' };
 export const CRAFT_OF_EXILE_SITE = 'https://craftofexile.com';
@@ -339,8 +341,6 @@ export const ITEM_CHECK_WIDTH = 380;
 export const MAP_CHECK_WIDTH = 440;
 export const STASH_PANEL_WIDTH = 360;
 
-/** Map check (APT `map-check/MapCheck.vue`): maps whose boss counts for a Maven's Invitation. */
-export const MEMORY_MAPS = ['Courtyard of Wasting', 'Chambers of Impurity', 'Theatre of Lies'];
 /** Map check profiles, shown as roman numerals; decisions are stored one character per profile. */
 export const MAP_CHECK_PROFILES = ['I', 'II', 'III'];
 /**

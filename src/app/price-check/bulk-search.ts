@@ -1,16 +1,17 @@
 // Bulk exchange search. Port of `useBulkApi` and `useMarketRatioFinder` from APT TradeBulk.vue
 // (MIT © 2020 Alexander Drozdov) on Angular signals, plus bait detection (FINDINGS F-26).
+// stage 5: PoE2 currencies to pay with (exalted, divine, chaos) and EE2 `bulk-api.ts`.
 
 import { computed, signal } from '@angular/core';
 import type { ParsedItem } from '@/parser';
-import type { ItemFilters } from '../../lib/apt/web/price-check/filters/interfaces';
-import { getTradeEndpoint } from '../../lib/apt/web/price-check/trade/common';
+import type { ItemFilters } from '../../lib/ee2/web/price-check/filters/interfaces';
+import { getTradeEndpoint } from '../../lib/ee2/web/price-check/trade/common';
 import {
   type BulkSearch as AptBulkSearch,
   createTradeRequest,
   execBulkSearch,
   type PricingResult,
-} from '../../lib/apt/web/price-check/trade/pathofexile-bulk';
+} from '../../lib/ee2/web/price-check/trade/pathofexile-bulk';
 import { BULK_BAIT_RATIO } from '../constants';
 import { settings } from '../core/settings';
 import { formatChaos } from './listing-summary';
@@ -159,5 +160,5 @@ export function stackWorth(amount: number, ninjaChaos: number, divineChaos: numb
 /** The same exchange on the trade site. */
 export function bulkSiteUrl(item: ParsedItem, filters: ItemFilters, have: BulkHave): string {
   const query = { exchange: createTradeRequest(filters, item, [have]).query };
-  return `https://${getTradeEndpoint()}/trade/exchange/${filters.trade.league}?q=${JSON.stringify(query)}`;
+  return `https://${getTradeEndpoint()}/trade2/exchange/poe2/${filters.trade.league}?q=${JSON.stringify(query)}`;
 }

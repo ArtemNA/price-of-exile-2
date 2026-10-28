@@ -2,19 +2,20 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { chaosRatesFromNinja, currencyName, divineFractions, toChaos } from '../src/app/core/currency-rates';
 import { formatChaos, limiterUsage, summarizeListings } from '../src/app/price-check/listing-summary';
 import type { GroupedResult } from '../src/app/price-check/trade-search';
-import { RateLimiter } from '../src/lib/apt/web/price-check/trade/RateLimiter';
+import { RateLimiter } from '../src/lib/ee2/web/price-check/trade/RateLimiter';
 import { loadGameDataFromDisk } from './game-data';
 
 beforeAll(loadGameDataFromDisk);
 
-// Shape of poe.ninja /poe1/api/economy/current/dense/overviews (Allflame, 26.10.2026).
+// Shape of poe.ninja /poe1/api/economy/current/dense/overviews (Allflame, 26.10.2026), PoE2 currency names.
+// stage 4: the PoE2 poe.ninja API instead.
 const NINJA = {
   currencyOverviews: [
     {
       type: 'Currency',
       lines: [
         { name: 'Divine Orb', chaos: 342.6 },
-        { name: 'Chromatic Orb', chaos: 3.82 },
+        { name: 'Exalted Orb', chaos: 3.82 },
         { name: 'Vaal Orb', chaos: 0.2435 },
       ],
     },
@@ -37,15 +38,15 @@ describe('currency rates', () => {
   });
 
   it('maps trade currency ids to item names through game data', () => {
-    expect(currencyName('chrome')).toBe('Chromatic Orb');
+    expect(currencyName('exalted')).toBe('Exalted Orb');
     expect(currencyName('divine')).toBe('Divine Orb');
     expect(currencyName('no-such-currency')).toBeUndefined();
   });
 
   it('converts listing prices to chaos', () => {
     expect(toChaos(2, 'chaos', rates)).toBe(2);
-    expect(toChaos(1, 'chrome', rates)).toBeCloseTo(3.82);
-    expect(toChaos(1, 'exalted', rates)).toBeUndefined(); // not in this poe.ninja sample
+    expect(toChaos(1, 'exalted', rates)).toBeCloseTo(3.82);
+    expect(toChaos(1, 'annul', rates)).toBeUndefined(); // not in this poe.ninja sample
   });
 });
 
@@ -54,8 +55,8 @@ describe('listing summary', () => {
     ({ id: `${priceAmount}${priceCurrency}${Math.random()}`, priceAmount, priceCurrency, listedTimes }) as GroupedResult;
 
   it('finds the cheapest listing by chaos value and the most listed price', () => {
-    // From the real ring search: chaos listings plus one chrome and one vaal.
-    const rows = [row(1, 'chaos', 4), row(2, 'chaos', 10), row(1, 'chrome'), row(1, 'vaal'), row(3, 'chaos', 4)];
+    // From the real ring search: chaos listings plus one exalted and one vaal.
+    const rows = [row(1, 'chaos', 4), row(2, 'chaos', 10), row(1, 'exalted'), row(1, 'vaal'), row(3, 'chaos', 4)];
     expect(summarizeListings(rows, rates)).toEqual({
       cheapest: { price: '1 vaal', chaos: 0.2435 },
       mostListed: '2 chaos',

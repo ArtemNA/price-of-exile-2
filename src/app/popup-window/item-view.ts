@@ -34,7 +34,7 @@ export function toItemView(item: ParsedItem): ItemView {
     item.quality && `Quality ${item.quality}%`,
     item.gemLevel && `Level ${item.gemLevel}`,
     item.stackSize && `Stack ${item.stackSize.value}/${item.stackSize.max}`,
-    item.sockets?.linked && `${item.sockets.linked}-link`,
+    item.augmentSockets?.current && `${item.augmentSockets.current} sockets`,
     ...item.influences,
   ].filter((flag): flag is string => Boolean(flag));
 

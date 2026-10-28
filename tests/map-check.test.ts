@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { parseClipboard, type ParsedItem } from '@/parser';
-import { StatTag } from '@/web/map-check/common';
 import { DEFAULT_MAP_CHECK } from '../src/app/constants';
 import {
   allAreaMods,
@@ -16,95 +16,72 @@ import {
 import { loadGameDataFromDisk } from './game-data';
 import * as items from './items';
 
+// stage 7 rewrites the map check for waystones and tablets with PoE2 default marks; until then
+// this covers what works on PoE2 data. The defaults still mark PoE1 mods (see `hasOutdated`).
+
 beforeAll(loadGameDataFromDisk);
 
 function parse(text: string): ParsedItem {
   return parseClipboard(text)._unsafeUnwrap();
 }
 
+const WAYSTONE = readFileSync(new URL('./fixtures/items/waystone.txt', import.meta.url), 'utf-8');
 const MAX_RES = 'Players have #% to all maximum Resistances';
-const LESS_RECOVERY = 'Players have #% less Recovery Rate of Life and Energy Shield';
-const TWO_BOSSES = 'Area contains two Unique Bosses';
+const MONSTER_DAMAGE = '#% increased Monster Damage';
 
 describe('map check', () => {
-  it('opens for non-unique maps only', () => {
-    expect(isMapLike(parse(items.RARE_MAP))).toBe(true);
-    expect(isMapLike(parse(items.NORMAL_MAP))).toBe(true);
+  it('opens for non-unique waystones only', () => {
+    expect(isMapLike(parse(WAYSTONE))).toBe(true);
     expect(isMapLike(parse(items.RARE_RING))).toBe(false);
   });
 
-  it('lists the explicit map mods with rolls and the default marks', () => {
-    const view = mapCheckView(parse(items.RARE_MAP), DEFAULT_MAP_CHECK);
-    expect(view.name).toBe('Strand');
-    expect(view.image).toBe('https://i.imgur.com/7aE4Xzp.jpg');
+  it('lists the explicit waystone mods with rolls and marks', () => {
+    const config = withDecision(DEFAULT_MAP_CHECK, MONSTER_DAMAGE, 'd');
+    const view = mapCheckView(parse(WAYSTONE), config);
+    expect(view.name).toBe('Waystone (Tier 14)');
     expect(view.mavenReminder).toBe(false);
-    expect(view.hasOutdated).toBe(false);
-    expect(view.unknown).toEqual([]);
     expect(view.stats).toEqual([
-      { matcher: TWO_BOSSES, roll: undefined, decision: 'g' },
-      { matcher: '#% more Monster Life', roll: 40, decision: '-' },
-      { matcher: 'Monsters deal #% extra Physical Damage as Fire', roll: 102, decision: '-' },
-      { matcher: MAX_RES, roll: -10, decision: 'w' },
-      { matcher: LESS_RECOVERY, roll: 40, decision: 'd' },
-      { matcher: 'Monsters take #% reduced Extra Damage from Critical Strikes', roll: 25, decision: '-' },
+      { matcher: 'Area has patches of Shocked Ground', roll: undefined, decision: '-' },
+      { matcher: MONSTER_DAMAGE, roll: 28, decision: 'd' },
+      { matcher: 'Monsters fire # additional Projectiles', roll: 2, decision: '-' },
+      { matcher: 'Monsters have #% increased Critical Hit Chance', roll: 293, decision: '-' },
     ]);
-  });
-
-  it('reminds about Maven memory bosses and shows unknown mods', () => {
-    const memory = items.NORMAL_MAP.replace('Map Area: Courtyard', 'Map Area: Courtyard of Wasting');
-    expect(mapCheckView(parse(memory), DEFAULT_MAP_CHECK).mavenReminder).toBe(true);
-    const odd = items.RARE_MAP.replace('Area contains two Unique Bosses', 'Monsters reflect 18(18-20)% of Physical Damage');
-    expect(mapCheckView(parse(odd), DEFAULT_MAP_CHECK).unknown).toEqual(['Monsters reflect 18(18-20)% of Physical Damage']);
-  });
-
-  it('flags marks whose wording left the stat data', () => {
-    const config = withDecision(DEFAULT_MAP_CHECK, 'Monsters reflect #% of Physical Damage', 'd');
-    expect(mapCheckView(parse(items.NORMAL_MAP), config).hasOutdated).toBe(true);
-    const list = filterAreaMods(allAreaMods(), config, 'zzz', false);
-    expect(list).toEqual([{ matchStr: 'Monsters reflect #% of Physical Damage', tag: StatTag.Outdated }]);
+    // The second line of a hybrid mod the stat data does not know.
+    expect(view.unknown).toEqual(['+26(26-30)% to Monster Critical Damage Bonus']);
+    // The PoE1 default marks: two of three are gone from PoE2 data (stage 7).
+    expect(view.hasOutdated).toBe(true);
   });
 
   it('cycles marks per profile without touching the others', () => {
     let config = DEFAULT_MAP_CHECK;
     const order = [];
     for (let i = 0; i < 5; i++) {
-      config = cycleDecision(config, '#% more Monster Life');
-      order.push(decisionOf(config, '#% more Monster Life'));
+      config = cycleDecision(config, MONSTER_DAMAGE);
+      order.push(decisionOf(config, MONSTER_DAMAGE));
     }
     expect(order).toEqual(['d', 'w', 'g', 's', 'd']);
 
     config = withDecision({ ...DEFAULT_MAP_CHECK, profile: 2 }, MAX_RES, 'd');
     expect(config.selectedStats.find((s) => s.matcher === MAX_RES)?.decision).toBe('wd-');
     expect(decisionOf(config, MAX_RES, 1)).toBe('w');
-    // No marks left in any profile: the entry goes away.
-    config = withDecision({ ...DEFAULT_MAP_CHECK, profile: 1 }, TWO_BOSSES, '-');
-    expect(config.selectedStats.some((s) => s.matcher === TWO_BOSSES)).toBe(false);
   });
 
   it('marks new mods as seen only with the new mods icon on', () => {
-    expect(toggleSeen(DEFAULT_MAP_CHECK, '#% more Monster Life')).toBe(DEFAULT_MAP_CHECK);
-    const config = toggleSeen({ ...DEFAULT_MAP_CHECK, showNewStats: true }, '#% more Monster Life');
-    expect(decisionOf(config, '#% more Monster Life')).toBe('s');
-    expect(decisionOf(toggleSeen(config, '#% more Monster Life'), '#% more Monster Life')).toBe('-');
+    expect(toggleSeen(DEFAULT_MAP_CHECK, MONSTER_DAMAGE)).toBe(DEFAULT_MAP_CHECK);
+    const config = toggleSeen({ ...DEFAULT_MAP_CHECK, showNewStats: true }, MONSTER_DAMAGE);
+    expect(decisionOf(config, MONSTER_DAMAGE)).toBe('s');
+    expect(decisionOf(toggleSeen(config, MONSTER_DAMAGE), MONSTER_DAMAGE)).toBe('-');
   });
 
   it('puts the roll in place of #', () => {
-    expect(modTextParts('Players have #% to all maximum Resistances', -10)).toEqual([
-      { text: 'Players have ' },
-      { text: '-10', value: true },
-      { text: '% to all maximum Resistances' },
-    ]);
-    expect(modTextParts('+#% Monster Elemental Resistances')).toEqual([{ text: '#' }, { text: '% Monster Elemental Resistances' }]);
+    expect(modTextParts(MONSTER_DAMAGE, 28)).toEqual([{ text: '28', value: true }, { text: '% increased Monster Damage' }]);
   });
 
-  it('searches every map mod, ordinary first', () => {
+  it('searches every map mod of the stat data', () => {
     const all = allAreaMods();
-    expect(all.length).toBeGreaterThan(200);
-    expect(all[0].tag).toBeUndefined();
-    expect(all.at(-1)?.tag).toBe(StatTag.HeistExclusive);
-    expect(filterAreaMods(all, DEFAULT_MAP_CHECK, 'unique bosses', false).map((m) => m.matchStr)).toContain(TWO_BOSSES);
-    expect(filterAreaMods(all, DEFAULT_MAP_CHECK, '', true).map((m) => m.matchStr).sort()).toEqual(
-      [LESS_RECOVERY, MAX_RES, TWO_BOSSES].sort(),
+    expect(all.length).toBeGreaterThan(150);
+    expect(filterAreaMods(all, DEFAULT_MAP_CHECK, 'shocked ground', false).map((m) => m.matchStr)).toContain(
+      'Area has patches of Shocked Ground',
     );
   });
 });

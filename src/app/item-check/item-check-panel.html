@@ -66,14 +66,7 @@
       <span class="text-right"><b class="font-semibold text-gold-soft">{{ weapon.total }}</b>@if (weapon.q20; as q20) {<span class="ml-1 text-muted">{{ '({0} at Q20)' | tr: q20.total }}</span>}</span>
     </div>
   }
-  @if (item().dustEquivalent; as dust) {
-    <div class="flex items-center gap-2 px-2.5 py-1.5 not-last:border-b not-last:border-line">
-      <span class="text-muted">{{ 'item.disenchanting' | t }}</span>
-      <span class="flex-1"></span>
-      <b class="font-semibold text-bright tabular-nums">{{ dust.toLocaleString('en') }}</b><span class="text-muted">{{ 'dust' | tr }}</span>
-    </div>
-  }
-  @if ((compact() || !ninja()) && !dps() && !item().dustEquivalent) {
+  @if ((compact() || !ninja()) && !dps()) {
     <p class="px-2.5 py-1.5 text-muted">{{ 'Nothing more to show for this item.' | tr }}</p>
   }
 </div>

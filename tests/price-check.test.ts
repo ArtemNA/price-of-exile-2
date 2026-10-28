@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { parseClipboard, type ParsedItem } from '@/parser';
-import { createTradeRequest } from '../src/lib/apt/web/price-check/trade/pathofexile-trade';
-import type { StatFilter } from '../src/lib/apt/web/price-check/filters/interfaces';
+import { createTradeRequest } from '../src/lib/ee2/web/price-check/trade/pathofexile-trade';
 import { USER_AGENT } from '../src/app/constants';
 import { setHttpFetch } from '../src/app/core/http';
 import { activePreset, createItemPresets, shouldSearchImmediately } from '../src/app/price-check/price-check';
@@ -15,41 +14,40 @@ const parse = (text: string): ParsedItem => parseClipboard(text)._unsafeUnwrap()
 
 describe('createItemPresets', () => {
   it('builds pseudo stat filters for a rare ring', () => {
-    const presets = createItemPresets(parse(items.RARE_RING), 'Allflame');
+    const presets = createItemPresets(parse(items.RARE_RING), 'Standard');
     expect(presets.active).toBe('filters.preset_pseudo');
     expect(presets.presets.map((p) => p.id)).toEqual(['filters.preset_pseudo', 'mods', 'filters.preset_base_item']);
 
-    const stats = activePreset(presets).stats as StatFilter[];
+    const stats = activePreset(presets).stats;
     const byRef = (ref: string) => stats.find((s) => s.statRef === ref);
-    // Min is the roll minus searchStatRange (10%).
-    expect(byRef('+# total maximum Life')).toMatchObject({ disabled: false, roll: { value: 68, min: 61 } });
-    // Cold (implicit) + fire + lightning resistances merge into one pseudo stat.
-    expect(byRef('+#% total Elemental Resistance')).toMatchObject({ disabled: false, roll: { value: 110, min: 99 } });
-    expect(byRef('+#% total to Fire Resistance')).toMatchObject({ disabled: true, hidden: 'filters.hide_ele_res' });
+    // Implicit all-res (3 × 8) + cold res merge into one pseudo stat; min is the roll minus searchStatRange (10%).
+    expect(byRef('#% total Elemental Resistance')).toMatchObject({ disabled: false, roll: { value: 39, min: 35 } });
+    expect(byRef('#% total to Cold Resistance')).toMatchObject({ disabled: true, hidden: 'filters.hide_ele_res' });
   });
 
   it('has a Mods preset with every mod on its own instead of pseudo totals', () => {
-    const presets = createItemPresets(parse(items.RARE_RING), 'Allflame');
-    const mods = presets.presets.find((p) => p.id === 'mods')!.stats as StatFilter[];
+    const presets = createItemPresets(parse(items.RARE_RING), 'Standard');
+    const mods = presets.presets.find((p) => p.id === 'mods')!.stats;
     const refs = mods.map((s) => s.statRef);
-    expect(refs).toContain('+# to maximum Life');
-    expect(refs).toContain('+#% to Fire Resistance');
-    expect(refs).not.toContain('+# total maximum Life');
-    expect(mods.every((s) => s.tag !== 'pseudo')).toBe(true);
+    expect(refs).toContain('# to Strength');
+    expect(refs).toContain('#% to Cold Resistance');
+    expect(refs.filter((ref) => ref.includes(' total '))).toEqual([]);
   });
 
-  it('uses the selected league and merchant-only listings', () => {
-    const { filters } = activePreset(createItemPresets(parse(items.RARE_RING), 'Allflame'));
-    expect(filters.trade).toMatchObject({ league: 'Allflame', merchantOnly: true });
+  it('uses the selected league and instant buyout listings', () => {
+    const { filters } = activePreset(createItemPresets(parse(items.RARE_RING), 'Standard'));
+    expect(filters.trade).toMatchObject({ league: 'Standard', listingType: 'securable' });
   });
 });
 
 describe('createTradeRequest', () => {
   it('turns enabled stat filters into a trade query', () => {
-    const { filters, stats } = activePreset(createItemPresets(parse(items.RARE_RING), 'Allflame'));
-    const body = createTradeRequest(filters, stats);
+    const item = parse(items.RARE_RING);
+    const { filters, stats } = activePreset(createItemPresets(item, 'Standard'));
+    const body = createTradeRequest(filters, stats, item);
     const ids = body.query.stats.flatMap((group) => group.filters.filter((f) => !f.disabled).map((f) => f.id));
     expect(ids.length).toBeGreaterThan(0);
+    expect(body.query.status).toEqual({ option: 'securable' });
     expect(body.sort).toEqual({ price: 'asc' });
   });
 });
@@ -58,10 +56,10 @@ describe('shouldSearchImmediately', () => {
   it('searches uniques and currency right away, but not rares', () => {
     const check = (text: string) => {
       const item = parse(text);
-      return shouldSearchImmediately(item, createItemPresets(item, 'Allflame'));
+      return shouldSearchImmediately(item, createItemPresets(item, 'Standard'));
     };
-    expect(check(items.UNIQUE_TABULA)).toBe(true);
-    expect(check(items.CURRENCY_CHAOS)).toBe(true);
+    expect(check(items.UNIQUE_FOCUS)).toBe(true);
+    expect(check(items.CURRENCY_EXALTED)).toBe(true);
     expect(check(items.RARE_RING)).toBe(false);
   });
 });
@@ -78,7 +76,7 @@ describe('TradeSearch', () => {
     item: { ilvl: 84 },
     listing: {
       indexed: new Date().toISOString(),
-      price: { amount, currency: 'chaos', type: '~price' },
+      price: { amount, currency: 'exalted', type: '~price' },
       fee: 0,
       account: { name: account, lastCharacterName: `${account}_char`, online: {} },
     },
@@ -90,36 +88,38 @@ describe('TradeSearch', () => {
     setHttpFetch(async (input, init) => {
       const url = String(input);
       requests.push({ url, method: init?.method ?? 'GET', userAgent: new Headers(init?.headers).get('User-Agent') });
-      if (url.includes('/api/trade/search/')) {
+      if (url.includes('/api/trade2/search/')) {
         return Response.json({ id: 'Q1', result: ids, total: 15 }, { headers: limitHeaders });
       }
       const chunk = new URL(url).pathname.split('/').pop()!.split(',');
       return Response.json({ result: chunk.map((id, i) => listing(id, `seller_${id}`, 10 + i)) }, { headers: limitHeaders });
     });
 
-    const { filters, stats } = activePreset(createItemPresets(parse(items.UNIQUE_TABULA), 'Allflame'));
+    const item = parse(items.UNIQUE_FOCUS);
+    const { filters, stats } = activePreset(createItemPresets(item, 'Standard'));
     const search = new TradeSearch();
-    await search.search(filters, stats);
+    await search.search(filters, stats, item);
 
     expect(search.error()).toBeNull();
     expect(search.searchResult()?.total).toBe(15);
     expect(search.rows().map((r) => r.id)).toEqual(ids);
     expect(requests.map((r) => `${r.method} ${new URL(r.url).pathname.split('/').slice(0, 4).join('/')}`)).toEqual([
-      'POST /api/trade/search',
-      'GET /api/trade/fetch',
-      'GET /api/trade/fetch',
+      'POST /api/trade2/search',
+      'GET /api/trade2/fetch',
+      'GET /api/trade2/fetch',
     ]);
     expect(requests.every((r) => r.userAgent === USER_AGENT)).toBe(true);
-    expect(tradeSiteUrl(filters, stats, 'Q1')).toBe('https://www.pathofexile.com/trade/search/Allflame/Q1');
+    expect(tradeSiteUrl(filters, stats, item, 'Q1')).toBe('https://www.pathofexile.com/trade2/search/poe2/Standard/Q1');
   });
 
   it('reports trade API errors', async () => {
     setHttpFetch(async () => Response.json({ error: { code: 2, message: 'Invalid query' } }, { headers: limitHeaders }));
-    const { filters, stats } = activePreset(createItemPresets(parse(items.CURRENCY_CHAOS), 'Allflame'));
+    const item = parse(items.CURRENCY_EXALTED);
+    const { filters, stats } = activePreset(createItemPresets(item, 'Standard'));
     // Different query than above, so the response cache does not answer it.
-    filters.trade.offline = true;
+    filters.trade.listingType = 'any';
     const search = new TradeSearch();
-    await search.search(filters, stats);
+    await search.search(filters, stats, item);
     expect(search.error()).toBe('Invalid query');
     expect(search.isSearching()).toBe(false);
   });
@@ -128,9 +128,10 @@ describe('TradeSearch', () => {
     setHttpFetch(async () => {
       throw new TypeError('error sending request');
     });
-    const { filters, stats } = activePreset(createItemPresets(parse(items.GEM_ARC), 'Allflame'));
+    const item = parse(items.META_GEM);
+    const { filters, stats } = activePreset(createItemPresets(item, 'Standard'));
     const search = new TradeSearch();
-    await search.search(filters, stats);
+    await search.search(filters, stats, item);
     expect(search.error()).toContain('error sending request');
     expect(search.isSearching()).toBe(false);
   });

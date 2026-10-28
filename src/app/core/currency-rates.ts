@@ -1,10 +1,11 @@
 // Currency rates from poe.ninja: the divine → chaos rate in the title bar and
 // chaos equivalents of listings priced in other currencies. The same download
 // also feeds the poe.ninja tab (`ninja-prices.ts`).
+// stage 4: off until the PoE2 poe.ninja adapter; the PoE1 API below has no PoE2 leagues.
 
 import { computed, signal } from '@angular/core';
 import { ITEMS_ITERATOR } from '@/assets/data';
-import { DIVINE_FRACTIONS, POE_NINJA_BULK_TYPES, POE_NINJA_OVERVIEWS, POE_NINJA_REFRESH_MS } from '../constants';
+import { DIVINE_FRACTIONS, NINJA_PENDING_MESSAGE, POE_NINJA_BULK_TYPES, POE_NINJA_OVERVIEWS, POE_NINJA_REFRESH_MS } from '../constants';
 import { poeFetch } from './http';
 import { settings } from './settings';
 import { NinjaOverviews, PriceDb, priceDbFromNinja } from './ninja-prices';
@@ -35,7 +36,8 @@ const byTradeTag = new Map<string, { name: string; refName: string; icon: string
 function currencyItem(tradeTag: string): { name: string; refName: string; icon: string } | null {
   const key = `${settings().language}:${tradeTag}`;
   if (!byTradeTag.has(key)) {
-    const item = ITEMS_ITERATOR(`"tradeTag":"${tradeTag}"`).next().value;
+    // EE2 data is written with a space after the colon.
+    const item = ITEMS_ITERATOR(`"tradeTag": "${tradeTag}"`).next().value;
     byTradeTag.set(key, item?.tradeTag === tradeTag ? { name: item.name, refName: item.refName, icon: item.icon } : null);
   }
   return byTradeTag.get(key) ?? null;
@@ -102,6 +104,10 @@ export function trackCurrencyRates(leagueId: string | undefined): void {
   prices.set(new Map());
   updatedAt.set(null);
   if (!leagueId) return;
+  if (NINJA_PENDING_MESSAGE) {
+    error.set(NINJA_PENDING_MESSAGE);
+    return;
+  }
   void load(leagueId);
   timer = setInterval(() => void load(leagueId), POE_NINJA_REFRESH_MS);
 }

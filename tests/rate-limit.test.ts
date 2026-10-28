@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Cache } from '../src/lib/apt/web/price-check/trade/Cache';
-import { RateLimiter } from '../src/lib/apt/web/price-check/trade/RateLimiter';
+import { Cache } from '../src/lib/ee2/web/price-check/trade/Cache';
+import { RateLimiter } from '../src/lib/ee2/web/price-check/trade/RateLimiter';
 import {
   adjustRateLimits,
   preventQueueCreation,
   RATE_LIMIT_RULES_REVISION,
-} from '../src/lib/apt/web/price-check/trade/common';
+} from '../src/lib/ee2/web/price-check/trade/common';
 import { API_LATENCY_SECONDS } from '../src/app/constants';
 
 beforeEach(() => vi.useFakeTimers());

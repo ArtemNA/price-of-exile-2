@@ -1,7 +1,7 @@
-import type { FilterNumeric, ItemFilters } from '../../lib/apt/web/price-check/filters/interfaces';
+import type { FilterNumeric, ItemFilters } from '../../lib/ee2/web/price-check/filters/interfaces';
 import { t, tr } from '../core/i18n';
 
-/** One item property filter row (item level, links, quality, corrupted, …). */
+/** One item property filter row (item level, sockets, quality, corrupted, …). */
 export interface ItemFilterChip {
   key: string;
   label: string;
@@ -14,14 +14,13 @@ export interface ItemFilterChip {
 /** Numeric ItemFilters keys with the APT i18n key of their label ("Item Level: {0}"). */
 const NUMERIC: Array<[keyof ItemFilters, string]> = [
   ['itemLevel', 'item.item_level'],
-  ['linkedSockets', 'item.linked_sockets'],
-  ['whiteSockets', 'item.white_sockets'],
+  ['augmentSockets', 'item.augment_sockets'],
+  ['socketNumber', 'item.gem_sockets'],
   ['quality', 'item.quality'],
   ['gemLevel', 'item.gem_level'],
   ['mapTier', 'item.map_tier'],
   ['areaLevel', 'item.area_level'],
   ['stackSize', 'item.stock'],
-  ['sentinelCharge', 'item.sentinel_charge'],
 ];
 
 /** "Item Level: {0}" → "Item Level". */
@@ -41,11 +40,7 @@ export function itemFilterChips(filters: ItemFilters): ItemFilterChip[] {
     });
   }
 
-  const rarity = filters.rarity;
-  if (rarity) {
-    const label = rarity.value === 'nonunique' ? tr('Not unique') : rarity.value.charAt(0).toUpperCase() + rarity.value.slice(1);
-    chips.push({ key: 'rarity', label, enabled: !rarity.disabled, toggle: () => (rarity.disabled = !rarity.disabled) });
-  }
+  // stage 3: EE2 always searches by the rarity (its filter has no `disabled`), so it has no switch yet.
 
   for (const [key, i18nKey] of NUMERIC) {
     const filter = filters[key] as FilterNumeric | undefined;
@@ -69,9 +64,9 @@ export function itemFilterChips(filters: ItemFilters): ItemFilterChip[] {
     });
   }
 
-  for (const [key, i18nKey] of [['mirrored', 'item.mirrored'], ['split', 'item.split']] as const) {
+  for (const [key, i18nKey] of [['mirrored', 'item.mirrored'], ['sanctified', 'item.sanctified']] as const) {
     const filter = filters[key];
-    if (filter && !filter.hidden) {
+    if (filter) {
       chips.push({ key, label: t(i18nKey), enabled: !filter.disabled, toggle: () => (filter.disabled = !filter.disabled) });
     }
   }

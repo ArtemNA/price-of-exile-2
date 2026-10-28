@@ -2,13 +2,13 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, DestroyRef, effect, ElementRef, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { ItemCategory, type ParsedItem } from '@/parser';
-import type { FilterNumeric, FilterOrGroup, FilterTag, StatFilter } from '../../lib/apt/web/price-check/filters/interfaces';
+import type { FilterNumeric, FilterTag, ItemFilters, StatFilter } from '../../lib/ee2/web/price-check/filters/interfaces';
 import {
   apiToSatisfySearch,
   RATE_LIMIT_RULES,
   RATE_LIMIT_RULES_REVISION,
   tradeTag,
-} from '../../lib/apt/web/price-check/trade/common';
+} from '../../lib/ee2/web/price-check/trade/common';
 import {
   CLOUDFLARE_CHECK_ERROR,
   CURRENCY_COLOR_OTHER,
@@ -56,8 +56,12 @@ import {
   corruptedState,
   type CorruptedState,
   groupStats,
+  instantOnly,
+  onlineOnly,
   setCorrupted,
   setExactBase,
+  setInstantOnly,
+  setOnlineOnly,
   sourceLines,
   statCounts,
   statLine,
@@ -67,7 +71,6 @@ import { NumInput } from './num-input';
 import { activePreset, createItemPresets, Presets, shouldSearchImmediately } from './price-check';
 import { GroupedResult, TradeSearch, tradeSiteUrl } from './trade-search';
 
-type Group = Extract<FilterOrGroup, { group: string }>;
 type Tab = 'trade' | 'bulk' | 'ninja' | 'wiki';
 
 /** Tabs about the item itself rather than a search: switching to them keeps the search results. */
@@ -222,9 +225,8 @@ export class PriceCheckPanel {
     this.markChanged();
   }
 
-  protected hiddenReason(filter: FilterOrGroup): string {
-    const reason = filter.group ? filter.meta.hidden : filter.hidden;
-    return reason ? t(reason) : '';
+  protected hiddenReason(filter: StatFilter): string {
+    return filter.hidden ? t(filter.hidden) : '';
   }
 
   protected readonly summary = computed(() => summarizeListings(this.search.groupedResults(), currencyRates.rates()));
@@ -406,7 +408,7 @@ export class PriceCheckPanel {
   protected readonly tradeSummary = computed(() => {
     const trade = this.active()?.filters.trade;
     if (!trade) return '';
-    return [tr(trade.offline ? 'online & offline' : 'online'), tr(trade.merchantOnly ? 'instant buyout' : 'any listing')].join(' · ');
+    return [tr(onlineOnly(trade) ? 'online' : 'online & offline'), tr(instantOnly(trade) ? 'instant buyout' : 'any listing')].join(' · ');
   });
 
   private readonly filtersScroll = viewChild<ElementRef<HTMLElement>>('filtersScroll');
@@ -484,7 +486,7 @@ export class PriceCheckPanel {
     if (INFO_TABS.includes(this.activeTab())) this.tabChoice.set(null); // Search goes to trade or bulk
     this.stale.set(false);
     if (this.activeTab() === 'bulk') void this.bulk.search(this.item(), active.filters);
-    else void this.search.search(active.filters, active.stats);
+    else void this.search.search(active.filters, active.stats, this.item());
   }
 
   protected selectPreset(id: string): void {
@@ -530,16 +532,24 @@ export class PriceCheckPanel {
 
   // Online filters change the search right away (as in APT).
 
+  protected onlineOnly(trade: ItemFilters['trade']): boolean {
+    return onlineOnly(trade);
+  }
+
+  protected instantOnly(trade: ItemFilters['trade']): boolean {
+    return instantOnly(trade);
+  }
+
   protected toggleOffline(): void {
     const trade = this.active()!.filters.trade;
-    trade.offline = !trade.offline;
+    setOnlineOnly(trade, !onlineOnly(trade));
     this.revision.update((n) => n + 1);
     this.runSearchSoon();
   }
 
   protected toggleMerchantOnly(): void {
     const trade = this.active()!.filters.trade;
-    trade.merchantOnly = !trade.merchantOnly;
+    setInstantOnly(trade, !instantOnly(trade));
     this.revision.update((n) => n + 1);
     this.runSearchSoon();
   }
@@ -551,22 +561,9 @@ export class PriceCheckPanel {
 
   // Stat filters
 
-  protected isGroup(filter: FilterOrGroup): filter is Group {
-    return Boolean(filter.group);
-  }
-
-  protected asStat(filter: FilterOrGroup): StatFilter {
-    return filter as StatFilter;
-  }
-
   protected toggleStat(filter: StatFilter): void {
     filter.disabled = !filter.disabled;
     this.markChanged();
-  }
-
-  protected toggleGroup(group: Group): void {
-    group.expanded = !group.expanded;
-    this.revision.update((n) => n + 1);
   }
 
   protected statText(filter: StatFilter): string {
@@ -647,7 +644,7 @@ export class PriceCheckPanel {
     const url =
       this.activeTab() === 'bulk'
         ? bulkSiteUrl(this.item(), active.filters, this.bulk.selected())
-        : tradeSiteUrl(active.filters, active.stats, this.stale() ? undefined : this.search.searchResult()?.id);
+        : tradeSiteUrl(active.filters, active.stats, this.item(), this.stale() ? undefined : this.search.searchResult()?.id);
     // With the built-in browser on, the trade site opens there, logged in (APT `TradeLinks.vue`).
     if (settings().priceCheck.builtinBrowser) void host.browserOpen(url);
     else void openUrl(url);

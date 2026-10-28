@@ -1,16 +1,17 @@
-// How the price check shows APT's filter objects (design A+B, FINDINGS F-54): stat filters in
-// groups by kind with tiers, the mods behind pseudo totals, hidden filters apart, and the item
-// header's base / corrupted switches. The filter objects stay APT's; only the view is ours.
+// How the price check shows EE2's filter objects (design A+B, reference FINDINGS F-54): stat filters
+// in groups by kind with tiers, the mods behind pseudo totals, hidden filters apart, and the item
+// header's base / corrupted switches. The filter objects stay EE2's; only the view is ours.
+// EE2 has no OR groups of filters (APT `FilterOrGroup`): the groups here are our own headings.
 
 import { STAT_GROUP_OTHER, STAT_GROUPS } from '../constants';
 import { tr } from '../core/i18n';
-import type { FilterOrGroup, ItemFilters, StatFilter } from '../../lib/apt/web/price-check/filters/interfaces';
+import type { ItemFilters, StatFilter } from '../../lib/ee2/web/price-check/filters/interfaces';
 
 export type CorruptedState = 'any' | 'not' | 'only';
 
 export interface StatGroup {
   name: string;
-  entries: FilterOrGroup[];
+  entries: StatFilter[];
 }
 
 export interface SourceLine {
@@ -22,25 +23,16 @@ export interface SourceLine {
 }
 
 
-function tagOf(entry: FilterOrGroup): string {
-  return entry.group ? entry.meta.tag : entry.tag;
-}
-
-function isHidden(entry: FilterOrGroup): boolean {
-  return entry.group ? entry.meta.hidden != null : entry.hidden != null;
-}
-
 /** Visible filters in groups; hidden ones (APT `hidden`: "rarely moves the price") on their own. */
-export function groupStats(stats: FilterOrGroup[]): { groups: StatGroup[]; hidden: FilterOrGroup[] } {
-  const groups = new Map<string, FilterOrGroup[]>();
-  const hidden: FilterOrGroup[] = [];
+export function groupStats(stats: StatFilter[]): { groups: StatGroup[]; hidden: StatFilter[] } {
+  const groups = new Map<string, StatFilter[]>();
+  const hidden: StatFilter[] = [];
   for (const entry of stats) {
-    if (isHidden(entry)) {
+    if (entry.hidden != null) {
       hidden.push(entry);
       continue;
     }
-    const tag = tagOf(entry);
-    const name = STAT_GROUPS.find((group) => group.tags.includes(tag))?.name ?? STAT_GROUP_OTHER;
+    const name = STAT_GROUPS.find((group) => group.tags.includes(entry.tag))?.name ?? STAT_GROUP_OTHER;
     groups.set(name, [...(groups.get(name) ?? []), entry]);
   }
   const order = [...STAT_GROUPS.map((group) => group.name), STAT_GROUP_OTHER];
@@ -83,9 +75,8 @@ export function sourceLines(filter: StatFilter): SourceLine[] {
 }
 
 /** Number of stat filters that are on, and of all of them (APT "3 of 10, stats"). */
-export function statCounts(stats: FilterOrGroup[]): { on: number; all: number } {
-  const flat = stats.map((entry) => (entry.group ? entry.meta : entry));
-  return { on: flat.filter((filter) => !filter.disabled).length, all: flat.length };
+export function statCounts(stats: StatFilter[]): { on: number; all: number } {
+  return { on: stats.filter((filter) => !filter.disabled).length, all: stats.length };
 }
 
 /**
@@ -116,4 +107,26 @@ export function baseSwitch(filters: ItemFilters): { category: string; base: stri
 
 export function setExactBase(filters: ItemFilters, exact: boolean): void {
   if (filters.searchRelaxed) filters.searchRelaxed.disabled = exact;
+}
+
+type TradeOptions = ItemFilters['trade'];
+
+/**
+ * The listing type (EE2 `listingType`) behind APT's two switches, until stage 3 shows all four
+ * states (PLAN F2): instant buyout only = "securable", online sellers only = anything but "any".
+ */
+export function instantOnly(trade: TradeOptions): boolean {
+  return trade.listingType === 'securable';
+}
+
+export function onlineOnly(trade: TradeOptions): boolean {
+  return trade.listingType !== 'any';
+}
+
+export function setInstantOnly(trade: TradeOptions, on: boolean): void {
+  trade.listingType = on ? 'securable' : 'online';
+}
+
+export function setOnlineOnly(trade: TradeOptions, on: boolean): void {
+  trade.listingType = on ? 'online' : 'any';
 }

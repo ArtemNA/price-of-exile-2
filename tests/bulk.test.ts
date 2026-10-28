@@ -18,7 +18,7 @@ import * as items from './items';
 
 beforeAll(loadGameDataFromDisk);
 
-/** Real exchange response, chaos → divine, Allflame 26.10.2026 (accounts anonymized). */
+/** Real exchange response, chaos → divine, Allflame 26.10.2026 (accounts anonymized). stage 5: a PoE2 one. */
 const EXCHANGE = JSON.parse(readFileSync(new URL('./fixtures/bulk-chaos-divine.json', import.meta.url), 'utf-8'));
 const DIVINE = 342.6;
 
@@ -126,11 +126,11 @@ describe('BulkSearch', () => {
     const bulk = new BulkSearch();
     await bulk.search(item, filters);
 
-    expect(request?.url).toBe('https://www.pathofexile.com/api/trade/exchange/Allflame');
+    expect(request?.url).toBe('https://www.pathofexile.com/api/trade2/exchange/Allflame');
     expect(request?.body.query).toMatchObject({ have: ['chaos'], want: ['divine'] });
     expect(bulk.error()).toBeNull();
     expect(bulk.selected()).toBe('chaos');
     expect(bulk.current()?.listed.map((r) => r.exchangeAmount)).toEqual([5, 320, 330, 350, 370, 380]);
-    expect(bulkSiteUrl(item, filters, 'chaos')).toContain('/trade/exchange/Allflame?q=');
+    expect(bulkSiteUrl(item, filters, 'chaos')).toContain('/trade2/exchange/poe2/Allflame?q=');
   });
 });

@@ -10,7 +10,7 @@ import { settings } from '../core/settings';
 import { host } from '../host';
 import type { ItemView } from '../popup-window/item-view';
 
-/** Item check (APT `ItemInfo.vue`): links to item databases, find in stash, weapon DPS, dust, poe.ninja. */
+/** Item check (APT `ItemInfo.vue`): links to item databases, find in stash, weapon DPS, poe.ninja. */
 @Component({
   selector: 'app-item-check',
   imports: [TranslatePipe, TrPipe],

@@ -48,8 +48,3 @@ Thumbs.db
 
 # Upstream clones (EE2, APT) for porting and diffs
 /_upstream/
-
-# Stage 0 only: the PoE1 parser and its data keep the copied app building
-# until stage 1 swaps them for Exiled Exchange 2. Not committed.
-/src/lib/apt/
-/public/data/

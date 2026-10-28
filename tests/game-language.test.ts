@@ -1,12 +1,11 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { parseClipboard, type ParsedItem } from '@/parser';
-import { poeWebApi } from '../src/app/apt-shims/web-config';
+import { poeWebApi } from '../src/app/ee2-shims/web-config';
 import { updateSettings } from '../src/app/core/settings';
 import { activePreset, createItemPresets } from '../src/app/price-check/price-check';
 import { tradeSiteUrl } from '../src/app/price-check/trade-search';
 import { bulkSiteUrl } from '../src/app/price-check/bulk-search';
 import { leaguesUrl } from '../src/app/core/leagues';
-import type { StatFilter } from '../src/lib/apt/web/price-check/filters/interfaces';
 import { loadGameDataInLanguage } from './game-data';
 
 // The Russian game: its data (public/data/ru) and its trade site, ru.pathofexile.com.
@@ -17,6 +16,7 @@ afterEach(() => updateSettings({ language: 'en', useIntlSite: false }));
 
 const parse = (text: string): ParsedItem => parseClipboard(text)._unsafeUnwrap();
 
+// stage 12: a ring copied from the Russian PoE2 client; this one keeps PoE1's advanced mod headers.
 const RU_RARE_RING = `Класс предмета: Кольца
 Редкость: Редкий
 Петля бури
@@ -65,11 +65,11 @@ describe('trade site per game language', () => {
   it('links the trade site and bulk exchange of the game language', () => {
     updateSettings({ language: 'ru' });
     const item = parse(RU_CHAOS);
-    const { filters, stats } = activePreset(createItemPresets(item, 'Mercenaries'));
-    expect(tradeSiteUrl(filters, stats, 'Q1')).toBe('https://ru.pathofexile.com/trade/search/Mercenaries/Q1');
-    expect(bulkSiteUrl(item, filters, 'divine')).toMatch(/^https:\/\/ru\.pathofexile\.com\/trade\/exchange\//);
+    const { filters, stats } = activePreset(createItemPresets(item, 'Standard'));
+    expect(tradeSiteUrl(filters, stats, item, 'Q1')).toBe('https://ru.pathofexile.com/trade2/search/poe2/Standard/Q1');
+    expect(bulkSiteUrl(item, filters, 'divine')).toMatch(/^https:\/\/ru\.pathofexile\.com\/trade2\/exchange\/poe2\//);
     updateSettings({ language: 'en' });
-    expect(tradeSiteUrl(filters, stats, 'Q1')).toBe('https://www.pathofexile.com/trade/search/Mercenaries/Q1');
+    expect(tradeSiteUrl(filters, stats, item, 'Q1')).toBe('https://www.pathofexile.com/trade2/search/poe2/Standard/Q1');
     expect(bulkSiteUrl(item, filters, 'divine')).toMatch(/^https:\/\/www\.pathofexile\.com\//);
   });
 });
@@ -80,10 +80,10 @@ describe('Russian item text', () => {
     expect(item.info.refName).toBe('Sapphire Ring');
     expect(item.info.name).toBe('Кольцо с сапфиром');
     expect(item.itemLevel).toBe(84);
-    const stats = activePreset(createItemPresets(item, 'Mercenaries')).stats as StatFilter[];
+    const stats = activePreset(createItemPresets(item, 'Standard')).stats;
     const life = stats.find((s) => s.statRef === '+# total maximum Life');
     expect(life).toMatchObject({ disabled: false, roll: { value: 68 } });
-    expect(stats.find((s) => s.statRef === '+#% total Elemental Resistance')).toMatchObject({ roll: { value: 72 } });
+    expect(stats.find((s) => s.statRef === '#% total Elemental Resistance')).toMatchObject({ roll: { value: 72 } });
   });
 
   it('parses currency by its Russian name, with the English refName for poe.ninja', () => {

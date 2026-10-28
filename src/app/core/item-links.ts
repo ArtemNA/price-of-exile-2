@@ -1,8 +1,9 @@
 // Item check: links to item databases, stash search text and weapon DPS.
 // Port of APT `item-check/hotkeyable-actions.ts` and the DPS part of `ItemInfo.vue`.
+// stage 6: PoE2 page paths (EE2 `getPoe2dbPath`), DPS with PoE2 damage types.
 
 import type { ParsedItem } from '@/parser';
-import { getPropQuality, propAt20Quality, QUALITY_STATS } from '@/parser/calc-q20';
+import { propAt20Quality, QUALITY_STATS } from '@/parser/calc-q20';
 import { CRAFT_OF_EXILE_SITE, DEFAULT_LANG, Lang, POE_WIKI_SITE, POEDB_LANGS, POEDB_SITE } from '../constants';
 
 export function wikiUrl(item: ParsedItem): string {
@@ -16,12 +17,15 @@ export function poedbUrl(item: ParsedItem, lang: Lang = DEFAULT_LANG): string {
 }
 
 export function craftOfExileUrl(item: ParsedItem): string {
-  return `${CRAFT_OF_EXILE_SITE}/?game=poe1&eimport=${encodeURIComponent(item.rawText)}`;
+  return `${CRAFT_OF_EXILE_SITE}/?game=poe2&eimport=${encodeURIComponent(item.rawText)}`;
 }
 
-/** Craft of Exile only makes sense for bases that can still be crafted on. */
+/**
+ * Craft of Exile only makes sense for bases that can still be crafted on. EE2 data marks currency
+ * craftable too: only items with a rarity (equipment, jewels, flasks) count.
+ */
 export function canCraftOfExile(item: ParsedItem): boolean {
-  return Boolean(item.info.craftable) && !item.isCorrupted && !item.isMirrored;
+  return Boolean(item.info.craftable) && item.rarity != null && !item.isCorrupted && !item.isMirrored && !item.isSanctified;
 }
 
 /** Stash search text: the item name in quotes, matched as a phrase by the game. */
@@ -44,8 +48,8 @@ export function weaponDps(item: ParsedItem): WeaponDps | null {
   const elem = Math.round(item.weaponAS * (item.weaponELEMENTAL ?? 0));
   const dps: WeaponDps = { phys, elem, total: phys + elem };
   // Quality raises physical damage only (APT `weaponProps`).
-  if (item.weaponPHYSICAL && getPropQuality(item) < 20) {
-    const physQ20 = propAt20Quality(item.weaponPHYSICAL, QUALITY_STATS.PHYSICAL_DAMAGE, undefined, item).roll.value;
+  if (item.weaponPHYSICAL && (item.quality ?? 0) < 20) {
+    const physQ20 = propAt20Quality(item.weaponPHYSICAL, QUALITY_STATS.PHYSICAL_DAMAGE, item).roll.value;
     // Truncated like the filter values (APT `roundRoll`), so both show the same numbers.
     const physDps = item.weaponAS * physQ20;
     const q20 = { phys: Math.trunc(physDps), total: Math.trunc(physDps + item.weaponAS * (item.weaponELEMENTAL ?? 0)) };

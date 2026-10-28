@@ -1,16 +1,17 @@
-// Trade search with listings. Port of `useTradeApi` from APT TradeListing.vue
-// (MIT © 2020 Alexander Drozdov); Vue refs replaced with Angular signals, logic unchanged.
+// Trade search with listings. Port of `useTradeApi` from EE2 trade/trade-api.ts
+// (MIT © 2020 Alexander Drozdov and EE2 contributors); Vue refs replaced with Angular signals, logic unchanged.
 
 import { computed, signal } from '@angular/core';
-import type { FilterOrGroup, ItemFilters } from '../../lib/apt/web/price-check/filters/interfaces';
-import { getTradeEndpoint } from '../../lib/apt/web/price-check/trade/common';
+import type { ParsedItem } from '@/parser';
+import type { ItemFilters, StatFilter } from '../../lib/ee2/web/price-check/filters/interfaces';
+import { getTradeEndpoint } from '../../lib/ee2/web/price-check/trade/common';
 import {
   createTradeRequest,
   type PricingResult,
   requestResults,
   requestTradeResultList,
   type SearchResult,
-} from '../../lib/apt/web/price-check/trade/pathofexile-trade';
+} from '../../lib/ee2/web/price-check/trade/pathofexile-trade';
 import { TRADE_LISTING } from '../constants';
 import { settings } from '../core/settings';
 
@@ -22,13 +23,12 @@ export class TradeSearch {
   readonly isSearching = signal(false);
   private readonly fetchResults = signal<PricingResult[]>([]);
   private searchId = 0;
-  private collapseMerchant = false;
 
   /** Consecutive listings of one seller collapse into a row (stack sizes add up). */
   readonly groupedResults = computed(() => {
     const out: GroupedResult[] = [];
     for (const result of this.fetchResults()) {
-      if (out.length === 0 || (result.hasFee && !this.collapseMerchant)) {
+      if (out.length === 0) {
         out.push({ listedTimes: 1, ...result });
         continue;
       }
@@ -60,7 +60,7 @@ export class TradeSearch {
     this.isSearching.set(false);
   }
 
-  async search(filters: ItemFilters, stats: FilterOrGroup[]): Promise<void> {
+  async search(filters: ItemFilters, stats: StatFilter[], item: ParsedItem): Promise<void> {
     this.reset();
     const searchId = this.searchId;
     const isCurrent = () => searchId === this.searchId;
@@ -72,10 +72,9 @@ export class TradeSearch {
 
     this.isSearching.set(true);
     try {
-      const searchResult = await requestTradeResultList(createTradeRequest(filters, stats), filters.trade.league);
+      const searchResult = await requestTradeResultList(createTradeRequest(filters, stats, item), filters.trade.league);
       if (!isCurrent()) return;
       this.searchResult.set(searchResult);
-      this.collapseMerchant = filters.trade.collapseMerchant;
 
       // The first two fetches run in parallel (results keep their order), then one by one on demand.
       const ids = searchResult.result;
@@ -107,7 +106,7 @@ export class TradeSearch {
 }
 
 /** Link to the same search on the trade site. */
-export function tradeSiteUrl(filters: ItemFilters, stats: FilterOrGroup[], searchId?: string): string {
-  const base = `https://${getTradeEndpoint()}/trade/search/${filters.trade.league}`;
-  return searchId ? `${base}/${searchId}` : `${base}?q=${JSON.stringify(createTradeRequest(filters, stats))}`;
+export function tradeSiteUrl(filters: ItemFilters, stats: StatFilter[], item: ParsedItem, searchId?: string): string {
+  const base = `https://${getTradeEndpoint()}/trade2/search/poe2/${filters.trade.league}`;
+  return searchId ? `${base}/${searchId}` : `${base}?q=${JSON.stringify(createTradeRequest(filters, stats, item))}`;
 }

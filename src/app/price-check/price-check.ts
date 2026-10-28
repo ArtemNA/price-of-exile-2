@@ -1,12 +1,12 @@
-// Price check session logic. Port of the non-UI parts of APT CheckedItem.vue
-// (MIT © 2020 Alexander Drozdov): preset creation and the "search right away" decision.
+// Price check session logic. Port of the non-UI parts of EE2 CheckedItem.vue
+// (MIT © 2020 Alexander Drozdov and EE2 contributors): preset creation and the "search right away" decision.
 
 import { ItemCategory, ItemRarity, type ParsedItem } from '@/parser';
-import { createPresets } from '../../lib/apt/web/price-check/filters/create-presets';
-import { initUiModFilters } from '../../lib/apt/web/price-check/filters/create-stat-filters';
+import { createPresets } from '../../lib/ee2/web/price-check/filters/create-presets';
+import { initUiModFilters } from '../../lib/ee2/web/price-check/filters/create-stat-filters';
 import { MODS_PRESET_ID } from '../constants';
-import type { FilterPreset } from '../../lib/apt/web/price-check/filters/interfaces';
-import { CATEGORY_TO_TRADE_ID } from '../../lib/apt/web/price-check/trade/pathofexile-trade';
+import type { FilterPreset } from '../../lib/ee2/web/price-check/filters/interfaces';
+import { CATEGORY_TO_TRADE_ID } from '../../lib/ee2/web/price-check/trade/pathofexile-trade';
 import { settings } from '../core/settings';
 
 export interface Presets {
@@ -30,12 +30,14 @@ export function createItemPresets(item: ParsedItem, leagueId: string, previous?:
   const options = settings().priceCheck;
   const presets = createPresets(item, {
     league: leagueId,
-    merchantOnly: options.merchantOnly,
+    // stage 3: the four listing types in the settings (PLAN F2); APT's "instant buyout" maps to EE2's default.
+    listingType: options.merchantOnly ? 'securable' : 'online',
+    defaultAllSelected: false,
     collapseListings: options.collapseListings,
     activateStockFilter: options.activateStockFilter,
     searchStatRange: options.searchStatRange,
     useEn: settings().useIntlSite,
-    currency: sameItem ? activePreset(previous.presets).filters.trade.currency : options.defaultCurrency,
+    currency: sameItem ? activePreset(previous.presets).filters.trade.currency : (options.defaultCurrency ?? undefined),
   });
   return withModsPreset(item, presets, options.searchStatRange);
 }
@@ -48,31 +50,28 @@ function withModsPreset(item: ParsedItem, presets: Presets, searchStatRange: num
   const index = presets.presets.findIndex((preset) => preset.id === 'filters.preset_pseudo');
   if (index < 0) return presets;
   const pseudo = presets.presets[index];
-  const hasTotals = pseudo.stats.some((filter) => !filter.group && filter.tag === 'pseudo');
+  const hasTotals = pseudo.stats.some((filter) => filter.tag === 'pseudo');
   if (!hasTotals) return presets;
   const mods: FilterPreset = {
     id: MODS_PRESET_ID,
     filters: structuredClone(pseudo.filters),
-    stats: initUiModFilters(item, { searchStatRange, noPseudo: true }),
+    stats: initUiModFilters(item, { searchStatRange, defaultAllSelected: false, noPseudo: true }),
   };
   const list = [...presets.presets];
   list.splice(index + 1, 0, mods);
   return { ...presets, presets: list };
 }
 
-/** Items whose price rarely depends on filter tweaks are searched right away. */
+/** Items whose price rarely depends on filter tweaks are searched right away (EE2 `CheckedItem.vue`). */
 export function shouldSearchImmediately(item: ParsedItem, presets: Presets): boolean {
   if (!settings().priceCheck.smartInitialSearch) return false;
   return Boolean(
     item.rarity === ItemRarity.Unique ||
       presets.active === 'filters.preset_bulk' ||
-      item.mapCompletionReward ||
-      item.category === ItemCategory.HeistContract ||
       item.category === ItemCategory.HeistBlueprint ||
       item.category === ItemCategory.SanctumRelic ||
       item.category === ItemCategory.Charm ||
-      item.category === ItemCategory.Idol ||
-      (!CATEGORY_TO_TRADE_ID.has(item.category!) && item.info.refName !== 'Mercenary Warrant') ||
+      !CATEGORY_TO_TRADE_ID.has(item.category!) ||
       item.isUnidentified ||
       item.isVeiled,
   );

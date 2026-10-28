@@ -1,4 +1,4 @@
-import type { RateLimiter } from '../../lib/apt/web/price-check/trade/RateLimiter';
+import type { RateLimiter } from '../../lib/ee2/web/price-check/trade/RateLimiter';
 import { type ChaosRates, toChaos } from '../core/currency-rates';
 import type { GroupedResult } from './trade-search';
 
