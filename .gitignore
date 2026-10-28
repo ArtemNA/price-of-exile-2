@@ -1,0 +1,6 @@
+_upstream/
+node_modules/
+dist/
+.angular/
+src-tauri/target/
+*.log
