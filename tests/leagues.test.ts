@@ -5,24 +5,33 @@ import { setHttpFetch } from '../src/app/core/http';
 import { ApiLeague, Leagues, pickLeague, toTradeLeagues } from '../src/app/core/leagues';
 import { settings, updateSettings } from '../src/app/core/settings';
 
-/** Real response of /api/leagues?type=main&realm=pc (Allflame league, 26.10.2026). */
-const API_LEAGUES: ApiLeague[] = JSON.parse(
-  readFileSync(new URL('./fixtures/leagues.json', import.meta.url), 'utf-8'),
-);
+/** Real response of /api/trade2/data/leagues (0.5: Forbidden Rites and Runes of Aldur, 28.10.2026). */
+const API_RESPONSE = readFileSync(new URL('./fixtures/leagues-trade2.json', import.meta.url), 'utf-8');
+const API_LEAGUES: ApiLeague[] = JSON.parse(API_RESPONSE).result;
 
 afterEach(() => updateSettings({ leagueId: undefined }));
 
 describe('toTradeLeagues', () => {
-  it('drops permanent HC, SSF and Ruthless leagues', () => {
-    expect(toTradeLeagues(API_LEAGUES).map((l) => l.id)).toEqual(['Standard', 'Allflame', 'Hardcore Allflame']);
+  it('drops permanent Hardcore', () => {
+    expect(toTradeLeagues(API_LEAGUES).map((l) => l.id)).toEqual([
+      'Forbidden Rites',
+      'HC Forbidden Rites',
+      'Runes of Aldur',
+      'HC Runes of Aldur',
+      'Standard',
+    ]);
   });
 });
 
 describe('pickLeague', () => {
   const leagues = toTradeLeagues(API_LEAGUES);
 
-  it('defaults to the challenge league', () => {
-    expect(pickLeague(leagues, undefined)).toBe('Allflame');
+  it('defaults to the newest challenge league', () => {
+    expect(pickLeague(leagues, undefined)).toBe('Forbidden Rites');
+  });
+
+  it('falls back to Standard when no challenge league runs', () => {
+    expect(pickLeague(toTradeLeagues([{ id: 'Hardcore', text: '' }, { id: 'Standard', text: '' }]), undefined)).toBe('Standard');
   });
 
   it('keeps a league that still exists', () => {
@@ -30,7 +39,7 @@ describe('pickLeague', () => {
   });
 
   it('replaces a league that ended', () => {
-    expect(pickLeague(leagues, 'Mercenaries')).toBe('Allflame');
+    expect(pickLeague(leagues, 'Dawn of the Hunt')).toBe('Forbidden Rites');
   });
 
   it('keeps private leagues, which are not listed', () => {
@@ -43,19 +52,19 @@ describe('Leagues.load', () => {
     let request: { url: string; userAgent: string | null } | undefined;
     setHttpFetch(async (input, init) => {
       request = { url: String(input), userAgent: new Headers(init?.headers).get('User-Agent') };
-      return new Response(JSON.stringify(API_LEAGUES), { status: 200 });
+      return new Response(API_RESPONSE, { status: 200 });
     });
 
     const leagues = new Leagues();
     await leagues.load();
 
     expect(request).toEqual({
-      url: 'https://www.pathofexile.com/api/leagues?type=main&realm=pc',
+      url: 'https://www.pathofexile.com/api/trade2/data/leagues',
       userAgent: USER_AGENT,
     });
     expect(leagues.error()).toBeNull();
-    expect(settings().leagueId).toBe('Allflame');
-    expect(leagues.selectedId()).toBe('Allflame');
+    expect(settings().leagueId).toBe('Forbidden Rites');
+    expect(leagues.selectedId()).toBe('Forbidden Rites');
   });
 
   it('reports HTTP errors', async () => {

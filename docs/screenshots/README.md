@@ -5,3 +5,5 @@
 | Файл | Що видно |
 |---|---|
 | `00-popup-poe2-ring-stage0.png` | Етап 0: Ctrl+D над фейковою грою, хост натиснув Ctrl+Alt+C, popup показує PoE2-кільце (`tests/fixtures/items/rare-ring.txt`). Розбір і ліга ще від парсера PoE1 (F-04); тіри T3/T7 видно, отже дійшов розширений текст |
+| `02-price-check-ee2-ring.png` | Етап 2: те саме кільце, розібране вже парсером EE2; ліга Forbidden Rites вибрана сама з `/api/trade2/data/leagues`. Знак «+» у модах ще губиться (F-08) |
+| `02-price-check-ee2-search.png` | Етап 2: після Search — живий trade2-пошук, 20 лістингів, рядок стану «Search 1/5 · Fetch 2/12» з реальних правил лімітів (F-12) |

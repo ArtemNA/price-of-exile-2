@@ -48,14 +48,27 @@ export const POE_WEB_API: Record<Lang, string> = {
   ru: 'ru.pathofexile.com',
 };
 export const POE_INTL_WEB_API = 'www.pathofexile.com';
-export const POE_REALM = 'pc';
+
+/**
+ * The trade site's own item and stat lists (EE2 `TradeData.ts`): the parser falls back to them for
+ * bases and mods missing from the game data. Always English, as the parser matches ref names.
+ */
+export const TRADE_DATA_ITEMS_URL = 'https://www.pathofexile.com/api/trade2/data/items';
+export const TRADE_DATA_STATS_URL = 'https://www.pathofexile.com/api/trade2/data/stats';
+/** Reload them at most this often, and only if an item was checked within the interest span. */
+export const TRADE_DATA_UPDATE_INTERVAL = 2 * 60 * 60 * 1000;
+export const TRADE_DATA_INTEREST_SPAN = 60 * 60 * 1000;
+/** How often to see whether a reload is due. */
+export const TRADE_DATA_RETRY_INTERVAL = 30 * 60 * 1000;
 
 /** Seconds added to every server rate-limit window to absorb latency (APT default `apiLatencySeconds`). */
 export const API_LATENCY_SECONDS = 2;
 
-/** Leagues never offered for trade (APT `Leagues.ts`). Names on pc-ggg and pc-garena. */
+/** Permanent leagues (EE2 `Leagues.ts`); Hardcore is not offered. Names on pc-ggg and pc-garena. */
 export const PERMANENT_SC_LEAGUES = ['Standard', '標準模式'];
 export const PERMANENT_HC_LEAGUES = ['Hardcore', '專家模式'];
+/** The Hardcore twin of a PoE2 challenge league is "HC <name>" ("HC Forbidden Rites"). */
+export const HC_LEAGUE_PREFIX = 'HC ';
 
 /** Price check defaults (APT price-check widget `initInstance`). */
 export const PRICE_CHECK_DEFAULTS = {

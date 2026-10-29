@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Cache } from '../src/lib/ee2/web/price-check/trade/Cache';
 import { RateLimiter } from '../src/lib/ee2/web/price-check/trade/RateLimiter';
@@ -64,6 +65,25 @@ describe('adjustRateLimits', () => {
       [60, 300 + API_LATENCY_SECONDS, 3],
     ]);
     expect(RATE_LIMIT_RULES_REVISION()).toBeGreaterThan(revision);
+  });
+
+  it('takes the 6 hour window of the PoE2 trade search (live headers, 29.10.2026)', () => {
+    const text = readFileSync(new URL('./fixtures/trade2-search-prismatic-ring.headers.txt', import.meta.url), 'utf-8');
+    const live = new Headers(
+      text
+        .split('\n')
+        .filter((line) => line.toLowerCase().startsWith('x-rate-limit'))
+        .map((line) => line.split(': ') as [string, string]),
+    );
+    const limits = new Set([new RateLimiter(1, 5)]);
+    adjustRateLimits(limits, live);
+
+    expect([...limits].map((l) => [l.max, l.window, l.stack.length])).toEqual([
+      [5, 10 + API_LATENCY_SECONDS, 1],
+      [15, 60 + API_LATENCY_SECONDS, 1],
+      [30, 300 + API_LATENCY_SECONDS, 1],
+      [600, 21600 + API_LATENCY_SECONDS, 1],
+    ]);
   });
 
   it('ignores responses without rate limit headers', () => {
