@@ -63,6 +63,12 @@ describe('listing summary', () => {
     });
   });
 
+  it('takes the trade site order for the cheapest listing while there are no rates', () => {
+    // PoE2 until poe.ninja (stage 4): the exalted listing first, as the site sorted it.
+    const rows = [row(2, 'exalted'), row(1, 'chaos', 3), row(3, 'exalted')];
+    expect(summarizeListings(rows, new Map())).toEqual({ cheapest: { price: '2 exalted' }, mostListed: '1 chaos' });
+  });
+
   it('formats chaos amounts compactly', () => {
     expect(formatChaos(0.2435)).toBe('0.24');
     expect(formatChaos(3.82)).toBe('3.8');

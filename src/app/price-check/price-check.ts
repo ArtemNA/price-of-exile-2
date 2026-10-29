@@ -30,8 +30,7 @@ export function createItemPresets(item: ParsedItem, leagueId: string, previous?:
   const options = settings().priceCheck;
   const presets = createPresets(item, {
     league: leagueId,
-    // stage 3: the four listing types in the settings (PLAN F2); APT's "instant buyout" maps to EE2's default.
-    listingType: options.merchantOnly ? 'securable' : 'online',
+    listingType: options.listingType,
     defaultAllSelected: false,
     collapseListings: options.collapseListings,
     activateStockFilter: options.activateStockFilter,

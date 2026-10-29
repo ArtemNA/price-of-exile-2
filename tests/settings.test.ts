@@ -45,6 +45,18 @@ describe('settings', () => {
     expect(upgradeSettings({ configVersion: 1, stashSearch: groups }).stashSearch).toEqual(groups);
   });
 
+  it('turns the "instant buyout only" switch of version 1 into a listing type', () => {
+    expect(SETTINGS_VERSION).toBe(2);
+    expect(defaultSettings().priceCheck.listingType).toBe('securable');
+    const on = upgradeSettings({ configVersion: 1, priceCheck: { merchantOnly: true, searchStatRange: 5 } });
+    expect(on.priceCheck).toEqual({ ...defaultSettings().priceCheck, listingType: 'securable', searchStatRange: 5 });
+    expect(on.priceCheck).not.toHaveProperty('merchantOnly');
+    expect(upgradeSettings({ configVersion: 1, priceCheck: { merchantOnly: false } }).priceCheck.listingType).toBe('online');
+    // Version 2 keeps its choice.
+    expect(upgradeSettings({ configVersion: 2, priceCheck: { listingType: 'any' } }).priceCheck.listingType).toBe('any');
+    expect(upgradeSettings({ configVersion: 1 }).priceCheck.listingType).toBe('securable');
+  });
+
   it('fills missing nested fields and survives a damaged file', () => {
     const settings = upgradeSettings({ configVersion: 1, hotkeys: { wiki: 'Alt+KeyW' }, priceCheck: { searchStatRange: 5 } });
     expect(settings.hotkeys).toEqual({ ...DEFAULT_HOTKEYS, wiki: 'Alt+KeyW' });

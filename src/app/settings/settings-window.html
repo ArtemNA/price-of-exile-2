@@ -297,18 +297,25 @@
                   <button class="h-8 border px-3"
                     [class]="settings().priceCheck.defaultCurrency === option.value ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
                     [attr.aria-pressed]="settings().priceCheck.defaultCurrency === option.value"
-                    (click)="setPriceCheck({ defaultCurrency: option.value })">{{ option.value ? option.label : ('Any currency' | tr) }}</button>
+                    (click)="setPriceCheck({ defaultCurrency: option.value })">{{ option.label | tr }}</button>
                 }
               </div>
             </div>
 
+            <div class="flex flex-col gap-1.5">
+              <span class="text-bright">{{ 'Listings by default' | tr }}</span>
+              <div class="flex gap-1">
+                @for (option of listingTypes; track option.value) {
+                  <button class="h-8 border px-3"
+                    [class]="settings().priceCheck.listingType === option.value ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [attr.aria-pressed]="settings().priceCheck.listingType === option.value" [title]="option.hint | tr"
+                    (click)="setPriceCheck({ listingType: option.value })">{{ option.label | tr }}</button>
+                }
+              </div>
+              <span class="text-[12px] text-muted">{{ 'Instant buyout: merchant tabs only, no whispers. The price check can change it for one search.' | tr }}</span>
+            </div>
+
             <div class="flex flex-col gap-3">
-              <label class="flex items-start gap-2.5">
-                <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().priceCheck.merchantOnly"
-                  (change)="setPriceCheck({ merchantOnly: $any($event.target).checked })" />
-                <span class="flex flex-col"><span class="text-bright">{{ 'Instant buyout only' | tr }}</span>
-                  <span class="text-[12px] text-muted">{{ 'Listings in merchant tabs; turn off to include offers you have to whisper for.' | tr }}</span></span>
-              </label>
               <label class="flex items-start gap-2.5">
                 <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().priceCheck.smartInitialSearch"
                   (change)="setPriceCheck({ smartInitialSearch: $any($event.target).checked })" />

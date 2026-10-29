@@ -8,6 +8,7 @@ import { poeWebApi } from '@/web/Config';
 import {
   APP_CONTACT,
   DEFAULT_CURRENCY_OPTIONS,
+  LISTING_TYPES,
   GAME_LANGS,
   HotkeyAction,
   Lang,
@@ -71,6 +72,7 @@ export class SettingsWindow {
   protected readonly sections = SECTIONS;
   protected readonly hotkeyRows = HOTKEYS;
   protected readonly currencies = DEFAULT_CURRENCY_OPTIONS;
+  protected readonly listingTypes = LISTING_TYPES;
   protected readonly statRangeMax = SEARCH_STAT_RANGE_MAX;
   protected readonly positions: Array<{ value: PopupPosition; label: string }> = [
     { value: 'center', label: 'Centre of the game' },

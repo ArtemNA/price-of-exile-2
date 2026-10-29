@@ -99,3 +99,32 @@
 - Обидва файли теж віддає кеш Cloudflare без заголовків лімітів. Вони англійські для будь-якої мови гри, бо парсер шукає за ref-назвами.
 - Кожне вікно, що вантажить дані гри (popup і налаштування), завантажує їх окремо: 2 запити на вікно при старті.
 - **PoE1: ні.**
+
+---
+
+## Етап 3 — ядро price check (29.10.2026)
+
+### F-14. Групи модів, тіри, чипи під PoE2
+- Групи (власний код у `filter-view.ts`, таблиця `STAT_GROUPS`): Properties, Totals, Implicit, Explicit, Rune (`rune`, `added-rune`), Enchant (і Corruption Enhancement), Skill, Desecrated (з рядком нерозкритих модів — фільтр EE2 `veiled`), Crafted, Mutated (Vaal Unique Modifier). Eldritch немає. Перемикач Fractured — як був.
+- Тіри T1/T2 приховано для вейстоунів (EE2 розбирає їх як `Map`), табличок і самоцвітів, як в EE2.
+- Чипи шапки: Sockets ≥ N (рунні сокети), Waystone tier = N, Gem level ≥, сокети й якість гема, Unid tier ≥, Area level, Sanctified / Mirrored. Spirit — рядок у Properties з min/max, як в EE2.
+- Перемикач бази пише «Any Waystone», бо EE2 відносить вейстоуни до `Map` (`CATEGORY_NAMES`).
+- **PoE1: ні.**
+
+### F-15. Знак «+» повертається з тексту предмета
+- В EE2 знака немає ніде: ні в matcher, ні в ref; регулярний вираз парсера ковтає його разом із числом. Відображення шукає рядок шаблону в `rawText` предмета й повертає «+» перед кожним `#`, де він був (`signedTemplate`), — для рядків фільтрів і «Σ Mods behind totals», зокрема й для російської.
+- Псевдо-суми в EE2 теж бувають без знака («#% total Elemental Resistance»), а trade-сайт пише «+». Для сум плоских значень знак додається (`signedPseudo`), для «increased / reduced» — ні.
+- **PoE1: ні.**
+
+### F-16. Тип лістингу в 4 стани і валюта викупу
+- Замість двох перемикачів еталона — `listingType` EE2: Instant buyout (`securable`), Instant or online (`available`), Online (`online`), Any (`any`); у bulk — In league / Online / Any. Значення йде в `query.status.option`. Валюта викупу: будь-яка, exalted, chaos, divine, exalted + divine (`trade_filters.price.option`).
+- Налаштування — версія 2: `merchantOnly: true` → `securable`, `false` → `online` (`upgradeSettings`).
+- Фільтр рідкості EE2 вимкнути не можна (його UI не має такого стану). Наш чип «Not unique» / «Magic» / «Normal» ставить власну позначку, і запит іде без рідкості.
+- Без курсів poe.ninja (етап 4) «Cheapest» — перший лістинг у порядку trade-сайту, а колонка «≈» схована. Trade-сайт сортує за вартістю, тож 1 chaos стоїть після 10 exalted, і це правильно.
+- **PoE1: ні.**
+
+### F-17. Перевірено на живому trade2
+- На фейковій грі (знімки `03-*`): рідкісне кільце (знак «+», панель Listings / Buyout, пошук), арбалет (групи Rune і Enchant, Sockets ≥ 2), вейстоун (Waystone tier = 14, пошук), мета-гем (пошук одразу, ціни в exalted і chaos, колонка Lvl / Q), унікальний фокус (пошук одразу). 4 пошуки за перевірку.
+- Пастка тестування: застосунок, що стартував, поки dev-сервер перезбирав сторінку, не зареєстрував хоткеїв (жодних помилок у лозі). Допоміг перезапуск. Якщо хоткей мовчить на фейковій грі — спершу перезапустити `npm run dev`.
+- Не зроблено: фільтр «listed N days ago», вимога рівня для рідкісних предметів, тег `added-rune` у «Σ Mods behind totals» без перекладу; перемикач Fractured показується й на модах унікальних предметів, як в EE2.
+- **PoE1: перевірити** — пастка з перезбиркою dev-сервера, імовірно, та сама.

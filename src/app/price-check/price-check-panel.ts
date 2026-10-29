@@ -13,7 +13,9 @@ import {
   CLOUDFLARE_CHECK_ERROR,
   CURRENCY_COLOR_OTHER,
   CURRENCY_COLORS,
+  DEFAULT_CURRENCY_OPTIONS,
   ITEM_CHIP_SHORT_LABELS,
+  ITEM_CHIPS_EXACT,
   MODS_PRESET_ID,
   MODS_PRESET_LABEL,
   PRICE_CHECK_MAX_HEIGHT,
@@ -55,17 +57,20 @@ import {
   baseSwitch,
   corruptedState,
   type CorruptedState,
+  fitListingType,
   groupStats,
-  instantOnly,
-  onlineOnly,
+  listingTypes,
   setCorrupted,
   setExactBase,
-  setInstantOnly,
-  setOnlineOnly,
   sourceLines,
   statCounts,
+  signedPseudo,
   statLine,
+  statTemplate,
   statTier,
+  tradeOptionsSummary,
+  type UnrevealedRow,
+  unrevealedRow,
 } from './filter-view';
 import { NumInput } from './num-input';
 import { activePreset, createItemPresets, Presets, shouldSearchImmediately } from './price-check';
@@ -170,6 +175,11 @@ export class PriceCheckPanel {
     return short ? tr(short) : chip.label;
   }
 
+  /** "≥" before a chip's value; "=" where EE2 searches the exact value (waystone tier). */
+  protected chipComparator(chip: ItemFilterChip): string {
+    return ITEM_CHIPS_EXACT.includes(chip.key) ? ' =' : ' ≥';
+  }
+
   /** A unique the trade site prices by name: links and corruption decide, no stat filters. */
   protected readonly uniqueWithoutStats = computed(() => this.view().rarity === 'Unique' && !this.active()?.stats.length);
 
@@ -192,7 +202,7 @@ export class PriceCheckPanel {
 
   protected readonly statView = computed(() => {
     const active = this.active();
-    return active ? groupStats(active.stats) : { groups: [], hidden: [] };
+    return active ? groupStats(active.stats, unrevealedRow(this.item(), active.filters)) : { groups: [], hidden: [] };
   });
 
   protected readonly counts = computed(() => {
@@ -201,11 +211,17 @@ export class PriceCheckPanel {
   });
 
   protected tier(filter: StatFilter): number | null {
-    return statTier(filter);
+    return statTier(filter, this.item());
   }
 
   protected sources(filter: StatFilter) {
-    return this.showSources() ? sourceLines(filter) : [];
+    return this.showSources() ? sourceLines(filter, this.item().rawText) : [];
+  }
+
+  /** The unrevealed desecrated mods are searched as one EE2 item filter ("veiled"). */
+  protected toggleUnrevealed(row: UnrevealedRow): void {
+    row.filter.disabled = !row.filter.disabled;
+    this.markChanged();
   }
 
   /** "1 Empty or Crafted Modifier": which affix has to be free (APT `ItemHasEmptyModifier`). */
@@ -237,8 +253,14 @@ export class PriceCheckPanel {
     return at < 0 ? { amount: price, currency: '' } : { amount: price.slice(0, at), currency: price.slice(at + 1) };
   }
 
-  /** The "≈ chaos" column only when some listing is in another currency. */
-  protected readonly mixedCurrencies = computed(() => this.search.rows().some((row) => row.priceCurrency !== 'chaos'));
+  /**
+   * The "≈ chaos" column only when some listing has an equivalent to show: none in other
+   * currencies, and none at all until poe.ninja rates for PoE2 (stage 4).
+   */
+  protected readonly mixedCurrencies = computed(() => {
+    currencyRates.rates();
+    return this.search.rows().some((row) => this.equivalent(row) !== '');
+  });
 
   protected readonly limits = computed(() => {
     RATE_LIMIT_RULES_REVISION();
@@ -271,6 +293,15 @@ export class PriceCheckPanel {
     this.tabChoice.set(id as Tab);
     // poe.ninja and Wiki show the same item: switching to them and back keeps the search results.
     if (searchTab) this.stale.set(true);
+    this.fitListing();
+  }
+
+  /** A listing type the current tab's API takes (EE2 sets "online" for bulk). */
+  private fitListing(): void {
+    const active = this.active();
+    if (!active || INFO_TABS.includes(this.activeTab())) return;
+    fitListingType(active.filters.trade, this.tradeApi(), settings().priceCheck.listingType);
+    this.revision.update((n) => n + 1);
   }
 
   protected readonly isSearching = computed(() => this.search.isSearching() || this.bulk.isSearching());
@@ -405,11 +436,18 @@ export class PriceCheckPanel {
     return formatChaos(value);
   }
 
+  /** The trade options in one line, "instant buyout · Exalted Orb". */
   protected readonly tradeSummary = computed(() => {
     const trade = this.active()?.filters.trade;
     if (!trade) return '';
-    return [tr(onlineOnly(trade) ? 'online' : 'online & offline'), tr(instantOnly(trade) ? 'instant buyout' : 'any listing')].join(' · ');
+    const currency = DEFAULT_CURRENCY_OPTIONS.find((option) => option.value === trade.currency);
+    return tradeOptionsSummary(trade, this.tradeApi(), currency ? tr(currency.label) : trade.currency);
   });
+
+  /** Which API the search goes to: listing types differ between the trade site and bulk exchange. */
+  protected readonly tradeApi = computed(() => (this.activeTab() === 'bulk' ? 'bulk' : 'trade'));
+  protected readonly listingOptions = computed(() => listingTypes(this.tradeApi()));
+  protected readonly currencyOptions = DEFAULT_CURRENCY_OPTIONS;
 
   private readonly filtersScroll = viewChild<ElementRef<HTMLElement>>('filtersScroll');
 
@@ -476,6 +514,7 @@ export class PriceCheckPanel {
     const presets = createItemPresets(item, leagueId, this.previous);
     this.previous = { item, presets };
     this.presets.set(presets);
+    this.fitListing();
     this.stale.set(true);
     if (shouldSearchImmediately(item, presets)) this.runSearch();
   }
@@ -484,6 +523,7 @@ export class PriceCheckPanel {
     const active = this.active();
     if (!active || this.isSearching()) return;
     if (INFO_TABS.includes(this.activeTab())) this.tabChoice.set(null); // Search goes to trade or bulk
+    this.fitListing(); // the tab can follow the filters, from bulk to trade and back
     this.stale.set(false);
     if (this.activeTab() === 'bulk') void this.bulk.search(this.item(), active.filters);
     else void this.search.search(active.filters, active.stats, this.item());
@@ -530,26 +570,20 @@ export class PriceCheckPanel {
     this.markChanged();
   }
 
-  // Online filters change the search right away (as in APT).
+  // Trade options change the search right away (as in APT and EE2).
 
-  protected onlineOnly(trade: ItemFilters['trade']): boolean {
-    return onlineOnly(trade);
-  }
-
-  protected instantOnly(trade: ItemFilters['trade']): boolean {
-    return instantOnly(trade);
-  }
-
-  protected toggleOffline(): void {
+  protected setListingType(value: string): void {
     const trade = this.active()!.filters.trade;
-    setOnlineOnly(trade, !onlineOnly(trade));
+    if (trade.listingType === value) return;
+    trade.listingType = value as ItemFilters['trade']['listingType'];
     this.revision.update((n) => n + 1);
     this.runSearchSoon();
   }
 
-  protected toggleMerchantOnly(): void {
+  protected setCurrency(value: string | null): void {
     const trade = this.active()!.filters.trade;
-    setInstantOnly(trade, !instantOnly(trade));
+    if ((trade.currency ?? null) === value) return;
+    trade.currency = value ?? undefined;
     this.revision.update((n) => n + 1);
     this.runSearchSoon();
   }
@@ -567,7 +601,8 @@ export class PriceCheckPanel {
   }
 
   protected statText(filter: StatFilter): string {
-    return statLine(filter.text, filter.statRef, filter.roll?.value);
+    const template = filter.tag === 'pseudo' ? signedPseudo(statTemplate(filter)) : statTemplate(filter);
+    return statLine(template, filter.roll?.value, this.item().rawText);
   }
 
   /** Short tag before non-explicit stats ("implicit", "crafted", …); none for item properties (APT `showTag`). */

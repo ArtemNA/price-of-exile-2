@@ -25,7 +25,7 @@
           <span class="flex h-6 items-center gap-1 border pl-2" [class]="chip.enabled ? 'border-bronze bg-[#2a2219] text-gold-soft' : 'border-line text-muted'"
             [class.pr-2]="!chip.numeric">
             <button class="whitespace-nowrap" [title]="chip.label" [attr.aria-pressed]="chip.enabled" (click)="toggleChip(chip)">
-              {{ chipLabel(chip) }}{{ chip.numeric ? ' ≥' : chip.enabled ? ' ✓' : '' }}
+              {{ chipLabel(chip) }}{{ chip.numeric ? chipComparator(chip) : chip.enabled ? ' ✓' : '' }}
             </button>
             @if (chip.numeric; as numeric) {
               <app-num-input [value]="numeric.value" [label]="'{0} minimum' | tr: chip.label"
@@ -115,9 +115,17 @@
           @for (entry of group.entries; track $index) {
             <ng-container *ngTemplateOutlet="statRow; context: { $implicit: entry, nested: false }" />
           }
+          @if (group.unrevealed; as row) {
+            <label class="flex items-center gap-2 px-1 py-[3px]" [class.bg-mod/[0.06]]="!row.filter.disabled"
+              [title]="'Searches items with as many unrevealed desecrated modifiers' | tr">
+              <input type="checkbox" class="size-3.5 flex-none accent-gold" [checked]="!row.filter.disabled" (change)="toggleUnrevealed(row)" />
+              <span class="w-6 flex-none"></span>
+              <span class="min-w-0 flex-1 truncate font-display text-[13px] italic" [class]="row.filter.disabled ? 'text-mod-off' : 'text-mod'">{{ row.text }}</span>
+            </label>
+          }
         } @empty {
           @if (uniqueWithoutStats()) {
-            <p class="px-1 py-2 text-muted">{{ 'No stat filters for this unique: links and corruption, above, decide the price.' | tr }}</p>
+            <p class="px-1 py-2 text-muted">{{ 'No stat filters for this unique: sockets and corruption, above, decide the price.' | tr }}</p>
           } @else if (!statView().hidden.length && !relatedGroup()) {
             <p class="px-1 py-1.5 text-muted">{{ 'filters.empty' | t }}</p>
           }
@@ -172,20 +180,42 @@
           <button class="text-[11px] text-muted hover:text-text" (click)="toggleSection('trade')">{{ tradeSummary() }} {{ open().trade ? '▴' : '▾' }}</button>
         </div>
         @if (open().trade) {
-          <label class="flex items-center gap-2 px-1 py-1">
-            <input type="checkbox" class="size-3.5 accent-gold" [checked]="onlineOnly(preset.filters.trade)" (change)="toggleOffline()" />
-            <span>{{ 'Online sellers only' | tr }}</span>
-          </label>
+          <div class="flex items-center gap-2 px-1 py-1">
+            <span class="w-[60px] flex-none text-muted">{{ 'Listings' | tr }}</span>
+            <div class="flex h-6 border border-line-strong" role="group" [attr.aria-label]="'Listings' | tr">
+              @for (option of listingOptions(); track option.value) {
+                <button class="px-2 not-last:border-r not-last:border-line-strong"
+                  [class]="option.value === preset.filters.trade.listingType ? 'bg-[#2a2219] text-gold-soft' : 'text-muted hover:text-text'"
+                  [title]="option.hint | tr" [attr.aria-pressed]="option.value === preset.filters.trade.listingType"
+                  (click)="setListingType(option.value)">{{ option.label | tr }}</button>
+              }
+            </div>
+          </div>
           @if (activeTab() === 'bulk') {
             <label class="flex items-center gap-2 px-1 py-1" [title]="'Offers far below the poe.ninja price are almost always bait' | tr">
               <input type="checkbox" class="size-3.5 accent-gold" [checked]="hideBait()" (change)="toggleHideBait()" />
               <span>{{ 'Hide offers far below poe.ninja' | tr }}</span>
             </label>
           } @else {
-            <label class="flex items-center gap-2 px-1 py-1">
-              <input type="checkbox" class="size-3.5 accent-gold" [checked]="instantOnly(preset.filters.trade)" (change)="toggleMerchantOnly()" />
-              <span>{{ 'Instant buyout only' | tr }}</span>
-            </label>
+            <div class="flex items-center gap-2 px-1 py-1">
+              <span class="w-[60px] flex-none text-muted">{{ 'Buyout' | tr }}</span>
+              <div class="flex h-6 border border-line-strong" role="group" [attr.aria-label]="'Buyout currency' | tr">
+                @for (option of currencyOptions; track option.value) {
+                  @let on = option.value === (preset.filters.trade.currency ?? null);
+                  <button class="flex items-center gap-0.5 px-2 not-last:border-r not-last:border-line-strong"
+                    [class]="on ? 'bg-[#2a2219] text-gold-soft' : 'text-muted opacity-70 hover:text-text hover:opacity-100'"
+                    [title]="option.label | tr" [attr.aria-pressed]="on" (click)="setCurrency(option.value)">
+                    @if (option.value === null) {
+                      {{ 'Any' | tr }}
+                    } @else if (option.value === 'exalted_divine') {
+                      <app-currency tag="exalted" [size]="14" /><app-currency tag="divine" [size]="14" />
+                    } @else {
+                      <app-currency [tag]="option.value" [size]="14" />
+                    }
+                  </button>
+                }
+              </div>
+            </div>
           }
         }
       </div>

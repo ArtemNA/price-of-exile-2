@@ -10,8 +10,11 @@ export function formatChaos(value: number): string {
 }
 
 export interface ListingSummary {
-  /** Cheapest listing by chaos value, as listed ("1 vaal"), plus its chaos value. */
-  cheapest?: { price: string; chaos: number };
+  /**
+   * Cheapest listing by chaos value, as listed ("1 vaal"), plus its chaos value. Without currency
+   * rates it is the first listing: the trade site sorts them by price already.
+   */
+  cheapest?: { price: string; chaos?: number };
   /** The price most listings ask ("2 chaos"). */
   mostListed?: string;
 }
@@ -23,8 +26,10 @@ export function summarizeListings(rows: GroupedResult[], rates: ChaosRates): Lis
     const price = `${row.priceAmount} ${row.priceCurrency}`;
     counts.set(price, (counts.get(price) ?? 0) + row.listedTimes);
     const chaos = toChaos(row.priceAmount, row.priceCurrency, rates);
-    if (chaos != null && (!cheapest || chaos < cheapest.chaos)) cheapest = { price, chaos };
+    if (chaos != null && (!cheapest || chaos < cheapest.chaos!)) cheapest = { price, chaos };
   }
+  // stage 4: no rates until poe.ninja for PoE2; comparing only the chaos listings would mislead.
+  if (!rates.size && rows.length) cheapest = { price: `${rows[0].priceAmount} ${rows[0].priceCurrency}` };
   let mostListed: string | undefined;
   let best = 0;
   for (const [price, count] of counts) {

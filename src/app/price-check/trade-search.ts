@@ -14,6 +14,7 @@ import {
 } from '../../lib/ee2/web/price-check/trade/pathofexile-trade';
 import { TRADE_LISTING } from '../constants';
 import { settings } from '../core/settings';
+import { requestFilters } from './filter-view';
 
 export type GroupedResult = PricingResult & { listedTimes: number };
 
@@ -72,7 +73,7 @@ export class TradeSearch {
 
     this.isSearching.set(true);
     try {
-      const searchResult = await requestTradeResultList(createTradeRequest(filters, stats, item), filters.trade.league);
+      const searchResult = await requestTradeResultList(createTradeRequest(requestFilters(filters), stats, item), filters.trade.league);
       if (!isCurrent()) return;
       this.searchResult.set(searchResult);
 
@@ -108,5 +109,5 @@ export class TradeSearch {
 /** Link to the same search on the trade site. */
 export function tradeSiteUrl(filters: ItemFilters, stats: StatFilter[], item: ParsedItem, searchId?: string): string {
   const base = `https://${getTradeEndpoint()}/trade2/search/poe2/${filters.trade.league}`;
-  return searchId ? `${base}/${searchId}` : `${base}?q=${JSON.stringify(createTradeRequest(filters, stats, item))}`;
+  return searchId ? `${base}/${searchId}` : `${base}?q=${JSON.stringify(createTradeRequest(requestFilters(filters), stats, item))}`;
 }

@@ -64,6 +64,9 @@ export const TRADE_DATA_RETRY_INTERVAL = 30 * 60 * 1000;
 /** Seconds added to every server rate-limit window to absorb latency (APT default `apiLatencySeconds`). */
 export const API_LATENCY_SECONDS = 2;
 
+/** How the base switch names an EE2 item category where its name is not the game's ("Any Waystone"). */
+export const CATEGORY_NAMES: Record<string, string> = { Map: 'Waystone' };
+
 /** Permanent leagues (EE2 `Leagues.ts`); Hardcore is not offered. Names on pc-ggg and pc-garena. */
 export const PERMANENT_SC_LEAGUES = ['Standard', '標準模式'];
 export const PERMANENT_HC_LEAGUES = ['Hardcore', '專家模式'];
@@ -74,8 +77,8 @@ export const HC_LEAGUE_PREFIX = 'HC ';
 export const PRICE_CHECK_DEFAULTS = {
   /** ±% around each roll used for min/max of stat filters. */
   searchStatRange: 10,
-  /** Only listings with instant buyout (merchant tabs). */
-  merchantOnly: true,
+  /** Which listings to search (EE2 `listingType`): instant buyout only, as EE2 does by default. */
+  listingType: 'securable' as ListingType,
   /** Group same-seller listings by the trade API ('api') or by the app ('app'). */
   collapseListings: 'api' as 'api' | 'app',
   activateStockFilter: false,
@@ -102,40 +105,84 @@ export const PRICE_CHECK_WIDTH = 960;
 export const PRICE_CHECK_MIN_HEIGHT = 590;
 export const PRICE_CHECK_MAX_HEIGHT = 900;
 
-/** Price check stat filter headings in display order, and which filter tags go under each (F-54). */
+/**
+ * Price check stat filter headings in display order, and which EE2 filter tags go under each (F-54).
+ * PoE2 has no Eldritch implicits; runes, granted skills, desecrated and mutated (Vaal unique) mods
+ * are their own groups. Fractured mods stay with the explicit ones (the row has a Fractured switch).
+ * Tags as `FilterTag` and, where EE2 passes the mod type through, `ModifierType` (`necropolis`, …).
+ */
 export const STAT_GROUPS: ReadonlyArray<{ name: string; tags: readonly string[] }> = [
   { name: 'Properties', tags: ['property'] },
   { name: 'Totals', tags: ['pseudo'] },
-  { name: 'Enchant', tags: ['enchant'] },
-  { name: 'Implicit', tags: ['implicit', 'scourge', 'synthesised', 'foulborn', 'vestigial', 'corrupted'] },
-  { name: 'Eldritch implicits', tags: ['eldritch'] },
-  {
-    name: 'Explicit',
-    tags: ['explicit', 'fractured', 'veiled', 'explicit-shaper', 'explicit-elder', 'explicit-crusader', 'explicit-hunter', 'explicit-redeemer', 'explicit-warlord', 'explicit-delve', 'explicit-incursion'],
-  },
+  { name: 'Implicit', tags: ['implicit', 'synthesised', 'eldritch', 'scourge'] },
+  { name: 'Explicit', tags: ['explicit', 'fractured', 'variant', 'veiled', 'explicit-veiled', 'explicit-delve', 'explicit-incursion', 'sanctum'] },
+  { name: 'Rune', tags: ['rune', 'added-rune'] },
+  { name: 'Enchant', tags: ['enchant', 'corrupted'] },
+  { name: 'Skill', tags: ['skill'] },
+  { name: 'Desecrated', tags: ['desecrated'] },
   { name: 'Crafted', tags: ['crafted'] },
+  { name: 'Mutated', tags: ['mutated'] },
 ];
+/** The group that also shows the item's unrevealed desecrated mods (EE2 `veiled` item filter). */
+export const STAT_GROUP_UNREVEALED = 'Desecrated';
 export const STAT_GROUP_OTHER = 'Other';
 
 /** Short labels of the item filter chips in the price check header. */
 export const ITEM_CHIP_SHORT_LABELS: Record<string, string> = {
   itemLevel: 'iLvl',
+  augmentSockets: 'Sockets',
+  socketNumber: 'Sockets',
   gemLevel: 'Gem level',
-  mapTier: 'Tier',
+  mapTier: 'Waystone tier',
   areaLevel: 'Area level',
+  awardedAscendancyPoints: 'Ascendancy points',
+  unidentifiedTier: 'Unid tier',
   stackSize: 'Stack',
 };
+/** Chips searched for exactly their value, not "at least" (EE2 sends min = max for the waystone tier). */
+export const ITEM_CHIPS_EXACT: readonly string[] = ['mapTier'];
+
+/**
+ * Items without tier badges on their mods, as in EE2 `FilterModifierTiers.vue`: waystones (EE2 parses
+ * them as maps, FINDINGS F-09) and tablets have no tiers worth comparing, and jewel tiers do not
+ * rank the rolls the way gear tiers do.
+ */
+export const NO_TIER_CATEGORIES: readonly string[] = ['Map', 'TowerAugment', 'Jewel', 'Cluster Jewel', 'Abyss Jewel'];
+
+/**
+ * Trade listing types (EE2 `OnlineFilter.vue` `listingType`, the trade2 `status.option`) with their
+ * labels in the price check and the short form for its summary line.
+ */
+export type ListingType = 'securable' | 'available' | 'online' | 'any';
+export const LISTING_TYPES: ReadonlyArray<{ value: ListingType; label: string; summary: string; hint: string }> = [
+  { value: 'securable', label: 'Instant buyout', summary: 'instant buyout', hint: 'Listings in merchant tabs, bought without a whisper' },
+  { value: 'available', label: 'Instant or online', summary: 'instant or online', hint: 'Merchant tabs and sellers online to whisper' },
+  { value: 'online', label: 'Online', summary: 'online', hint: 'Sellers online to whisper, merchant tabs left out' },
+  { value: 'any', label: 'Any', summary: 'online & offline', hint: 'Every listing, sellers offline too' },
+];
+/** Bulk exchange knows no instant buyout: EE2 offers these three there (`onlineleague` only for bulk). */
+export type BulkListingType = 'onlineleague' | 'online' | 'any';
+export const BULK_LISTING_TYPES: ReadonlyArray<{ value: BulkListingType; label: string; summary: string; hint: string }> = [
+  { value: 'onlineleague', label: 'In league', summary: 'online in league', hint: 'Sellers online and in this league' },
+  { value: 'online', label: 'Online', summary: 'online', hint: 'Sellers online' },
+  { value: 'any', label: 'Any', summary: 'online & offline', hint: 'Every offer, sellers offline too' },
+];
 
 /** The leagues list is loaded again on a check when it is older than this (ms). */
 export const LEAGUES_REFRESH_AFTER = 3 * 60 * 60 * 1000;
 
 /** Upper limit of the stat filter range setting, % (APT `settings-price-check.vue`). */
 export const SEARCH_STAT_RANGE_MAX = 50;
-/** Buyout currency filter choices in the settings; values are trade API price options. */
+/**
+ * Buyout currency filter choices (EE2 `OnlineFilter.vue`); values are trade2 `price.option`s.
+ * PoE2 trades in exalted orbs; chaos and divine orbs are the other two common prices.
+ */
 export const DEFAULT_CURRENCY_OPTIONS: Array<{ value: string | null; label: string }> = [
   { value: null, label: 'Any currency' },
+  { value: 'exalted', label: 'Exalted Orb' },
   { value: 'chaos', label: 'Chaos Orb' },
   { value: 'divine', label: 'Divine Orb' },
+  { value: 'exalted_divine', label: 'Exalted or Divine' },
 ];
 
 /** Trade listings (APT `TradeListing.vue`). */
@@ -262,7 +309,7 @@ export const SETTINGS_FILE = 'settings.json';
 /** Key of the whole settings object inside the store file. */
 export const SETTINGS_STORE_KEY = 'settings';
 /** Current settings format; `upgradeSettings` brings older files up to it. */
-export const SETTINGS_VERSION = 1;
+export const SETTINGS_VERSION = 2;
 /** Event the window that changed the settings sends to the other windows. */
 export const SETTINGS_CHANGED_EVENT = 'settings-changed';
 

@@ -11,6 +11,7 @@ import {
   DEFAULT_STASH_SEARCH,
   HotkeyAction,
   Lang,
+  ListingType,
   UiLang,
   PopupPosition,
   LEGACY_SETTINGS_STORAGE_KEY,
@@ -25,7 +26,8 @@ import {
 /** Price check options the user can change (APT `PriceCheckWidget`, the subset ported so far). */
 export interface PriceCheckSettings {
   searchStatRange: number;
-  merchantOnly: boolean;
+  /** Listings a search starts with (EE2 `listingType`); the price check can change it per search. */
+  listingType: ListingType;
   collapseListings: 'api' | 'app';
   activateStockFilter: boolean;
   defaultCurrency: string | null;
@@ -75,7 +77,7 @@ export interface Settings {
 export function defaultSettings(): Settings {
   const {
     searchStatRange,
-    merchantOnly,
+    listingType,
     collapseListings,
     activateStockFilter,
     defaultCurrency,
@@ -96,7 +98,7 @@ export function defaultSettings(): Settings {
     stashSearch: structuredClone(DEFAULT_STASH_SEARCH),
     priceCheck: {
       searchStatRange,
-      merchantOnly,
+      listingType,
       collapseListings,
       activateStockFilter,
       defaultCurrency,
@@ -110,12 +112,18 @@ export function defaultSettings(): Settings {
 /**
  * Brings stored settings of any older version up to `SETTINGS_VERSION` (APT `upgradeConfig`).
  * Version 0 is the localStorage format of stages 2–10: flat, no version, no hotkeys or price check.
+ * Version 1 had APT's "instant buyout only" switch (`merchantOnly`) instead of EE2's four listing
+ * types: on means instant buyout, off meant online sellers.
  * Unknown or missing fields fall back to the defaults, so a damaged file still loads.
  */
 export function upgradeSettings(raw: unknown): Settings {
   const defaults = defaultSettings();
   if (!raw || typeof raw !== 'object') return defaults;
   const stored = raw as Partial<Settings>;
+  const { merchantOnly, ...priceCheck } = (stored.priceCheck ?? {}) as Partial<PriceCheckSettings> & { merchantOnly?: boolean };
+  if (priceCheck.listingType == null && typeof merchantOnly === 'boolean') {
+    priceCheck.listingType = merchantOnly ? 'securable' : 'online';
+  }
   return {
     ...defaults,
     ...stored,
@@ -123,7 +131,7 @@ export function upgradeSettings(raw: unknown): Settings {
     hotkeys: { ...defaults.hotkeys, ...stored.hotkeys },
     commands: Array.isArray(stored.commands) ? stored.commands : defaults.commands,
     stashSearch: Array.isArray(stored.stashSearch) ? stored.stashSearch : defaults.stashSearch,
-    priceCheck: { ...defaults.priceCheck, ...stored.priceCheck },
+    priceCheck: { ...defaults.priceCheck, ...priceCheck },
     mapCheck: { ...defaults.mapCheck, ...stored.mapCheck },
   };
 }

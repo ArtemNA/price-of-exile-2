@@ -15,6 +15,21 @@ export const RARE_CROSSBOW = fixture('weapon');
 export const RARE_BOW = fixture('bow-runes-crafted');
 /** The Eternal Spark, Crystal Focus. */
 export const UNIQUE_FOCUS = fixture('unique');
+/** Rare Gold Amulet: anointment, fractured cold res, desecrated fire and chaos res. */
+export const AMULET_FRACTURED = fixture('amulet-fractured-desecrated');
+/** Rare Shrine Sceptre: 152 Spirit, a granted skill, rune socket. */
+export const RARE_SCEPTRE = fixture('sceptre-spirit');
+/** Rare Waystone (Tier 14) and a corrupted Tier 16 one. */
+export const WAYSTONE = fixture('waystone');
+export const WAYSTONE_CORRUPTED = fixture('waystone-corrupted');
+/** Rare jewel. */
+export const JEWEL = fixture('jewel');
+/** Magic Sapphire Ring, unidentified (Tier 4). */
+export const MAGIC_UNID_TIER = fixture('magic-unid-tier');
+/** Normal Helmet. */
+export const NORMAL_HELMET = fixture('normal-helmet');
+/** Uncut Skill Gem (Level 19). */
+export const UNCUT_GEM = fixture('uncut-gem');
 /** Unidentified rare Volatile Wand. */
 export const RARE_UNIDENTIFIED = fixture('rare-unid');
 /** Mirage Archer, level 14, without the Item Class line. */

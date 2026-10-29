@@ -1,7 +1,8 @@
 import type { FilterNumeric, ItemFilters } from '../../lib/ee2/web/price-check/filters/interfaces';
 import { t, tr } from '../core/i18n';
+import type { RarityFilter } from './filter-view';
 
-/** One item property filter row (item level, sockets, quality, corrupted, …). */
+/** One item property filter row (item level, sockets, waystone tier, corrupted, …). */
 export interface ItemFilterChip {
   key: string;
   label: string;
@@ -11,16 +12,23 @@ export interface ItemFilterChip {
   numeric?: FilterNumeric;
 }
 
-/** Numeric ItemFilters keys with the APT i18n key of their label ("Item Level: {0}"). */
+/**
+ * Numeric ItemFilters keys with the EE2 i18n key of their label ("Item Level: {0}"), in EE2's
+ * `FiltersBlock.vue` order. Rune sockets (`augmentSockets`) take the place of PoE1's links;
+ * `socketNumber` is a gem's support sockets; the unidentified tier (EE2 turns it on from 5 up)
+ * replaces the plain "Unidentified" switch for items that show one.
+ */
 const NUMERIC: Array<[keyof ItemFilters, string]> = [
-  ['itemLevel', 'item.item_level'],
-  ['augmentSockets', 'item.augment_sockets'],
   ['socketNumber', 'item.gem_sockets'],
-  ['quality', 'item.quality'],
-  ['gemLevel', 'item.gem_level'],
   ['mapTier', 'item.map_tier'],
+  ['awardedAscendancyPoints', 'item.ascendancy_points'],
   ['areaLevel', 'item.area_level'],
+  ['itemLevel', 'item.item_level'],
   ['stackSize', 'item.stock'],
+  ['augmentSockets', 'item.augment_sockets'],
+  ['gemLevel', 'item.gem_level'],
+  ['quality', 'item.quality'],
+  ['unidentifiedTier', 'item.unidentified_tier'],
 ];
 
 /** "Item Level: {0}" → "Item Level". */
@@ -40,7 +48,12 @@ export function itemFilterChips(filters: ItemFilters): ItemFilterChip[] {
     });
   }
 
-  // stage 3: EE2 always searches by the rarity (its filter has no `disabled`), so it has no switch yet.
+  // EE2 always sends its rarity filter; the off state is our own (`requestFilters`).
+  const rarity = filters.rarity as RarityFilter | undefined;
+  if (rarity) {
+    const label = tr(rarity.value === 'nonunique' ? 'Not unique' : rarity.value === 'magic' ? 'Magic' : 'Normal');
+    chips.push({ key: 'rarity', label, enabled: !rarity.disabled, toggle: () => (rarity.disabled = !rarity.disabled) });
+  }
 
   for (const [key, i18nKey] of NUMERIC) {
     const filter = filters[key] as FilterNumeric | undefined;
@@ -64,15 +77,21 @@ export function itemFilterChips(filters: ItemFilters): ItemFilterChip[] {
     });
   }
 
-  for (const [key, i18nKey] of [['mirrored', 'item.mirrored'], ['sanctified', 'item.sanctified']] as const) {
+  // Off is "not mirrored" / "not sanctified" on the trade site, as EE2 labels it; on is "any".
+  for (const key of ['mirrored', 'sanctified'] as const) {
     const filter = filters[key];
     if (filter) {
-      chips.push({ key, label: t(i18nKey), enabled: !filter.disabled, toggle: () => (filter.disabled = !filter.disabled) });
+      chips.push({
+        key,
+        label: t(filter.disabled ? `item.not_${key}` : `item.${key}`),
+        enabled: !filter.disabled,
+        toggle: () => (filter.disabled = !filter.disabled),
+      });
     }
   }
 
   const unidentified = filters.unidentified;
-  if (unidentified) {
+  if (unidentified && !filters.unidentifiedTier) {
     chips.push({ key: 'unidentified', label: t('item.unidentified'), enabled: !unidentified.disabled, toggle: () => (unidentified.disabled = !unidentified.disabled) });
   }
 

@@ -38,3 +38,19 @@ export function loadGameDataInLanguage(lang: string): Promise<void> {
   }
   return loading;
 }
+
+/** Loads EE2's interface texts (public/data/<lang>/app_i18n.json) the way the app does, from disk. */
+export async function loadI18nFromDisk(lang = 'en'): Promise<void> {
+  const { loadI18n } = await import('../src/app/core/i18n');
+  const global = globalThis as { document?: unknown };
+  const saved = { document: global.document, fetch: globalThis.fetch };
+  global.document = { baseURI: 'http://disk/' };
+  globalThis.fetch = (async (url: string | URL) =>
+    new Response(await readFile(dataPath(new URL(String(url)).pathname.replace(/^\/data\//, '')), 'utf-8'))) as typeof fetch;
+  try {
+    await loadI18n(lang as 'en');
+  } finally {
+    global.document = saved.document;
+    globalThis.fetch = saved.fetch;
+  }
+}
