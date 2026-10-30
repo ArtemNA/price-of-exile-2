@@ -1,14 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { DEFAULT_HOTKEYS, DEFAULT_MAP_CHECK, DEFAULT_STASH_SEARCH, SETTINGS_VERSION } from '../src/app/constants';
 import { defaultSettings, upgradeSettings } from '../src/app/core/settings';
+import { host, hostConfig } from '../src/app/host';
 import { hotkeyConflicts, hotkeyLabel, recordHotkey } from '../src/app/settings/hotkey';
+
+const invoke = vi.hoisted(() => vi.fn(async () => [] as string[]));
+vi.mock('@tauri-apps/api/core', () => ({ invoke }));
 
 function key(code: string, mods: { ctrl?: boolean; alt?: boolean; shift?: boolean } = {}, key = code) {
   return { code, key, ctrlKey: Boolean(mods.ctrl), altKey: Boolean(mods.alt), shiftKey: Boolean(mods.shift) };
 }
 
 describe('settings', () => {
-  it('upgrades the localStorage format of stages 2–10', () => {
+  it('treats settings without a version as the oldest format', () => {
     const marks = { ...DEFAULT_MAP_CHECK, profile: 2 };
     const settings = upgradeSettings({ language: 'en', useIntlSite: true, accountName: 'me', leagueId: 'Keepers', mapCheck: marks });
     expect(settings).toEqual({
@@ -120,6 +124,55 @@ describe('settings', () => {
     expect(dump).toEqual({ ...DEFAULT_STASH_SEARCH[1], enableHotkeys: false });
     expect(defaultSettings().stashSearch).toEqual(DEFAULT_STASH_SEARCH);
     expect(upgradeSettings({ configVersion: 3, stashSearch: v2 }).stashSearch).toEqual(v2);
+  });
+
+  it('reads the copy key from the game config unless the settings choose one', () => {
+    expect(SETTINGS_VERSION).toBe(3);
+    expect(defaultSettings().copyKey).toBeNull();
+    // Version 3 files from before the field get the default without a new version.
+    expect(upgradeSettings({ configVersion: 3, gameTitle: 'Path of Exile 2' }).copyKey).toBeNull();
+    for (const key of ['Alt', 'Shift', 'Ctrl'] as const) expect(upgradeSettings({ configVersion: 3, copyKey: key }).copyKey).toBe(key);
+    for (const key of ['alt', 'Z', 18, true, {}]) expect(upgradeSettings({ configVersion: 3, copyKey: key }).copyKey).toBeNull();
+  });
+
+  it('sends the host its part of the settings, with the copy key', async () => {
+    const settings = {
+      ...defaultSettings(),
+      gameTitle: 'Path of Exile 2',
+      popupPosition: 'opposite-cursor' as const,
+      copyKey: 'Shift' as const,
+      commands: [
+        { text: '/hideout', hotkey: 'F5', send: true },
+        { text: '  ', hotkey: 'F6', send: true },
+      ],
+      stashSearch: [
+        {
+          id: 1,
+          title: 'On',
+          enableHotkeys: true,
+          entries: [
+            { id: 1, name: '', text: 'Jewel', hotkey: 'F2' },
+            { id: 2, name: '', text: 'Rune', hotkey: null },
+            { id: 3, name: '', text: ' ', hotkey: 'F3' },
+          ],
+        },
+        { id: 2, title: 'Off', enableHotkeys: false, entries: [{ id: 1, name: '', text: 'Gem', hotkey: 'F4' }] },
+      ],
+    };
+    const config = hostConfig(settings);
+    expect(config).toEqual({
+      gameTitle: 'Path of Exile 2',
+      hotkeys: DEFAULT_HOTKEYS,
+      commands: [{ text: '/hideout', hotkey: 'F5', send: true }],
+      stashPresets: [{ hotkey: 'F2', text: 'Jewel' }],
+      popupPosition: 'opposite-cursor',
+      copyKey: 'Shift',
+    });
+    await host.setHostConfig(config);
+    expect(invoke).toHaveBeenLastCalledWith('set_host_config', config);
+    // Null asks the host to read the game config.
+    await host.setHostConfig(hostConfig(defaultSettings()));
+    expect(invoke).toHaveBeenLastCalledWith('set_host_config', expect.objectContaining({ copyKey: null, popupPosition: 'center' }));
   });
 
   it('fills missing nested fields and survives a damaged file', () => {

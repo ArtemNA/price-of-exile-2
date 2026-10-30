@@ -6,8 +6,8 @@
 use std::path::Path;
 
 use crate::constants::{
-    ADVANCED_DESCRIPTIONS_ACTION, DEFAULT_ADVANCED_DESCRIPTIONS_KEYS, GAME_CONFIG_FILE,
-    GAME_CONFIG_SECTION,
+    ADVANCED_DESCRIPTIONS_ACTION, COPY_KEY_OVERRIDES, DEFAULT_ADVANCED_DESCRIPTIONS_KEYS,
+    GAME_CONFIG_FILE, GAME_CONFIG_SECTION,
 };
 use crate::platform::{self, vk};
 
@@ -103,9 +103,67 @@ pub fn default_copy_keys() -> Vec<u16> {
     copy_chord(DEFAULT_ADVANCED_DESCRIPTIONS_KEYS)
 }
 
-/// Reads the advanced descriptions key from the game config under `documents`.
-/// Returns the copy keys and where they came from, for the log.
-pub fn read_copy_keys(documents: Option<&Path>) -> (Vec<u16>, String) {
+/// Where the advanced descriptions key came from.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum CopyKeysSource {
+    /// The overlay settings override the game config.
+    Settings,
+    /// The game config file.
+    GameConfig,
+    /// The game's default (Alt): the config could not be read.
+    Default,
+}
+
+/// The keys held while C copies the item, where they came from, and the config file or the reason
+/// it was not read.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CopyKeys {
+    pub keys: Vec<u16>,
+    pub source: CopyKeysSource,
+    pub detail: String,
+}
+
+impl CopyKeys {
+    pub fn initial() -> Self {
+        Self {
+            keys: default_copy_keys(),
+            source: CopyKeysSource::Default,
+            detail: "game config not read yet".into(),
+        }
+    }
+
+    /// "Ctrl+Alt+C (show_advanced_item_descriptions from …)" for the log.
+    pub fn describe(&self) -> String {
+        let source = match self.source {
+            CopyKeysSource::Settings => "set in the settings".to_string(),
+            CopyKeysSource::GameConfig => {
+                format!("{ADVANCED_DESCRIPTIONS_ACTION} from {}", self.detail)
+            }
+            CopyKeysSource::Default => format!("default, {}", self.detail),
+        };
+        format!("{} ({source})", describe(&self.keys))
+    }
+}
+
+/// The virtual key of an override the settings name ("Alt", "Shift", "Ctrl").
+pub fn override_key(name: &str) -> Option<u16> {
+    COPY_KEY_OVERRIDES
+        .iter()
+        .find(|(known, _)| *known == name)
+        .map(|(_, key)| *key)
+}
+
+/// The copy keys: the settings' `override_key` when set, else the advanced descriptions key from
+/// the game config under `documents`, else the default.
+pub fn read_copy_keys(override_key: Option<u16>, documents: Option<&Path>) -> CopyKeys {
+    if let Some(key) = override_key {
+        return CopyKeys {
+            keys: copy_chord(&[key]),
+            source: CopyKeysSource::Settings,
+            detail: String::new(),
+        };
+    }
     let path = documents.map(|dir| dir.join(GAME_CONFIG_FILE));
     let read = path
         .as_ref()
@@ -116,20 +174,22 @@ pub fn read_copy_keys(documents: Option<&Path>) -> (Vec<u16>, String) {
         });
     let file = path.unwrap_or_default();
     match read {
-        Ok(keys) => (
-            copy_chord(&keys),
-            format!("{ADVANCED_DESCRIPTIONS_ACTION} from {}", file.display()),
-        ),
-        Err(e) => (
-            default_copy_keys(),
-            format!("default, {} not read: {e}", file.display()),
-        ),
+        Ok(keys) => CopyKeys {
+            keys: copy_chord(&keys),
+            source: CopyKeysSource::GameConfig,
+            detail: file.display().to_string(),
+        },
+        Err(e) => CopyKeys {
+            keys: default_copy_keys(),
+            source: CopyKeysSource::Default,
+            detail: format!("{} not read: {e}", file.display()),
+        },
     }
 }
 
-/// The copy keys from the game config in the user's Documents folder, and where they came from.
-pub fn copy_keys() -> (Vec<u16>, String) {
-    read_copy_keys(platform::documents_dir().as_deref())
+/// The copy keys with the settings' override, else from the game config in the user's Documents.
+pub fn copy_keys(override_key: Option<u16>) -> CopyKeys {
+    read_copy_keys(override_key, platform::documents_dir().as_deref())
 }
 
 /// "Ctrl+Alt+C" for the log.
@@ -208,21 +268,77 @@ mod tests {
     #[test]
     fn falls_back_to_the_default() {
         assert_eq!(default_copy_keys(), vec![vk::CONTROL, vk::MENU]);
-        let (keys, source) = read_copy_keys(None);
-        assert_eq!(keys, vec![vk::CONTROL, vk::MENU]);
-        assert!(source.starts_with("default"), "{source}");
+        let copy = read_copy_keys(None, None);
+        assert_eq!(copy.keys, vec![vk::CONTROL, vk::MENU]);
+        assert_eq!(copy.source, CopyKeysSource::Default);
+        assert!(
+            copy.describe().starts_with("Ctrl+Alt+C (default"),
+            "{copy:?}"
+        );
 
-        let root = std::env::temp_dir().join(format!("poe-config-{}", std::process::id()));
-        let (keys, source) = read_copy_keys(Some(&root));
-        assert_eq!(keys, vec![vk::CONTROL, vk::MENU]);
-        assert!(source.starts_with("default"), "{source}");
+        let root = temp_root("default");
+        let copy = read_copy_keys(None, Some(&root));
+        assert_eq!(copy.keys, vec![vk::CONTROL, vk::MENU]);
+        assert_eq!(copy.source, CopyKeysSource::Default);
+        assert!(copy.detail.contains("not read"), "{copy:?}");
 
+        write_config(&root, "90");
+        let copy = read_copy_keys(None, Some(&root));
+        assert_eq!(copy.keys, vec![vk::CONTROL, 0x5A]);
+        assert_eq!(copy.source, CopyKeysSource::GameConfig);
+        assert_eq!(
+            copy.detail,
+            root.join(GAME_CONFIG_FILE).display().to_string()
+        );
+        assert!(
+            copy.describe()
+                .starts_with(&format!("Ctrl+Z+C ({ADVANCED_DESCRIPTIONS_ACTION} from")),
+            "{copy:?}"
+        );
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn the_settings_override_the_game_config() {
+        assert_eq!(override_key("Alt"), Some(vk::MENU));
+        assert_eq!(override_key("Shift"), Some(vk::SHIFT));
+        assert_eq!(override_key("Ctrl"), Some(vk::CONTROL));
+        assert_eq!(override_key("alt"), None);
+        assert_eq!(override_key("Z"), None);
+
+        let root = temp_root("override");
+        write_config(&root, "18");
+        let copy = read_copy_keys(Some(vk::SHIFT), Some(&root));
+        assert_eq!(copy.keys, vec![vk::CONTROL, vk::SHIFT]);
+        assert_eq!(copy.source, CopyKeysSource::Settings);
+        assert_eq!(copy.describe(), "Ctrl+Shift+C (set in the settings)");
+        // Ctrl alone is a plain Ctrl+C, for a game bound to Ctrl.
+        assert_eq!(
+            read_copy_keys(Some(vk::CONTROL), None).keys,
+            vec![vk::CONTROL]
+        );
+        // Without the override, the game config again.
+        let copy = read_copy_keys(None, Some(&root));
+        assert_eq!(copy.keys, vec![vk::CONTROL, vk::MENU]);
+        assert_eq!(copy.source, CopyKeysSource::GameConfig);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    fn temp_root(name: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("poe-config-{name}-{}", std::process::id()))
+    }
+
+    fn write_config(root: &Path, value: &str) {
         let file = root.join(GAME_CONFIG_FILE);
         std::fs::create_dir_all(file.parent().unwrap()).unwrap();
-        std::fs::write(&file, "[ACTION_KEYS]\nshow_advanced_item_descriptions=90\n").unwrap();
-        let (keys, source) = read_copy_keys(Some(&root));
-        assert_eq!(keys, vec![vk::CONTROL, 0x5A]);
-        assert!(source.starts_with(ADVANCED_DESCRIPTIONS_ACTION), "{source}");
-        let _ = std::fs::remove_dir_all(&root);
+        std::fs::write(
+            &file,
+            format!(
+                "[ACTION_KEYS]
+show_advanced_item_descriptions={value}
+"
+            ),
+        )
+        .unwrap();
     }
 }

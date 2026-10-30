@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { HotkeyAction, PopupPosition } from './constants';
-import type { ChatCommand } from './core/settings';
+import type { CopyKey, HotkeyAction, PopupPosition } from './constants';
+import type { ChatCommand, Settings } from './core/settings';
 import type { ItemAction } from './core/item-links';
 
 /** A stash search preset with a hotkey, for the host. */
@@ -54,16 +54,50 @@ export interface Status {
   gameActive: boolean;
 }
 
+/** What the host gets of the settings (`set_host_config`). */
+export interface HostConfig {
+  gameTitle: string;
+  hotkeys: Record<HotkeyAction, string | null>;
+  /** Chat commands with text. */
+  commands: ChatCommand[];
+  /** Stash search presets with a hotkey and text, of the groups whose hotkeys are on. */
+  stashPresets: StashHotkey[];
+  popupPosition: PopupPosition;
+  /** The advanced descriptions key instead of the game config's; null = the game config. */
+  copyKey: CopyKey | null;
+}
+
+/** The part of the settings the host needs: it keeps no settings of its own. */
+export function hostConfig(settings: Settings): HostConfig {
+  const { gameTitle, hotkeys, commands, stashSearch, popupPosition, copyKey } = settings;
+  const stashPresets = stashSearch
+    .filter((group) => group.enableHotkeys)
+    .flatMap((group) => group.entries)
+    .filter((entry) => entry.hotkey && entry.text.trim())
+    .map((entry) => ({ hotkey: entry.hotkey!, text: entry.text }));
+  return { gameTitle, hotkeys, commands: commands.filter((command) => command.text.trim()), stashPresets, popupPosition, copyKey };
+}
+
+/** Where the copy keys came from: the settings, the game config, or the default (config not read). */
+export type CopyKeysSource = 'settings' | 'game-config' | 'default';
+
+/** The keys the host presses to copy an item (`get_copy_keys`). */
+export interface CopyKeysStatus {
+  /** "Ctrl+Alt+C". */
+  keys: string;
+  source: CopyKeysSource;
+  /** The game config file, or why it could not be read. */
+  detail: string;
+  /** They changed since the last read: send the hotkeys again, so the host refuses the new copy keys. */
+  changed: boolean;
+}
+
 export const host = {
   getStatus: () => invoke<Status>('get_status'),
-  /** Game window title and hotkeys from the settings; returns a message per unusable hotkey. */
-  setHostConfig: (
-    gameTitle: string,
-    hotkeys: Record<HotkeyAction, string | null>,
-    commands: ChatCommand[],
-    stashPresets: StashHotkey[],
-    popupPosition: PopupPosition,
-  ) => invoke<string[]>('set_host_config', { gameTitle, hotkeys, commands, stashPresets, popupPosition }),
+  /** Game window title, hotkeys and copy key from the settings; returns a message per unusable hotkey. */
+  setHostConfig: (config: HostConfig) => invoke<string[]>('set_host_config', { ...config }),
+  /** Reads the copy keys again (from the game config unless the settings set them). */
+  getCopyKeys: () => invoke<CopyKeysStatus>('get_copy_keys'),
   hidePopup: () => invoke<void>('hide_popup'),
   /** The popup takes the keyboard (for typing into a field); false if Windows refused. */
   popupFocusInput: async () => (popupHasKeyboard = await invoke<boolean>('popup_focus_input')),

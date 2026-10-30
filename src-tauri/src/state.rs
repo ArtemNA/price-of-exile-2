@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use tauri_plugin_global_shortcut::Shortcut;
 
 use crate::constants::{DEFAULT_GAME_TITLE, DEFAULT_TRADE_HOST, ENV_GAME_TITLE, ENV_KEEP_POPUP};
-use crate::game_config;
+use crate::game_config::CopyKeys;
 use crate::hotkeys::Binding;
 use crate::platform::RawHwnd;
 use crate::popup::Placement;
@@ -28,8 +28,10 @@ pub struct AppState {
     placement: Mutex<Option<Placement>>,
     /// Trade site of the game language, where the built-in browser opens.
     trade_host: Mutex<String>,
-    /// Keys held down while C copies the item (`game_config::copy_keys`).
-    copy_keys: Mutex<Vec<u16>>,
+    /// Keys held down while C copies the item and where they came from (`game_config::copy_keys`).
+    copy_keys: Mutex<CopyKeys>,
+    /// Advanced descriptions key the settings set instead of the game config's.
+    copy_key_override: Mutex<Option<u16>>,
     /// See `ENV_KEEP_POPUP`.
     pub keep_popup_on_blur: bool,
 }
@@ -49,7 +51,8 @@ impl AppState {
             busy: AtomicBool::new(false),
             placement: Mutex::new(None),
             trade_host: Mutex::new(DEFAULT_TRADE_HOST.into()),
-            copy_keys: Mutex::new(game_config::default_copy_keys()),
+            copy_keys: Mutex::new(CopyKeys::initial()),
+            copy_key_override: Mutex::new(None),
             keep_popup_on_blur: std::env::var(ENV_KEEP_POPUP).is_ok_and(|v| v == "1"),
         }
     }
@@ -62,14 +65,21 @@ impl AppState {
     }
 
     pub fn copy_keys(&self) -> Vec<u16> {
+        self.copy_keys.lock().unwrap().keys.clone()
+    }
+    pub fn copy_keys_info(&self) -> CopyKeys {
         self.copy_keys.lock().unwrap().clone()
     }
-    /// Returns whether they changed.
-    pub fn set_copy_keys(&self, keys: Vec<u16>) -> bool {
-        let mut current = self.copy_keys.lock().unwrap();
-        let changed = *current != keys;
-        *current = keys;
-        changed
+    /// Returns the previous ones.
+    pub fn set_copy_keys(&self, keys: CopyKeys) -> CopyKeys {
+        std::mem::replace(&mut *self.copy_keys.lock().unwrap(), keys)
+    }
+
+    pub fn copy_key_override(&self) -> Option<u16> {
+        *self.copy_key_override.lock().unwrap()
+    }
+    pub fn set_copy_key_override(&self, key: Option<u16>) {
+        *self.copy_key_override.lock().unwrap() = key;
     }
 
     pub fn game_title(&self) -> String {

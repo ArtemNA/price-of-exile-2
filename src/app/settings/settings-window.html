@@ -134,7 +134,7 @@
                     [attr.aria-pressed]="settings().popupPosition === option.value" (click)="setPopupPosition(option.value)">{{ option.label | tr }}</button>
                 }
               </div>
-              <span class="text-[12px] text-muted">{{ 'Opposite the cursor is how Awakened PoE Trade places it: the popup never covers the item.' | tr }} {{ 'A click into the game outside the popup closes it.' | tr }}</span>
+              <span class="text-[12px] text-muted">{{ 'Opposite the cursor is how Exiled Exchange 2 places it: the popup never covers the item.' | tr }} {{ 'A click into the game outside the popup closes it.' | tr }}</span>
             </div>
 
             <label class="flex items-start gap-2.5">
@@ -195,6 +195,25 @@
             @for (error of hotkeyErrors(); track error) {
               <p class="mt-2 bg-[#3a1a14] px-2 py-1 text-bad">{{ error }}</p>
             }
+
+            <div class="mt-5 flex flex-col gap-1.5">
+              <span class="text-bright">{{ 'Item copy keys' | tr }}</span>
+              @if (copyKeys(); as copy) {
+                <span><span class="text-gold-soft tabular-nums">{{ copyKeysLabel(copy.keys) }}</span> — {{ copyKeySources[copy.source] | tr }}</span>
+                @if (copy.source !== 'settings' && copy.detail) {
+                  <span class="text-[12px] break-all text-muted">{{ (copy.source === 'game-config' ? 'Read from {0}' : '{0}') | tr: copy.detail }}</span>
+                }
+              }
+              <div class="mt-1 flex gap-1">
+                @for (option of copyKeyOptions; track option.value) {
+                  <button class="h-8 border px-3"
+                    [class]="settings().copyKey === option.value ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [attr.aria-pressed]="settings().copyKey === option.value" (click)="setCopyKey(option.value)">{{ option.label | tr }}</button>
+                }
+              </div>
+              <span class="text-[12px] text-muted">{{ 'Path of Exile 2 copies an item with its mod tiers only while its "{0}" key is held, so the overlay presses Ctrl, that key and C. This combination cannot be a hotkey.' | tr: 'Show advanced item descriptions' }}
+                {{ "Choose the key here only if the overlay cannot read it from the game's settings." | tr }}</span>
+            </div>
           </div>
         }
 

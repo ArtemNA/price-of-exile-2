@@ -88,7 +88,6 @@ export const PRICE_CHECK_DEFAULTS = {
   smartInitialSearch: true,
   /** Trade requests through the built-in browser's page, with its login and Cloudflare clearance (APT `builtinBrowser`). */
   builtinBrowser: false,
-  showSeller: false as false | 'account' | 'ign',
 };
 
 /** pathofexile.com hosts: rate limits, Cloudflare checks and the built-in browser apply to them (F-45, F-60). */
@@ -363,9 +362,6 @@ export const CURRENCY_COLORS: Record<string, string> = {
 };
 export const CURRENCY_COLOR_OTHER = '#8f887c';
 
-/** localStorage key of the settings before stage 13; read once to move them into the store. */
-// The old name stays: it is where stages 2–10 kept the settings.
-export const LEGACY_SETTINGS_STORAGE_KEY = 'poe-trade-overlay.settings';
 /** Settings file of `tauri-plugin-store`, in the app config folder. */
 export const SETTINGS_FILE = 'settings.json';
 /** Key of the whole settings object inside the store file. */
@@ -384,6 +380,14 @@ export const DEFAULT_CHAT_COMMANDS: Array<{ text: string; hotkey: string | null;
   { text: '/tradewith @last', hotkey: null, send: true },
   { text: '/hideout @last', hotkey: null, send: true },
 ];
+
+/**
+ * Keys the settings may name for the game's "show advanced item descriptions" action, instead of
+ * reading it from the game config (`COPY_KEY_OVERRIDES` in `constants.rs`). The overlay copies with
+ * Ctrl, that key and C; null = read from the game config, Alt if it cannot be read.
+ */
+export type CopyKey = 'Alt' | 'Shift' | 'Ctrl';
+export const COPY_KEYS: readonly CopyKey[] = ['Alt', 'Shift', 'Ctrl'];
 
 /** Where the popup opens: centred on the game, or in the half opposite to the cursor (APT). */
 export type PopupPosition = 'center' | 'opposite-cursor';

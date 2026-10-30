@@ -101,8 +101,9 @@ fn get_status(state: tauri::State<AppState>) -> Status {
 }
 
 /// Settings the host needs (APT `update-host-config`): game window title, hotkeys, chat commands
-/// and stash search presets, and where the popup goes ("center" or "opposite-cursor").
-/// Returns a message for every hotkey that cannot be used.
+/// and stash search presets, where the popup goes ("center" or "opposite-cursor"), and the
+/// advanced descriptions key that overrides the game config ("Alt", "Shift", "Ctrl"; none: read
+/// the config). Returns a message for every hotkey that cannot be used.
 #[tauri::command]
 fn set_host_config(
     app: AppHandle,
@@ -111,26 +112,72 @@ fn set_host_config(
     commands: Vec<hotkeys::ChatHotkey>,
     stash_presets: Vec<hotkeys::StashHotkey>,
     popup_position: String,
+    copy_key: Option<String>,
 ) -> Vec<String> {
     let state = app.state::<AppState>();
     state.set_game_title(game_title.trim().to_string());
     state.set_popup_centred(popup_position != "opposite-cursor");
+    let mut errors = Vec::new();
+    let copy_key_override = copy_key.and_then(|name| {
+        let key = game_config::override_key(&name);
+        if key.is_none() {
+            errors.push(format!(
+                "Copy key {name:?}: unknown, the game config is used"
+            ));
+        }
+        key
+    });
+    state.set_copy_key_override(copy_key_override);
     // The user may have changed the key in the game since.
     refresh_copy_keys(&app, false);
-    let errors = hotkeys::set_hotkeys(&app, &hotkeys, &commands, &stash_presets);
+    errors.extend(hotkeys::set_hotkeys(
+        &app,
+        &hotkeys,
+        &commands,
+        &stash_presets,
+    ));
     // The title may now match (or no longer match) the window in front.
     on_foreground(&app, platform::current_foreground());
     errors
 }
 
-/// Reads the copy keys from the game config and logs them on the first read and when they
-/// changed.
-fn refresh_copy_keys(app: &AppHandle, first: bool) {
+/// Reads the copy keys (the settings' override, else the game config) and logs them on the first
+/// read and when they changed. Returns whether the keys changed.
+fn refresh_copy_keys(app: &AppHandle, first: bool) -> bool {
     let state = app.state::<AppState>();
-    let (keys, source) = game_config::copy_keys();
-    let description = game_config::describe(&keys);
-    if state.set_copy_keys(keys) || first {
-        log_to_ui(app, format!("Copy keys: {description} ({source})"));
+    let copy = game_config::copy_keys(state.copy_key_override());
+    let description = copy.describe();
+    let previous = state.set_copy_keys(copy.clone());
+    if previous != copy || first {
+        log_to_ui(app, format!("Copy keys: {description}"));
+    }
+    previous.keys != copy.keys
+}
+
+/// The copy keys for the settings page.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CopyKeysStatus {
+    /// "Ctrl+Alt+C".
+    keys: String,
+    source: game_config::CopyKeysSource,
+    /// The config file, or why it was not read.
+    detail: String,
+    /// They differ from the last read: the page sends its hotkeys again, so the new copy keys are
+    /// refused as a hotkey and the old ones allowed.
+    changed: bool,
+}
+
+/// Reads the copy keys again (the user may have rebound the key in the game) and returns them.
+#[tauri::command]
+fn get_copy_keys(app: AppHandle) -> CopyKeysStatus {
+    let changed = refresh_copy_keys(&app, false);
+    let copy = app.state::<AppState>().copy_keys_info();
+    CopyKeysStatus {
+        keys: game_config::describe(&copy.keys),
+        source: copy.source,
+        detail: copy.detail,
+        changed,
     }
 }
 
@@ -264,6 +311,7 @@ pub fn run() {
         .plugin(hotkeys::plugin())
         .invoke_handler(tauri::generate_handler![
             get_status,
+            get_copy_keys,
             set_host_config,
             show_toast,
             set_tray_labels,

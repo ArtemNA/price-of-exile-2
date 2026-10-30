@@ -1,6 +1,8 @@
 import { signal } from '@angular/core';
 import type { MapCheckConfig } from '@/web/map-check/common';
 import {
+  COPY_KEYS,
+  CopyKey,
   DEFAULT_CHAT_COMMANDS,
   DEFAULT_GAME_TITLE,
   DEFAULT_HOTKEYS,
@@ -16,7 +18,6 @@ import {
   PopupPosition,
   POE1_MAP_CHECK_MATCHERS,
   POE1_STASH_SEARCH_TEXTS,
-  LEGACY_SETTINGS_STORAGE_KEY,
   PRICE_CHECK_DEFAULTS,
   SETTINGS_CHANGED_EVENT,
   SETTINGS_FILE,
@@ -69,6 +70,11 @@ export interface Settings {
   startMessage: boolean;
   popupPosition: PopupPosition;
   hotkeys: Record<HotkeyAction, string | null>;
+  /**
+   * The game's "show advanced item descriptions" key, for players whose game config the overlay
+   * cannot read; null = read it from the game config.
+   */
+  copyKey: CopyKey | null;
   commands: ChatCommand[];
   stashSearch: StashSearchGroup[];
   priceCheck: PriceCheckSettings;
@@ -96,6 +102,7 @@ export function defaultSettings(): Settings {
     startMessage: true,
     popupPosition: DEFAULT_POPUP_POSITION,
     hotkeys: { ...DEFAULT_HOTKEYS },
+    copyKey: null,
     commands: DEFAULT_CHAT_COMMANDS.map((command) => ({ ...command })),
     stashSearch: structuredClone(DEFAULT_STASH_SEARCH),
     priceCheck: {
@@ -113,12 +120,13 @@ export function defaultSettings(): Settings {
 
 /**
  * Brings stored settings of any older version up to `SETTINGS_VERSION` (APT `upgradeConfig`).
- * Version 0 is the localStorage format of stages 2–10: flat, no version, no hotkeys or price check.
+ * Versions 1 and 2 are the formats of the first development builds.
  * Version 1 had APT's "instant buyout only" switch (`merchantOnly`) instead of EE2's four listing
  * types: on means instant buyout, off meant online sellers.
  * Version 2 had the PoE1 map marks and stash search presets: version 3 has PoE2 ones (`upgradeMapCheck`,
  * `upgradeStashSearch`).
- * Unknown or missing fields fall back to the defaults, so a damaged file still loads.
+ * Fields added later (`copyKey`) get their defaults without a new version. Unknown or missing
+ * fields fall back to the defaults, so a damaged file still loads.
  */
 export function upgradeSettings(raw: unknown): Settings {
   const defaults = defaultSettings();
@@ -136,6 +144,7 @@ export function upgradeSettings(raw: unknown): Settings {
     ...stored,
     configVersion: SETTINGS_VERSION,
     hotkeys: { ...defaults.hotkeys, ...stored.hotkeys },
+    copyKey: COPY_KEYS.includes(stored.copyKey as CopyKey) ? (stored.copyKey as CopyKey) : null,
     commands: Array.isArray(stored.commands) ? stored.commands : defaults.commands,
     stashSearch: poe1 ? upgradeStashSearch(stashSearch) : stashSearch,
     priceCheck: { ...defaults.priceCheck, ...priceCheck },
@@ -196,11 +205,8 @@ export async function initSettings(): Promise<void> {
   const { emit, listen } = await import('@tauri-apps/api/event');
   const { getCurrentWindow } = await import('@tauri-apps/api/window');
   const store = await load(SETTINGS_FILE, { defaults: {}, autoSave: false });
-  let stored = await store.get<unknown>(SETTINGS_STORE_KEY);
-  if (stored === undefined) {
-    stored = readLegacy();
-    firstStart = stored === undefined;
-  }
+  const stored = await store.get<unknown>(SETTINGS_STORE_KEY);
+  firstStart = stored === undefined;
   const settings = upgradeSettings(stored);
   state.set(settings);
 
@@ -221,15 +227,6 @@ export async function initSettings(): Promise<void> {
   const outdated = stored === undefined || (stored as Partial<Settings>).configVersion !== SETTINGS_VERSION;
   if (outdated && label === MAIN_WINDOW_LABEL) {
     await persistence.save(settings);
-  }
-}
-
-function readLegacy(): unknown {
-  try {
-    const raw = globalThis.localStorage?.getItem(LEGACY_SETTINGS_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : undefined;
-  } catch {
-    return undefined;
   }
 }
 

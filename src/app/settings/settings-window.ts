@@ -7,6 +7,8 @@ import { openUrl, revealItemInDir } from '@tauri-apps/plugin-opener';
 import { poeWebApi } from '@/web/Config';
 import {
   APP_CONTACT,
+  COPY_KEYS,
+  CopyKey,
   DEFAULT_CURRENCY_OPTIONS,
   LISTING_TYPES,
   GAME_LANGS,
@@ -24,7 +26,7 @@ import { TrPipe } from '../core/i18n';
 import { Leagues } from '../core/leagues';
 import { type ChatCommand, isFirstStart, type PriceCheckSettings, settings, type StashSearchGroup, updateSettings } from '../core/settings';
 import { updates } from '../core/updates';
-import { ForegroundEvent, host } from '../host';
+import { CopyKeysSource, CopyKeysStatus, ForegroundEvent, host, hostConfig } from '../host';
 import { MapModsEditor } from '../map-check/map-mods-editor';
 import { hotkeyConflicts } from './hotkey';
 import { HotkeyInput } from './hotkey-input';
@@ -53,7 +55,7 @@ const SECTIONS: Array<{ id: Section; label: string }> = [
 
 const HOTKEYS: Array<{ action: HotkeyAction; label: string; hint: string }> = [
   { action: 'price-check', label: 'Price check', hint: 'Trade listings and poe.ninja price of the hovered item' },
-  { action: 'item-check', label: 'Item check', hint: 'Links and details; on maps, contracts and logbooks the map check' },
+  { action: 'item-check', label: 'Item check', hint: 'Links and details; on waystones and logbooks the map check' },
   { action: 'wiki', label: 'Open on wiki', hint: 'poe2wiki.net page of the item, without the popup' },
   { action: 'poedb', label: 'Open on PoEDB', hint: 'poe2db.tw page of the item, without the popup' },
   { action: 'craft-of-exile', label: 'Open in Craft of Exile', hint: 'The item in the crafting simulator' },
@@ -61,6 +63,13 @@ const HOTKEYS: Array<{ action: HotkeyAction; label: string; hint: string }> = [
   { action: 'stash-panel', label: 'Stash search presets', hint: 'Buttons with your stash searches, between the stash and the inventory' },
   { action: 'browser', label: 'Built-in browser', hint: 'Shows pathofexile.com; pressed again in the browser, back to the game' },
 ];
+
+/** How the copy keys' source reads after the keys ("Ctrl + Alt + C — from the game's settings"). */
+const COPY_KEYS_SOURCES: Record<CopyKeysSource, string> = {
+  'game-config': "from the game's settings",
+  default: "the game's default: its settings could not be read",
+  settings: 'set here',
+};
 
 /** The main window: settings (APT `SettingsWindow.vue`) and the host log. Pushes the host's part of the settings. */
 @Component({
@@ -79,6 +88,13 @@ export class SettingsWindow {
     { value: 'opposite-cursor', label: 'Opposite the cursor' },
   ];
   protected readonly stashTextMax = STASH_SEARCH_MAX_LENGTH;
+  protected readonly copyKeyOptions: Array<{ value: CopyKey | null; label: string }> = [
+    { value: null, label: 'From the game' },
+    ...COPY_KEYS.map((key) => ({ value: key, label: key })),
+  ];
+  protected readonly copyKeySources = COPY_KEYS_SOURCES;
+  /** The keys the host copies items with and where they came from; null until the host answers. */
+  protected readonly copyKeys = signal<CopyKeysStatus | null>(null);
   protected readonly uiLangs = UI_LANGS;
   protected readonly gameLangs = GAME_LANGS;
   protected readonly intlSite = POE_INTL_WEB_API;
@@ -123,24 +139,7 @@ export class SettingsWindow {
     host.getStatus().then((status) => this.gameActive.set(status.gameActive));
 
     // The host keeps no settings of its own: every change of the title or the hotkeys goes there.
-    effect(() => {
-      const { gameTitle, hotkeys, commands, stashSearch, popupPosition } = settings();
-      const stashPresets = stashSearch
-        .filter((group) => group.enableHotkeys)
-        .flatMap((group) => group.entries)
-        .filter((entry) => entry.hotkey && entry.text.trim())
-        .map((entry) => ({ hotkey: entry.hotkey!, text: entry.text }));
-      host
-        .setHostConfig(gameTitle, hotkeys, commands.filter((command) => command.text.trim()), stashPresets, popupPosition)
-        .then((errors) => {
-          this.hotkeyErrors.set(errors);
-          return host.getStatus();
-        })
-        .then(
-          (status) => this.hostGameTitle.set(status.gameTitle),
-          (e) => this.hotkeyErrors.set([String(e)]),
-        );
-    });
+    effect(() => this.pushHostConfig());
 
     const unlisteners = [
       listen<ForegroundEvent>('foreground', ({ payload }) => {
@@ -149,8 +148,46 @@ export class SettingsWindow {
       }),
       listen<string>('log', ({ payload }) => this.append(payload)),
       listen<boolean>('exclusive-fullscreen', ({ payload }) => this.exclusiveFullscreen.set(payload)),
+      // The settings window opened from the tray: the key may have been rebound in the game since.
+      getCurrentWindow().onFocusChanged(({ payload: focused }) => {
+        if (focused) this.refreshCopyKeys();
+      }),
     ];
     inject(DestroyRef).onDestroy(() => unlisteners.forEach((p) => p.then((unlisten) => unlisten())));
+  }
+
+  private pushHostConfig(): void {
+    host
+      .setHostConfig(hostConfig(settings()))
+      .then((errors) => {
+        this.hotkeyErrors.set(errors);
+        this.refreshCopyKeys();
+        return host.getStatus();
+      })
+      .then(
+        (status) => this.hostGameTitle.set(status.gameTitle),
+        (e) => this.hotkeyErrors.set([String(e)]),
+      );
+  }
+
+  /** Reads the copy keys again; when they changed, the hotkeys go to the host again to be checked against them. */
+  private refreshCopyKeys(): void {
+    host.getCopyKeys().then(
+      (status) => {
+        this.copyKeys.set(status);
+        if (status.changed) this.pushHostConfig();
+      },
+      (e) => this.append(`Copy keys: ${e}`),
+    );
+  }
+
+  /** "Ctrl+Alt+C" → "Ctrl + Alt + C", as the hotkeys show. */
+  protected copyKeysLabel(keys: string): string {
+    return keys.split('+').join(' + ');
+  }
+
+  protected setCopyKey(copyKey: CopyKey | null): void {
+    updateSettings({ copyKey });
   }
 
   protected setGameTitle(title: string): void {

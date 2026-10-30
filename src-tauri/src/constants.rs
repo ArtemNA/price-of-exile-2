@@ -19,6 +19,13 @@ pub const GAME_CONFIG_FILE: &str = r"My Games\Path of Exile 2\poe2_production_Co
 pub const GAME_CONFIG_SECTION: &str = "ACTION_KEYS";
 pub const ADVANCED_DESCRIPTIONS_ACTION: &str = "show_advanced_item_descriptions";
 pub const DEFAULT_ADVANCED_DESCRIPTIONS_KEYS: &[u16] = &[vk::MENU];
+/// Advanced descriptions keys the settings may set instead of the game config's, for players whose
+/// config cannot be read (`set_host_config` `copy_key`; `COPY_KEY_OVERRIDES` in `constants.ts`).
+pub const COPY_KEY_OVERRIDES: [(&str, u16); 3] = [
+    ("Alt", vk::MENU),
+    ("Shift", vk::SHIFT),
+    ("Ctrl", vk::CONTROL),
+];
 /// The modifiers of the copy keys are released this long after C (EE2: "Game was dropping the
 /// release inputs").
 pub const COPY_RELEASE_DELAY: Duration = Duration::from_millis(10);

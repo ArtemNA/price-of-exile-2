@@ -27,3 +27,4 @@
 | `06-find-in-stash-fake-game.png` | Етап 6: Find in Stash ввів `"Greater Iron Rune"` у пошук сховища фейкової гри |
 | `07-map-check-waystone.png` | Етап 7: map check вейстоуна Tier 14 — числа, 4 моди, нерозпізнаний рядок гібридного мода |
 | `07-map-check-corrupted.png` | Етап 7: зіпсований вейстоун Tier 16 — 8 чисел, Temporal Chains позначено попередженням (профіль I) |
+| `08-settings-copy-keys.png` | Етап 8: Settings → Hotkeys, блок «Item copy keys» — Ctrl + Alt + C з конфігу гри і перемикач From the game / Alt / Shift / Ctrl |

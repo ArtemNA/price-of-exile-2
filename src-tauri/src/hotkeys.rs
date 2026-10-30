@@ -538,6 +538,15 @@ mod tests {
             Some(Shortcut::new(Some(Modifiers::CONTROL), Code::KeyC))
         );
         assert_eq!(copy_shortcut(&[vk::CONTROL, 0x5A]), None);
+        // The Shift override of the settings reserves Ctrl+Shift+C instead.
+        let shift = crate::game_config::read_copy_keys(Some(vk::SHIFT), None);
+        assert_eq!(
+            copy_shortcut(&shift.keys),
+            Some(Shortcut::new(
+                Some(Modifiers::CONTROL | Modifiers::SHIFT),
+                Code::KeyC
+            ))
+        );
 
         let (list, errors) = parse_hotkeys(
             &config(&[
