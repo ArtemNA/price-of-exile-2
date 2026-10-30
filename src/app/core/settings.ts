@@ -14,6 +14,8 @@ import {
   ListingType,
   UiLang,
   PopupPosition,
+  POE1_MAP_CHECK_MATCHERS,
+  POE1_STASH_SEARCH_TEXTS,
   LEGACY_SETTINGS_STORAGE_KEY,
   PRICE_CHECK_DEFAULTS,
   SETTINGS_CHANGED_EVENT,
@@ -114,6 +116,8 @@ export function defaultSettings(): Settings {
  * Version 0 is the localStorage format of stages 2–10: flat, no version, no hotkeys or price check.
  * Version 1 had APT's "instant buyout only" switch (`merchantOnly`) instead of EE2's four listing
  * types: on means instant buyout, off meant online sellers.
+ * Version 2 had the PoE1 map marks and stash search presets: version 3 has PoE2 ones (`upgradeMapCheck`,
+ * `upgradeStashSearch`).
  * Unknown or missing fields fall back to the defaults, so a damaged file still loads.
  */
 export function upgradeSettings(raw: unknown): Settings {
@@ -124,16 +128,46 @@ export function upgradeSettings(raw: unknown): Settings {
   if (priceCheck.listingType == null && typeof merchantOnly === 'boolean') {
     priceCheck.listingType = merchantOnly ? 'securable' : 'online';
   }
+  const poe1 = (stored.configVersion ?? 0) < 3;
+  const stashSearch = Array.isArray(stored.stashSearch) ? stored.stashSearch : defaults.stashSearch;
+  const mapCheck = { ...defaults.mapCheck, ...stored.mapCheck };
   return {
     ...defaults,
     ...stored,
     configVersion: SETTINGS_VERSION,
     hotkeys: { ...defaults.hotkeys, ...stored.hotkeys },
     commands: Array.isArray(stored.commands) ? stored.commands : defaults.commands,
-    stashSearch: Array.isArray(stored.stashSearch) ? stored.stashSearch : defaults.stashSearch,
+    stashSearch: poe1 ? upgradeStashSearch(stashSearch) : stashSearch,
     priceCheck: { ...defaults.priceCheck, ...priceCheck },
-    mapCheck: { ...defaults.mapCheck, ...stored.mapCheck },
+    mapCheck: poe1 ? upgradeMapCheck(mapCheck) : mapCheck,
   };
+}
+
+/**
+ * PoE1 map marks of version 2: a mark moves to the PoE2 mod that replaces it or is dropped, and
+ * the PoE2 default marks are added where the mod has no entry yet. The user's other marks stay.
+ */
+function upgradeMapCheck(config: MapCheckConfig): MapCheckConfig {
+  const stats = Array.isArray(config.selectedStats) ? config.selectedStats : [];
+  const selectedStats = stats.flatMap((entry) => {
+    if (!Object.hasOwn(POE1_MAP_CHECK_MATCHERS, entry.matcher)) return [entry];
+    const matcher = POE1_MAP_CHECK_MATCHERS[entry.matcher];
+    return matcher && !stats.some((other) => other.matcher === matcher) ? [{ ...entry, matcher }] : [];
+  });
+  for (const entry of DEFAULT_MAP_CHECK.selectedStats) {
+    if (!selectedStats.some((other) => other.matcher === entry.matcher)) selectedStats.push({ ...entry });
+  }
+  return { ...config, selectedStats };
+}
+
+/** PoE1 stash search presets of version 2 become the PoE2 ones; edited presets and groups stay. */
+function upgradeStashSearch(groups: StashSearchGroup[]): StashSearchGroup[] {
+  return groups.map((group) => ({
+    ...group,
+    entries: (group.entries ?? []).map((entry) =>
+      Object.hasOwn(POE1_STASH_SEARCH_TEXTS, entry.text) ? { ...entry, text: POE1_STASH_SEARCH_TEXTS[entry.text] } : entry,
+    ),
+  }));
 }
 
 const state = signal<Settings>(defaultSettings());

@@ -251,7 +251,7 @@
                     <div class="flex min-w-0 flex-1 flex-col gap-1">
                       <input #text class="h-7 border bg-panel px-2 text-bright outline-none focus:border-gold"
                         [class]="entry.text.length > stashTextMax ? 'border-[#8a3a2c]' : 'border-line-strong'"
-                        [placeholder]="'Search text, e.g. &quot;Map Tier&quot;' | tr" [attr.aria-label]="'Search text' | tr" [value]="entry.text"
+                        [placeholder]="'Search text, e.g. &quot;Waystone Tier&quot;' | tr" [attr.aria-label]="'Search text' | tr" [value]="entry.text"
                         (blur)="updateEntry(group.id, entry.id, { text: text.value })" (keydown.enter)="updateEntry(group.id, entry.id, { text: text.value })" />
                       <input #name class="h-6 border border-line bg-panel px-2 text-[12px] text-text outline-none focus:border-gold"
                         [placeholder]="'Button name (optional)' | tr" [attr.aria-label]="'Button name' | tr" [value]="entry.name"

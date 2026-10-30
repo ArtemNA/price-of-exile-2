@@ -1,16 +1,15 @@
-import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
 import type { ParsedItem } from '@/parser';
-import { MAP_CHECK_PROFILES, RARITY_COLORS } from '../constants';
-import { tr, TranslatePipe, TrPipe } from '../core/i18n';
+import { MAP_CHECK_PROFILES, MAP_MOD_TYPE_LABELS, RARITY_COLORS } from '../constants';
+import { TranslatePipe, TrPipe } from '../core/i18n';
 import { settings, updateSettings } from '../core/settings';
 import type { ItemView } from '../popup-window/item-view';
-import { cycleDecision, type Decision, mapCheckView, modTextParts, toggleSeen } from './map-check';
+import { cycleDecision, type Decision, type MapNumber, mapCheckView, modTextParts, toggleSeen } from './map-check';
 
-/** Map check (APT `MapCheck.vue` + `MapStatButton.vue`): the map's mods coloured by the user's marks. */
+/** Map check (EE2 `MapCheck.vue` + `MapStatButton.vue`): the waystone's numbers and its mods coloured by the user's marks. */
 @Component({
   selector: 'app-map-check',
-  imports: [NgTemplateOutlet, TranslatePipe, TrPipe],
+  imports: [TranslatePipe, TrPipe],
   templateUrl: './map-check-panel.html',
   host: { class: 'flex flex-col' },
 })
@@ -22,14 +21,13 @@ export class MapCheckPanel {
   protected readonly map = computed(() => mapCheckView(this.item(), this.config()));
   protected readonly plate = computed(() => RARITY_COLORS[this.view().rarity] ?? RARITY_COLORS['Normal']);
   protected readonly profiles = MAP_CHECK_PROFILES;
-  /** Rarity and pack size of the waystone, when it has them (stage 7: revives, drop chance…). */
-  protected readonly areaProps = computed(() => {
-    const item = this.item();
-    return [
-      item.mapItemRarity && { label: tr('Rarity'), value: item.mapItemRarity },
-      item.mapPackSize && { label: tr('Pack size'), value: item.mapPackSize },
-    ].filter((prop): prop is { label: string; value: number } => Boolean(prop));
-  });
+  protected readonly typeLabels = MAP_MOD_TYPE_LABELS;
+  /** The name plate shows the rare / magic name; the base ("Waystone (Tier 16)") goes under it. */
+  protected readonly baseName = computed(() => (this.view().name !== this.map().name ? this.map().name : null));
+
+  protected numberText({ value, percent }: MapNumber): string {
+    return percent ? `${value > 0 ? '+' : ''}${value}%` : String(value);
+  }
 
   protected selectProfile(profile: number): void {
     updateSettings({ mapCheck: { ...this.config(), profile } });

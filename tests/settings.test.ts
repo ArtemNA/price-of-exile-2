@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_HOTKEYS, DEFAULT_MAP_CHECK, SETTINGS_VERSION } from '../src/app/constants';
+import { DEFAULT_HOTKEYS, DEFAULT_MAP_CHECK, DEFAULT_STASH_SEARCH, SETTINGS_VERSION } from '../src/app/constants';
 import { defaultSettings, upgradeSettings } from '../src/app/core/settings';
 import { hotkeyConflicts, hotkeyLabel, recordHotkey } from '../src/app/settings/hotkey';
 
@@ -46,7 +46,6 @@ describe('settings', () => {
   });
 
   it('turns the "instant buyout only" switch of version 1 into a listing type', () => {
-    expect(SETTINGS_VERSION).toBe(2);
     expect(defaultSettings().priceCheck.listingType).toBe('securable');
     const on = upgradeSettings({ configVersion: 1, priceCheck: { merchantOnly: true, searchStatRange: 5 } });
     expect(on.priceCheck).toEqual({ ...defaultSettings().priceCheck, listingType: 'securable', searchStatRange: 5 });
@@ -55,6 +54,72 @@ describe('settings', () => {
     // Version 2 keeps its choice.
     expect(upgradeSettings({ configVersion: 2, priceCheck: { listingType: 'any' } }).priceCheck.listingType).toBe('any');
     expect(upgradeSettings({ configVersion: 1 }).priceCheck.listingType).toBe('securable');
+  });
+
+  it('moves the PoE1 map marks of version 2 to PoE2 mods and adds the PoE2 defaults', () => {
+    expect(SETTINGS_VERSION).toBe(3);
+    const mine = { matcher: 'Monsters are Armoured', decision: '-g-' };
+    const mapCheck = {
+      profile: 2,
+      showNewStats: true,
+      selectedStats: [
+        { matcher: 'Players have #% to all maximum Resistances', decision: 'w-d' },
+        { matcher: 'Players have #% less Recovery Rate of Life and Energy Shield', decision: 'dd-' },
+        { matcher: 'Area contains two Unique Bosses', decision: 'g--' },
+        { matcher: 'Monsters reflect #% of Physical Damage', decision: 'd--' },
+        mine,
+      ],
+    };
+    const upgraded = upgradeSettings({ configVersion: 2, mapCheck }).mapCheck;
+    expect(upgraded.profile).toBe(2);
+    expect(upgraded.showNewStats).toBe(true);
+    expect(upgraded.selectedStats).toEqual([
+      { matcher: '#% maximum Player Resistances', decision: 'w-d' },
+      { matcher: 'Players have #% less Recovery Rate of Life and Energy Shield', decision: 'dd-' },
+      mine,
+      { matcher: 'Players have #% less Cooldown Recovery Rate', decision: 'w--' },
+      { matcher: 'Players are periodically Cursed with Elemental Weakness', decision: 'w--' },
+      { matcher: 'Players are periodically Cursed with Enfeeble', decision: 'w--' },
+      { matcher: 'Players are periodically Cursed with Temporal Chains', decision: 'w--' },
+    ]);
+    // Version 3 keeps the marks as they are, removed defaults stay removed.
+    const v3 = { ...mapCheck, selectedStats: [mine] };
+    expect(upgradeSettings({ configVersion: 3, mapCheck: v3 }).mapCheck).toEqual(v3);
+    expect(upgradeSettings({ configVersion: 2 }).mapCheck).toEqual(DEFAULT_MAP_CHECK);
+  });
+
+  it('turns the PoE1 stash search presets of version 2 into PoE2 ones and keeps edited ones', () => {
+    const v2 = [
+      {
+        id: 1,
+        title: 'Map rolling',
+        enableHotkeys: true,
+        entries: [
+          { id: 1, name: '', text: '"Pack Size: +3"', hotkey: 'F2' },
+          { id: 2, name: '', text: '"less Recovery"', hotkey: null },
+          { id: 3, name: 'mine', text: '"Monster Damage"', hotkey: null },
+          { id: 4, name: '', text: '"Cannot Leech Mana"', hotkey: null },
+        ],
+      },
+      {
+        id: 2,
+        title: 'Dump sorting',
+        enableHotkeys: false,
+        entries: ['Currency', '"Divination Card"', 'Fossil', '"Map Tier"', '"Map Device" "Rarity: Normal"', 'Tane Laboratory'].map(
+          (text, i) => ({ id: i + 1, name: '', text, hotkey: null }),
+        ),
+      },
+    ];
+    const [rolling, dump] = upgradeSettings({ configVersion: 2, stashSearch: v2 }).stashSearch;
+    expect(rolling.entries).toEqual([
+      { id: 1, name: '', text: '"Increased Pack Size"', hotkey: 'F2' },
+      { id: 2, name: '', text: '"Additional Packs"', hotkey: null },
+      { id: 3, name: 'mine', text: '"Monster Damage"', hotkey: null },
+      { id: 4, name: '', text: '"Less Recovery Rate"', hotkey: null },
+    ]);
+    expect(dump).toEqual({ ...DEFAULT_STASH_SEARCH[1], enableHotkeys: false });
+    expect(defaultSettings().stashSearch).toEqual(DEFAULT_STASH_SEARCH);
+    expect(upgradeSettings({ configVersion: 3, stashSearch: v2 }).stashSearch).toEqual(v2);
   });
 
   it('fills missing nested fields and survives a damaged file', () => {

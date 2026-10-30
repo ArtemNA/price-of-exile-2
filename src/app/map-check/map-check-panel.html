@@ -1,32 +1,29 @@
-<div class="relative border-b" [style.border-color]="plate().rule">
-  @if (map().image; as image) {
-    <img class="block aspect-[21/8] w-full object-cover" [src]="image" alt="" />
-    <div class="absolute inset-x-0 bottom-0 flex flex-col items-center bg-linear-to-t from-black/90 via-black/70 to-transparent px-2.5 pt-6 pb-1.5">
-      <ng-container *ngTemplateOutlet="nameplate" />
-    </div>
-  } @else {
-    <div class="flex flex-col items-center px-2.5 pt-2 pb-1.5" [style.background]="plate().plate">
-      <ng-container *ngTemplateOutlet="nameplate" />
-    </div>
-  }
-</div>
-
-<ng-template #nameplate>
-  <span class="font-display text-lg leading-tight font-medium" [style.color]="plate().text">{{ map().name }}</span>
+<div class="flex flex-col items-center border-b px-2.5 pt-2 pb-1.5" [style.background]="plate().plate" [style.border-color]="plate().rule">
+  <span class="font-display text-lg leading-tight font-medium" [style.color]="plate().text">{{ view().name }}</span>
   <span class="font-display text-[13px] leading-tight text-text">
-    @if (view().rarity === 'Rare' && view().name !== map().name) {
-      <span [style.color]="plate().text">{{ view().name }}</span> ·
+    @if (baseName(); as base) {
+      <span [style.color]="plate().text">{{ base }}</span>
+    } @else if (map().tier) {
+      {{ 'Tier {0}' | tr: map().tier! }}
     }
-    @if (item().mapTier; as tier) {
-      {{ 'Tier {0}' | tr: tier }}
+    @if (map().corrupted) {
+      · <span class="text-bad">{{ 'Corrupted' | tr }}</span>
+    }
+    @if (map().unidentified) {
+      · <span class="text-bad">{{ 'Unidentified' | tr }}</span>
     }
   </span>
-</ng-template>
+</div>
+
+@if (map().numbers.length) {
+  <div class="grid grid-cols-2 gap-x-4 px-2.5 pt-1.5 text-[12px] text-muted">
+    @for (number of map().numbers; track number.label) {
+      <span class="flex justify-between gap-2">{{ number.label | tr }} <span class="text-bright tabular-nums">{{ numberText(number) }}</span></span>
+    }
+  </div>
+}
 
 <div class="flex items-center gap-3 px-2.5 py-1.5 text-[11px] text-muted">
-  @for (prop of areaProps(); track prop.label) {
-    <span>{{ prop.label }} <span class="text-bright tabular-nums">+{{ prop.value }}%</span></span>
-  }
   <span class="flex-1"></span>
   <span>{{ 'map_check.profile' | t }}</span>
   <div class="flex gap-0.5">
@@ -38,15 +35,8 @@
   </div>
 </div>
 
-@if (map().mavenReminder) {
-  <div class="mx-2.5 mb-1.5 flex items-center gap-2 text-[12px] leading-tight text-muted italic">
-    <img src="images/maven-witness.png" alt="" class="w-7" />
-    <span class="whitespace-pre-line">{{ 'map_check.maven_reminder' | t }}</span>
-  </div>
-}
-
 <div class="mx-2.5 mb-2.5 flex flex-col border border-line bg-well">
-  @for (stat of map().stats; track stat.matcher) {
+  @for (stat of map().stats; track stat.matcher + stat.type) {
     <div class="flex border-l-[3px] not-last:border-b not-last:border-b-line" [class]="rowClass(stat.decision)">
       <button class="flex min-w-0 flex-1 items-center gap-2 py-1.5 pr-1 pl-2 text-left" [title]="'Mark: deadly → warning → good → seen → none' | tr"
         (click)="cycle(stat.matcher)">
@@ -63,6 +53,9 @@
             }
           }
         </span>
+        @if (stat.type && typeLabels[stat.type]; as label) {
+          <span class="flex-none border border-line-strong px-1 text-[10px] text-muted">{{ label | tr }}</span>
+        }
         <span class="truncate" [class.text-muted]="stat.decision === 's'" [title]="stat.matcher">
           @for (part of parts(stat.matcher, stat.roll); track $index) {@if (part.value) {<b class="font-semibold text-bright tabular-nums">{{ part.text }}</b>} @else {<span>{{ part.text }}</span>}}
         </span>
@@ -79,7 +72,8 @@
     </div>
   }
   @for (text of map().unknown; track text) {
-    <div class="border-l-[3px] border-l-transparent px-2 py-1.5 not-last:border-b not-last:border-b-line">
+    <div class="border-l-[3px] border-l-transparent px-2 py-1.5 not-last:border-b not-last:border-b-line"
+      [title]="'The game data does not know this line, so it cannot be marked. It can be the second line of a mod above.' | tr">
       <span class="text-warn">{{ 'Not recognized modifier —' | tr }}</span> {{ text }}
     </div>
   }

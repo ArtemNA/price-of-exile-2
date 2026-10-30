@@ -25,3 +25,5 @@
 | `06-item-check-ring.png` | Етап 6: рідкісне кільце — Wiki, PoEDB, Craft of Exile |
 | `06-item-check-rune.png` | Етап 6: руна — без Craft of Exile, ціна poe.ninja з трендом |
 | `06-find-in-stash-fake-game.png` | Етап 6: Find in Stash ввів `"Greater Iron Rune"` у пошук сховища фейкової гри |
+| `07-map-check-waystone.png` | Етап 7: map check вейстоуна Tier 14 — числа, 4 моди, нерозпізнаний рядок гібридного мода |
+| `07-map-check-corrupted.png` | Етап 7: зіпсований вейстоун Tier 16 — 8 чисел, Temporal Chains позначено попередженням (профіль I) |

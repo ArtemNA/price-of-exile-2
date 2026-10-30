@@ -371,7 +371,7 @@ export const SETTINGS_FILE = 'settings.json';
 /** Key of the whole settings object inside the store file. */
 export const SETTINGS_STORE_KEY = 'settings';
 /** Current settings format; `upgradeSettings` brings older files up to it. */
-export const SETTINGS_VERSION = 2;
+export const SETTINGS_VERSION = 3;
 /** Event the window that changed the settings sends to the other windows. */
 export const SETTINGS_CHANGED_EVENT = 'settings-changed';
 
@@ -425,20 +425,17 @@ export const DEFAULT_HOTKEYS: Record<HotkeyAction, string | null> = {
   browser: null,
 };
 
-/**
- * Stash search presets (APT `WidgetStashSearch.vue defaultInstances`). APT's "Reflect" preset
- * looked for map reflect mods, which left the game (FINDINGS F-39): "less Recovery" takes its place.
- */
+/** Stash search presets (EE2 `WidgetStashSearch.vue defaultInstances`). */
 export const DEFAULT_STASH_SEARCH = [
   {
     id: 1,
     title: 'Map rolling',
     enableHotkeys: true,
     entries: [
-      { id: 1, name: '', text: '"Pack Size: +3"', hotkey: null },
-      { id: 2, name: '', text: '"less Recovery"', hotkey: null },
-      { id: 3, name: '', text: '"Cannot Leech Life"', hotkey: null },
-      { id: 4, name: '', text: '"Cannot Leech Mana"', hotkey: null },
+      { id: 1, name: '', text: '"Increased Pack Size"', hotkey: null },
+      { id: 2, name: '', text: '"Additional Packs"', hotkey: null },
+      { id: 3, name: '', text: '"Burning Ground"', hotkey: null },
+      { id: 4, name: '', text: '"Less Recovery Rate"', hotkey: null },
     ],
   },
   {
@@ -447,14 +444,30 @@ export const DEFAULT_STASH_SEARCH = [
     enableHotkeys: true,
     entries: [
       { id: 1, name: '', text: 'Currency', hotkey: null },
-      { id: 2, name: '', text: '"Divination Card"', hotkey: null },
-      { id: 3, name: '', text: 'Fossil', hotkey: null },
-      { id: 4, name: '', text: '"Map Tier"', hotkey: null },
-      { id: 5, name: '', text: '"Map Device" "Rarity: Normal"', hotkey: null },
-      { id: 6, name: '', text: 'Tane Laboratory', hotkey: null },
+      { id: 2, name: '', text: '"Martial Weapon"', hotkey: null },
+      { id: 3, name: '', text: 'Jewel', hotkey: null },
+      { id: 4, name: '', text: '"Waystone Tier"', hotkey: null },
+      { id: 5, name: '', text: '"Rarity: Normal"', hotkey: null },
+      { id: 6, name: '', text: 'Trials:', hotkey: null },
     ],
   },
 ];
+/**
+ * The PoE1 presets settings before version 3 had (APT's, "Reflect" already replaced), each with the
+ * PoE2 preset that takes its place. Presets the user changed stay as they are.
+ */
+export const POE1_STASH_SEARCH_TEXTS: Record<string, string> = {
+  '"Pack Size: +3"': '"Increased Pack Size"',
+  '"less Recovery"': '"Additional Packs"',
+  '"Cannot Leech Life"': '"Burning Ground"',
+  '"Cannot Leech Mana"': '"Less Recovery Rate"',
+  'Currency': 'Currency',
+  '"Divination Card"': '"Martial Weapon"',
+  'Fossil': 'Jewel',
+  '"Map Tier"': '"Waystone Tier"',
+  '"Map Device" "Rarity: Normal"': '"Rarity: Normal"',
+  'Tane Laboratory': 'Trials:',
+};
 /** The game's stash search takes at most this many characters (APT marks longer texts red). */
 export const STASH_SEARCH_MAX_LENGTH = 250;
 
@@ -466,16 +479,52 @@ export const STASH_PANEL_WIDTH = 360;
 /** Map check profiles, shown as roman numerals; decisions are stored one character per profile. */
 export const MAP_CHECK_PROFILES = ['I', 'II', 'III'];
 /**
- * Default map check marks (APT `WidgetItemCheck.vue initInstance`). APT also marks physical and
- * elemental reflect, which left the game and would show the "outdated wording" banner (FINDINGS F-39):
- * here the less recovery mod takes their place.
+ * Default map check marks. EE2 (`WidgetItemCheck.vue`) keeps APT's PoE1 marks: of them only
+ * "#% maximum Player Resistances" exists in PoE2 data; reflect and "two Unique Bosses" do not.
+ * The rest are PoE2 waystone mods that hurt most builds: less recovery (deadly), less cooldown
+ * recovery and the periodic curses (warning).
  */
 export const DEFAULT_MAP_CHECK = {
   profile: 1,
   showNewStats: false,
   selectedStats: [
-    { matcher: 'Players have #% to all maximum Resistances', decision: 'w--' },
     { matcher: 'Players have #% less Recovery Rate of Life and Energy Shield', decision: 'd--' },
-    { matcher: 'Area contains two Unique Bosses', decision: 'g--' },
+    { matcher: '#% maximum Player Resistances', decision: 'w--' },
+    { matcher: 'Players have #% less Cooldown Recovery Rate', decision: 'w--' },
+    { matcher: 'Players are periodically Cursed with Elemental Weakness', decision: 'w--' },
+    { matcher: 'Players are periodically Cursed with Enfeeble', decision: 'w--' },
+    { matcher: 'Players are periodically Cursed with Temporal Chains', decision: 'w--' },
   ],
+};
+/**
+ * PoE1 map marks of settings before version 3 (APT and EE2 defaults): the PoE2 mod that takes the
+ * mark over, or null to drop it.
+ */
+export const POE1_MAP_CHECK_MATCHERS: Record<string, string | null> = {
+  'Players have #% to all maximum Resistances': '#% maximum Player Resistances',
+  'Monsters reflect #% of Physical Damage': null,
+  'Monsters reflect #% of Elemental Damage': null,
+  'Area contains two Unique Bosses': null,
+};
+
+/** The waystone's own numbers in the map check header, in the game's order; English labels for `tr`. */
+export const MAP_CHECK_NUMBERS = [
+  { field: 'mapRevives', label: 'Revives', percent: false },
+  { field: 'mapPackSize', label: 'Pack size', percent: true },
+  { field: 'mapMagicMonsters', label: 'Magic monsters', percent: true },
+  { field: 'mapRareMonsters', label: 'Rare monsters', percent: true },
+  { field: 'mapDropChance', label: 'Waystone drop chance', percent: true },
+  { field: 'mapItemRarity', label: 'Item rarity', percent: true },
+  { field: 'mapMonsterRarity', label: 'Monster rarity', percent: true },
+  { field: 'mapEffectiveness', label: 'Monster effectiveness', percent: true },
+  { field: 'areaLevel', label: 'Area level', percent: false },
+] as const;
+
+/** Mods of other types than explicit get a label in the map check (desecrated, enchant: delirium). */
+export const MAP_MOD_TYPE_LABELS: Record<string, string> = {
+  implicit: 'Implicit',
+  enchant: 'Enchant',
+  desecrated: 'Desecrated',
+  fractured: 'Fractured',
+  crafted: 'Crafted',
 };

@@ -1,13 +1,14 @@
 // Map check: the item's map mods with the user's marks per profile.
-// Port of APT `map-check/MapCheck.vue`, `MapStatButton.vue`, `settings-maps.vue` and the `isMapLike`
+// Port of EE2 `map-check/MapCheck.vue`, `MapStatButton.vue`, `settings-maps.vue` and the `isMapLike`
 // check of `item-check/WidgetItemCheck.vue`. Decision strings and their helpers come unchanged
-// from EE2 `web/map-check/common.ts`; APT mutates the config in place, here every change
+// from EE2 `web/map-check/common.ts`; EE2 mutates the config in place, here every change
 // returns a new config for the settings signal.
-// stage 7: rewritten for waystones, tablets and PoE2 defaults (PLAN §6).
+// PoE2 waystones have no fixed area (no screenshot in the item data) and there is no Maven; the
+// header shows the waystone's own numbers instead. Tablets open the item check.
 
 import { STATS_ITERATOR } from '@/assets/data';
 import { ItemCategory, ItemRarity, type ParsedItem } from '@/parser';
-import { ModifierType } from '@/parser/modifiers';
+import { MAP_CHECK_NUMBERS } from '../constants';
 import {
   type MapCheckConfig,
   type StatMatcher,
@@ -25,16 +26,30 @@ export type Decision = 'd' | 'w' | 'g' | 's' | '-';
 export interface MapStat {
   matcher: string;
   roll?: number;
+  /** Modifier type (`explicit`, `enchant`…), as EE2 `prepareMapStats` gives it. */
+  type?: string;
   decision: Decision;
+}
+
+/** One of the waystone's own numbers; `label` is English, the panel translates it. */
+export interface MapNumber {
+  label: string;
+  value: number;
+  percent: boolean;
 }
 
 export interface MapCheckView {
   name: string;
-  /** Area screenshot; none for unidentified unique and blighted maps, as in APT. */
-  image?: string;
-  mavenReminder: boolean;
+  tier?: number;
+  corrupted: boolean;
+  unidentified: boolean;
+  /** Revives, pack size, rarity… the item shows; 0 revives is shown too. */
+  numbers: MapNumber[];
   stats: MapStat[];
-  /** Explicit mod lines the stat data does not know. */
+  /**
+   * Mod lines the stat data does not know (EE2 shows them all), roll ranges removed. Such a line can
+   * be the second line of a hybrid mod whose first line is known (FINDINGS F-09).
+   */
   unknown: string[];
   /** Marked mods whose wording the stat data no longer has. */
   hasOutdated: boolean;
@@ -77,18 +92,26 @@ export function toggleSeen(config: MapCheckConfig, matcher: string): MapCheckCon
 }
 
 export function mapCheckView(item: ParsedItem, config: MapCheckConfig): MapCheckView {
-  const hideImage = (item.rarity === ItemRarity.Unique && item.isUnidentified) || Boolean(item.mapBlighted);
+  const numbers: MapNumber[] = [];
+  for (const { field, label, percent } of MAP_CHECK_NUMBERS) {
+    const value = item[field];
+    if (value != null && !Number.isNaN(value)) numbers.push({ label, value, percent });
+  }
   return {
     name: item.info.name,
-    image: hideImage ? undefined : item.info.map?.screenshot,
-    // PoE2 has no Maven.
-    mavenReminder: false,
-    stats: prepareMapStats(item)
-      .filter((stat) => stat.type === ModifierType.Explicit)
-      .map(({ matcher, roll }) => ({ matcher, roll, decision: decisionOf(config, matcher) })),
-    unknown: item.unknownModifiers.filter((mod) => mod.type === ModifierType.Explicit).map((mod) => mod.text),
+    tier: item.mapTier,
+    corrupted: item.isCorrupted,
+    unidentified: item.isUnidentified,
+    numbers,
+    stats: prepareMapStats(item).map(({ matcher, roll, type }) => ({ matcher, roll, type, decision: decisionOf(config, matcher) })),
+    unknown: item.unknownModifiers.map((mod) => withoutRollRange(mod.text)),
     hasOutdated: config.selectedStats.some((entry) => isOutdated(config.profile, entry)),
   };
+}
+
+/** "+26(26-30)% to…" → "+26% to…": the game's advanced mod text puts the tier range after the roll. */
+export function withoutRollRange(text: string): string {
+  return text.replace(/(\d)\(-?[\d.]+--?[\d.]+\)/g, '$1');
 }
 
 /** Matcher text split around `#`, with the roll in its place (APT `ItemModifierText.vue`). */

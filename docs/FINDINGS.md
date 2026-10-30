@@ -187,6 +187,21 @@
 
 ---
 
+## Етап 7 — Map check (30.10.2026)
+
+### F-23. Map check для вейстоунів
+- Шапка: назва, «Waystone (Tier N)», Corrupted. Числа вейстоуна: Revives (0 теж показується), Pack size, Magic / Rare monsters, Waystone drop chance, Item rarity, Monster rarity, Monster effectiveness; Area level — у журналів експедиції. Скриншота локації й нагадування Maven немає: жоден вейстоун у даних не має `map.screenshot` (у PoE2 немає фіксованої локації), Maven немає в грі; зображення й тексти Maven прибрано.
+- Як EE2, показуються моди всіх типів з тегом (Enchant — напр., Delirium «Players in Area are #% Delirious», Implicit, Desecrated, Fractured, Crafted) і всі невідомі рядки. Таблички — у item check.
+- Позначки за замовчуванням (усі є в `stats.ndjson`): небезпечно — `Players have #% less Recovery Rate of Life and Energy Shield`; попередження — `#% maximum Player Resistances` (єдиний дійсний у PoE2 з дефолтів EE2), `Players have #% less Cooldown Recovery Rate` і три «Players are periodically Cursed with …». Reflect і «two Unique Bosses» у PoE2 немає; «бажаних» за замовчуванням немає. Банер «змінилось формулювання» з ними не показується.
+- Міграція налаштувань до версії 3: «all maximum Resistances» переходить у «maximum Player Resistances» з позначками профілів, reflect і два боси прибираються, нові дефолти додаються лише для модів без запису. Пресети сховища (формально етап 9) замінено на EE2: Map rolling — `"Increased Pack Size"`, `"Additional Packs"`, `"Burning Ground"`, `"Less Recovery Rate"`; Dump sorting — `Currency`, `"Martial Weapon"`, `Jewel`, `"Waystone Tier"`, `"Rarity: Normal"`, `Trials:`; змінені користувачем записи не чіпаються.
+- Рядок «+26% to Monster Critical Damage Bonus» — нове формулювання (у даних лише «Monsters have #% Critical Damage Bonus»): показується як нерозпізнаний, без діапазону, з підказкою.
+- Позначки ключуються текстом matcher мовою даних гри: з російськими даними англійські дефолти виглядають «застарілими» і банер показується на кожному вейстоуні (APT і EE2 так само). **PoE1: перевірити** — з російськими даними в еталоні те саме.
+- Ключі EE2 `map_magic_monsters` / `map_rare_monsters` мають неправильні тексти («Monster Effectiveness» / «Monster Rarity») — підписи наші. `mapGold` EE2 не розбирає (поля немає з 0.5.2). У `waystone-corrupted.txt` «Item Rarity: +17%» двічі — чи так у грі, не перевірено.
+- Перевірено на фейковій грі (знімки `07-*`): обидва вейстоуни, Temporal Chains позначено попередженням у профілі I.
+- **PoE1: ні** (крім позначеного).
+
+---
+
 ## Ідеї на потім
 
 ### I-01. Жорсткі ліміти trade2: показувати збережене замість «зачекайте» (запит власника 30.10.2026)
