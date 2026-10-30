@@ -128,7 +128,11 @@
       "spirit": "Дух: {0}",
       "sanctified": "Sanctified",
       "not_sanctified": "Not sanctified",
-      "unidentified_tier": "Неідентифікований: "
+      "unidentified_tier": "Неідентифікований: ",
+      "has_empty_affix": "Будь-який",
+      "has_empty_prefix": "Префікс",
+      "has_empty_suffix": "Суфікс",
+      "requires_level": "Потр. рівень: {0}"
     },
     "item_category": {
       "prop": "Категорія: {0}",
@@ -239,7 +243,8 @@
       "hide_low_ilvl": "Рівень предмета замалий, щоб на ньому могли бути всі моди",
       "hide_not_max_level": "Уміння не максимального рівня рідко додають цінності",
       "hide_revives": "Вибирайте, лише якщо не 0 і ви не збираєтеся покращувати його сферою Exalted",
-      "hide_total_all_res": "Додає мало порівняно із загальним опором, хіба що значення високе"
+      "hide_total_all_res": "Додає мало порівняно із загальним опором, хіба що значення високе",
+      "hidden_explicit_toggle": "Explicit"
     },
     "online_filter": {
       "offline_toggle": "Офлайн і онлайн",
@@ -255,7 +260,9 @@
       "currency_any": "Будь-яка валюта",
       "currency_only_chaos": "Сфера хаосу",
       "currency_only_div": "Божественна сфера",
-      "currency_chaos_div": "Обидві сфери"
+      "currency_chaos_div": "Обидві сфери",
+      "currency_exalted_div": "Exalted/Divine",
+      "currency_only_exalted": "Exalted Orb"
     },
     "widget": {
       "title": "заголовок віджета",
@@ -339,7 +346,10 @@
       "getting_price_from": "з poe.ninja …",
       "you_have": "У вас є",
       "stack": "Стос",
-      "legacy_bulk_xchg_msg": "Цей предмет доступний на ринку обміну валют"
+      "legacy_bulk_xchg_msg": "Цей предмет доступний на ринку обміну валют",
+      "filter_exalt_divine": "Лише Exalt/Divine",
+      "gem_sockets": "Гнізда",
+      "likely_price_fixed": "Переважно нестандартна валюта: "
     },
     "settings": {
       "title": "Налаштування - Awakened PoE Trade",
@@ -728,6 +738,19 @@
     "Worth in this currency at the poe.ninja rate": "Вартість у цій валюті за курсом poe.ninja",
     "poe.ninja": "poe.ninja",
     "Wiki": "Вікі",
-    "iLvl": "iLvl"
+    "iLvl": "iLvl",
+    "Wrong game language": "Не та мова гри",
+    "Copied without mod details": "Скопійовано без деталей модів",
+    "Not recognized modifier": "Нерозпізнаний модифікатор",
+    "Unable to determine fractured stat": "Не вдалося визначити fractured-стат",
+    "min": "мін",
+    "You": "Ви",
+    "in demand": "попит",
+    "Gone": "Зникло",
+    "Retry": "Повторити",
+    "Browser": "Браузер",
+    "Instant": "Миттєво",
+    "Offline": "Офлайн",
+    "Instant or Online": "Миттєво або онлайн"
   }
 }

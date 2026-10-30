@@ -1,0 +1,727 @@
+<!-- Exiled Exchange 2's price check (PriceCheckWindow.vue → CheckedItem.vue), top to bottom. -->
+<!-- The window is wider than the column: beside it, on the side facing the screen centre, related items
+     and the "Rate limiting" tab stand over the (transparent) rest of the window, as in EE2. The side
+     areas let clicks through to the host, so a click there closes the popup (backdropDown). -->
+@if (popupSide() === 'right') {
+  <ng-container *ngTemplateOutlet="side; context: { related: true, tab: true, towards: 'left' }" />
+} @else if (popupSide() === 'center') {
+  <ng-container *ngTemplateOutlet="side; context: { related: false, tab: true, towards: 'left' }" />
+}
+<div class="ee2-column flex min-h-0 w-[460px] flex-none flex-col">
+<ee2-title-bar />
+
+<div class="ee2-body relative flex min-h-0 grow flex-col bg-[#2d3748]">
+  @if (warning(); as note) {
+    <div class="mx-4 mt-4">
+      <ng-container *ngTemplateOutlet="errorBox; context: { name: 'Copied without mod details' | tr, text: note }" />
+    </div>
+  }
+  @if (error(); as message) {
+    <div class="m-4">
+      <ng-container *ngTemplateOutlet="errorBox; context: { name: 'item.parse_error' | t, text: (message | tr) }" />
+    </div>
+  }
+
+  @if (active(); as preset) {
+    <div class="flex min-h-0 grow flex-col p-4">
+      <!-- Name bar (FilterName.vue) -->
+      <div class="ee2-filter-name">
+        <button class="truncate rounded border px-2" [class]="nameExact() ? 'border-[#a0aec0]' : 'border-[#1a202c]'"
+          (click)="toggleNameAccuracy()">{{ nameLabel() }}</button>
+        @if (preset.filters.corrupted) {
+          <button class="px-2" (click)="toggleCorrupted()">
+            @if (isCorrupted()) {
+              <span class="text-[#f56565]">{{ 'item.corrupted' | t }}</span>
+            } @else {
+              <span class="text-[#718096]">{{ 'item.not_corrupted' | t }}</span>
+            }
+          </button>
+        }
+      </div>
+
+      <!-- poe.ninja line (PriceTrend.vue); the volume block is not shown yet -->
+      @if (ninjaQuick(); as price) {
+        <div class="flex items-center pb-4" style="min-height: 3rem">
+          <ng-container *ngTemplateOutlet="quickPrice; context: { price, img: itemImg(), base: ninjaBaseOnly(), size: itemImgSize(), icon: true }" />
+          @if (trendView(); as trend) {
+            <div class="ee2-trend-btn" role="button" (click)="openNinja()">
+              <div class="text-center">
+                <div class="leading-tight">
+                  @if (trend.forecast === 'down') {
+                    <ee2-icon name="angle-double-down" class="pr-1 text-[#e53e3e]" />
+                  } @else if (trend.forecast === 'up') {
+                    <ee2-icon name="angle-double-up" class="pr-1 text-[#48bb78]" />
+                  } @else {
+                    <span class="ee2-sans pr-1 leading-none text-[#718096]">±</span>
+                  }
+                  <span>{{ trend.text }}</span>
+                </div>
+                <div class="text-xs leading-none text-[#a0aec0]">{{ 'trade_result.graph_7d' | t }}</div>
+              </div>
+              <svg viewBox="0 0 48 32" class="h-8 w-12 overflow-visible" preserveAspectRatio="none">
+                <path [attr.d]="trend.path.area" fill="#4a5568" />
+                <path [attr.d]="trend.path.line" fill="none" stroke="#a0aec0" stroke-width="1" />
+              </svg>
+            </div>
+          }
+        </div>
+      } @else if (ninjaUnknown()) {
+        <div class="flex items-center pb-4" style="min-height: 3rem">
+          <ng-container *ngTemplateOutlet="quickPrice; context: { price: null, img: itemImg(), base: false, size: itemImgSize(), icon: true }" />
+        </div>
+      }
+
+      <!-- Chips (FiltersBlock.vue) -->
+      <div class="flex flex-wrap items-center gap-2 pb-3">
+        @for (chip of ee2Chips(); track chip.key) {
+          @if (chip.kind === 'numeric') {
+            <div class="ee2-chip pr-1" [class.ee2-chip-active]="!chip.filter.disabled">
+              <button class="pl-2" (click)="toggleNumeric(chip.filter)">{{ chip.name }}</button>
+              <app-num-input class="ee2-chip-input" [style.width]="chipInputWidth(chip.filter.value)" [value]="chip.filter.value" [label]="chip.name"
+                (valueChange)="setNumeric(chip.filter, 'value', $event)" (submit)="runSearch()" />
+              @if ('max' in chip.filter) {
+                <span>–</span>
+                <app-num-input class="ee2-chip-input" [style.width]="chipInputWidth(chip.filter.max)" [value]="chip.filter.max" [label]="chip.name" placeholder="…"
+                  (valueChange)="setNumeric(chip.filter, 'max', $event)" (submit)="runSearch()" />
+              }
+            </div>
+          } @else {
+            <button class="ee2-chip flex items-center pr-2 pl-1" [class.ee2-chip-active]="chip.active" [class.cursor-default]="!chip.toggle" (click)="clickChip(chip)">
+              <span class="pl-1">{{ chip.text }}</span>
+              @if (chip.key === 'stats' && statsFolded()) {
+                <ee2-icon name="chevron-down" class="pl-2 text-xs text-[#cbd5e0]" />
+              }
+            </button>
+          }
+        }
+      </div>
+
+      <!-- Stat filters -->
+      @if (!statsFolded() && hasStats()) {
+        <div class="mb-4" [class]="ee2Presets().length > 1 ? 'mt-1' : 'mt-4'">
+          @if (ee2Presets().length > 1) {
+            <div class="flex">
+              <div class="w-5 border-b border-[#4a5568]"></div>
+              <div class="flex divide-x divide-[#4a5568] overflow-hidden rounded-t border-x border-t border-[#4a5568]">
+                @for (p of ee2Presets(); track p.id) {
+                  <button class="ee2-preset-btn" [class.ee2-preset-active]="p.id === presets()!.active" (click)="selectPreset(p.id)">{{ p.id | t }}</button>
+                }
+              </div>
+              <div class="flex-1 border-b border-[#4a5568]"></div>
+            </div>
+          }
+          @for (stat of ee2Stats(); track $index) {
+            <ng-container *ngTemplateOutlet="statRow; context: { $implicit: stat }" />
+          }
+          @if (unrevealed(); as row) {
+            <div class="ee2-filter">
+              <div class="flex min-w-0 flex-1 flex-col">
+                <div class="flex items-baseline pb-px">
+                  <button class="flex min-w-0 items-baseline text-left" type="button" (click)="toggleUnrevealed(row)">
+                    <ee2-icon [name]="row.filter.disabled ? 'square' : 'check-square'" class="w-5 shrink-0" [class.text-[#a0aec0]]="row.filter.disabled" />
+                    <span class="truncate" style="line-height: 1rem">{{ row.text }}</span>
+                  </button>
+                </div>
+                <div class="flex">
+                  <div class="w-5"></div>
+                  <span class="ee2-tag ee2-tag-desecrated">{{ 'filters.tag_desecrated' | t }}</span>
+                </div>
+              </div>
+            </div>
+          }
+          @if (!ee2Stats().length && !unknownMods().length && !unrevealed()) {
+            <div class="border-b border-[#4a5568] py-2">{{ 'filters.empty' | t }}</div>
+          }
+          @for (mod of unknownMods(); track $index) {
+            <div class="flex flex-col border-b border-[#4a5568] py-2">
+              <div class="flex items-baseline pb-1">
+                <ee2-icon name="warning" class="w-5 shrink-0 text-[#f6ad55]" />
+                <div class="ee2-search-text relative mr-1 flex min-w-0" style="line-height: 1rem">
+                  <span class="truncate"><ng-container *ngTemplateOutlet="modText; context: { $implicit: parts(mod.text) }" /></span>
+                  <span class="ee2-search-text-full cursor-default whitespace-pre-wrap"><ng-container *ngTemplateOutlet="modText; context: { $implicit: parts(mod.text) }" /></span>
+                </div>
+              </div>
+              <div class="ml-5 text-xs leading-none">
+                <span class="text-[#718096]">{{ mod.type | t }} &mdash; </span>
+                <span class="text-[#f6ad55]">{{ 'Not recognized modifier' | tr }}</span>
+              </div>
+            </div>
+          }
+          @if (missingFractured()) {
+            <div class="flex flex-col border-b border-[#4a5568] py-2">
+              <div class="flex items-baseline pb-1">
+                <ee2-icon name="warning" class="w-5 shrink-0 text-[#f6ad55]" />
+                <div class="mr-1 flex min-w-0" style="line-height: 1rem">{{ 'Unable to determine fractured stat' | tr }}</div>
+              </div>
+              <div class="ml-5 text-xs leading-none text-[#718096]">{{ 'filters.tag_explicit' | t }} &mdash;</div>
+            </div>
+          }
+          <div class="flex gap-x-4">
+            <button class="w-40 rounded-b bg-[#4a5568] px-2 py-1 leading-none text-[#cbd5e0]" (click)="statsFolded.set(true)">
+              {{ 'filters.collapse' | t }} <ee2-icon name="chevron-up" class="pl-1 text-xs text-[#718096]" />
+            </button>
+            @if (anyHidden()) {
+              <ng-container *ngTemplateOutlet="toggle; context: { on: showHidden(), key: hiddenLabel(), flip: showHidden, cls: 'pt-2' }" />
+            }
+            <ng-container *ngTemplateOutlet="toggle; context: { on: showSources(), key: 'filters.mods_toggle', flip: showSources, cls: 'ml-auto pt-2' }" />
+          </div>
+        </div>
+      }
+
+      <!-- Results (TradeListing.vue / TradeBulk.vue), or Search / Trade before searching -->
+      @if (showResults()) {
+        @if (activeTab() === 'bulk') {
+          <ng-container *ngTemplateOutlet="bulkResults" />
+        } @else {
+          <ng-container *ngTemplateOutlet="tradeResults" />
+        }
+      } @else {
+        <div class="flex items-center justify-between">
+          <div class="flex w-40">
+            <button class="ee2-btn" style="min-width: 5rem" (click)="runSearch()">{{ 'Search' | tr }}</button>
+          </div>
+          @if (activeTab() !== 'bulk') {
+            <ng-container *ngTemplateOutlet="tradeLinks" />
+          }
+        </div>
+      }
+
+      <!-- Stack value (StackValue.vue) -->
+      @if (stackValue(); as value) {
+        <div class="mt-2 rounded border border-dashed border-[#718096] p-2">
+          <div class="flex leading-none text-[#cbd5e0]">
+            <div class="w-1/2">
+              {{ 'trade_result.you_have' | t }} <span class="ee2-sans">×</span> {{ value.have.amount }}
+              <ee2-icon name="arrow-right" class="px-1 text-xs text-[#718096]" /> {{ value.have.price }}
+            </div>
+            @if (value.stack; as stack) {
+              <div class="w-1/2 pl-2">
+                {{ 'trade_result.stack' | t }} <span class="ee2-sans">×</span> {{ stack.amount }}
+                <ee2-icon name="arrow-right" class="px-1 text-xs text-[#718096]" /> {{ stack.price }}
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+</div>
+@if (popupSide() !== 'right') {
+  <ng-container *ngTemplateOutlet="side; context: { related: true, tab: popupSide() === 'left', towards: 'right' }" />
+}
+
+<!-- Beside the column (PriceCheckWindow.vue): related items at the top, the rate limiting tab at the bottom
+     edge next to the column. `towards`: the side the column is on. -->
+<ng-template #side let-related="related" let-tab="tab" let-towards="towards">
+  <div class="pointer-events-none relative flex min-w-0 flex-1" [class.flex-row-reverse]="towards === 'left'">
+    @if (related) {
+      <ng-container *ngTemplateOutlet="relatedPanel; context: { towards }" />
+    }
+    @if (tab) {
+      <button class="ee2-rate-tab pointer-events-auto" [class]="towards === 'left' ? 'right-0' : 'left-0'" [class.ee2-rate-limited]="isLimited()"
+        (click)="showRateLimits.set(!showRateLimits())">Rate limiting</button>
+      @if (showRateLimits()) {
+        <div class="ee2-sans pointer-events-auto absolute bottom-0 z-20 mb-8 border-4 border-[#1a202c] bg-[#2d3748] p-4 text-[#cbd5e0]"
+          [class]="towards === 'left' ? 'right-0' : 'left-0'">
+          @for (limit of rateLimits(); track limit.policy) {
+            <div [class.text-[#fc8181]]="limit.hasQueue">Policy: {{ limit.policy }}</div>
+            <div>
+              @for (rule of limit.rules; track $index) {
+                <div>
+                  <span>{{ rule.active }} / {{ rule.max }} over {{ rule.window }}s</span>
+                  @if (rule.queue) {
+                    <span class="pl-1">(queue: {{ rule.queue }})</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+</ng-template>
+
+<!-- Related items (RelatedItems.vue): the 4 px border is open on the column's side. -->
+<ng-template #relatedPanel let-towards="towards">
+  @if (this.related(); as group) {
+    <div class="ee2-related pointer-events-auto mt-6 self-start" [class.ee2-related-left]="towards === 'left'" [class.ee2-related-right]="towards !== 'left'">
+      @if ('error' in group) {
+        <div class="p-2">{{ group.error }}</div>
+      } @else {
+        @if (group.related.length) {
+          <div class="w-1/2 flex-1 p-2">
+            @for (entry of group.related; track entry.id) {
+              <div class="rounded px-1" [class.bg-[#4a5568]]="entry.highlight">
+                <ng-container *ngTemplateOutlet="quickPrice; context: { price: relatedQuick(entry.div), img: entry.icon, base: false, size: 'w-8 h-8', icon: false }" />
+                <div class="mb-1 overflow-hidden text-left whitespace-nowrap text-[#718096]">{{ entry.name }}</div>
+              </div>
+            }
+          </div>
+        }
+        @if (group.items.length) {
+          <div class="w-1/2 flex-1 p-2">
+            @for (entry of group.items; track entry.id) {
+              <div>
+                <ng-container *ngTemplateOutlet="quickPrice; context: { price: relatedQuick(entry.div), img: entry.icon, base: false, size: 'w-8 h-8', icon: false }" />
+                <div class="mb-1 overflow-hidden text-left whitespace-nowrap text-[#718096]">{{ entry.name }}</div>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+</ng-template>
+
+<!-- ItemQuickPrice.vue: "icon → 5 × [exalted]" (icon: true) or "icon → 4.5 exalted" (currency as text) -->
+<ng-template #quickPrice let-price="price" let-img="img" let-base="base" let-size="size" let-icon="icon">
+  <div class="flex items-center gap-x-1 text-base" [class.flex-1]="icon" [class.justify-center]="icon">
+    @if (base) {
+      <span class="text-[#cbd5e0]">{{ 'trade_result.base_item' | t }}</span>
+    } @else {
+      <div class="flex shrink-0 items-center justify-center" [class]="size">
+        @if (img === '404') {
+          <span class="ee2-img-404 max-h-full max-w-full"></span>
+        } @else {
+          <img [src]="img" alt="" class="max-h-full max-w-full overflow-hidden" />
+        }
+      </div>
+    }
+    <ee2-icon name="arrow-right" class="px-1 text-sm text-[#718096]" />
+    <div class="overflow-hidden whitespace-nowrap">
+      @if (price) {
+        <span [class.ee2-golden]="price.div">{{ price.min }}</span>
+        @if (price.max) {
+          <span class="ee2-sans text-[#718096]"> ~ </span><span [class.ee2-golden]="price.div">{{ price.max }}</span>
+        }
+        @if (icon) {
+          <span class="ee2-sans" [class.ee2-golden]="price.div"> ×</span>
+        } @else {
+          <span [class.ee2-golden]="price.div">&nbsp;{{ price.currency }}</span>
+        }
+      } @else {
+        <span class="px-1">?</span>
+      }
+    </div>
+    @if (icon && price) {
+      <div class="flex size-8 shrink-0 items-center justify-center">
+        <app-currency [tag]="quickIcon(price)" [size]="32" />
+      </div>
+    }
+  </div>
+</ng-template>
+
+<!-- UiToggle.vue -->
+<ng-template #toggle let-on="on" let-key="key" let-flip="flip" let-cls="cls">
+  <button class="flex items-center text-[#cbd5e0]" [class]="cls" style="height: 1.375rem" (click)="flip.set(!on)">
+    <ee2-icon [name]="on ? 'toggle-on' : 'toggle-off'" class="pr-1" [class]="on ? 'text-[#e2e8f0]' : 'text-[#718096]'" />
+    {{ key | t }}
+  </button>
+</ng-template>
+
+<!-- ItemModifierText.vue: the rolled numbers in Exo 2 white -->
+<ng-template #modText let-parts>
+  @for (part of parts; track $index) {
+    <span [class]="part.roll ? 'ee2-roll text-white' : 'text-[#edf2f7]'">{{ part.text }}</span>
+  }
+</ng-template>
+
+<!-- FilterModifier.vue -->
+<ng-template #statRow let-stat>
+  @let fullText = filterText(stat);
+  @let text = parts(fullText, stat.roll?.value);
+  @let short = parts(shortText(fullText), stat.roll?.value);
+  <div class="ee2-filter">
+    @if (showSourceInfo(stat)) {
+      <div class="ee2-mods">
+        @for (source of stat.sources; track $index) {
+          @let info = sourceInfo(stat, source);
+          <div class="py-1 pl-5">
+            <div class="ee2-italic text-[#a0aec0]">{{ info.title }}</div>
+            @for (line of info.lines; track $index) {
+              <div class="flex items-baseline">
+                <span [class.line-through]="!line.contributes"><ng-container *ngTemplateOutlet="modText; context: { $implicit: line.parts }" /></span>
+                @if (line.contributes && line.contribution) {
+                  <div class="ml-auto w-12 shrink-0 rounded border border-[#4a5568] text-center">{{ line.contribution }}</div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+    <div class="flex min-w-0 flex-1 flex-col">
+      <div class="flex items-baseline justify-between pb-px">
+        <button class="flex min-w-0 items-baseline text-left" type="button" (click)="toggleStat(stat)">
+          <ee2-icon [name]="stat.disabled ? 'square' : 'check-square'" class="w-5 shrink-0" [class.text-[#a0aec0]]="stat.disabled" />
+          <div class="ee2-search-text relative mr-1 flex min-w-0 flex-1" style="line-height: 1rem">
+            <span class="truncate"><ng-container *ngTemplateOutlet="modText; context: { $implicit: short }" /></span>
+            <span class="ee2-search-text-full whitespace-pre-wrap"><ng-container *ngTemplateOutlet="modText; context: { $implicit: text }" /></span>
+          </div>
+        </button>
+        <div class="flex items-baseline gap-x-1">
+          @if (q20(stat); as quality) {
+            <div class="ee2-quality-label">{{ quality }}</div>
+          }
+          @if (stat.roll && !stat.oils) {
+            <div class="ee2-roll-inputs flex gap-x-px">
+              <app-num-input [value]="rollValue(stat, 'min')" [decimals]="stat.roll.dp" [label]="'Minimum' | tr" [placeholder]="'min' | tr"
+                (valueChange)="setRoll(stat, 'min', $event)" (submit)="runSearch()" />
+              <app-num-input [value]="rollValue(stat, 'max')" [decimals]="stat.roll.dp" [label]="'Maximum' | tr" [placeholder]="'max' | tr"
+                (valueChange)="setRoll(stat, 'max', $event)" (submit)="runSearch()" />
+            </div>
+          }
+        </div>
+      </div>
+      <div class="flex">
+        <div class="flex w-5 items-start">
+          @if (stat.hidden) {
+            <span class="ee2-hidden-eye relative cursor-pointer text-xs leading-none text-[#718096]">
+              <ee2-icon name="eye-slash" />
+              @if (hiddenReason(stat); as reason) {
+                <span class="ee2-tippy ee2-hidden-reason">{{ reason }}</span>
+              }
+            </span>
+          }
+        </div>
+        <div class="flex min-w-0 flex-1 flex-col gap-1">
+          <div class="flex min-w-0 flex-1 items-start gap-x-2">
+            @if (tagOf(stat); as tag) {
+              @if (fracturedState(stat)) {
+                <button class="ee2-tag" [class]="tag.cls" type="button" [title]="fracturedHint(stat)" [attr.aria-pressed]="fracturedState(stat) === 'on'"
+                  (click)="toggleFractured(stat)">{{ tag.text }}</button>
+              } @else {
+                <span class="ee2-tag" [class]="tag.cls">{{ tag.text }}</span>
+              }
+            }
+            @let tierList = tiers(stat);
+            @if (tierList.length) {
+              <div class="flex items-center gap-x-1 text-xs leading-none">
+                @for (tier of tierList; track $index) {
+                  <span [class]="tier.cls">{{ 'filters.tier' | t: tier.tier }}</span>
+                }
+              </div>
+            }
+            @if (emptyAffix(stat) != null) {
+              <div class="flex gap-x-1">
+                @for (option of emptyAffixChoices(stat); track option.value) {
+                  <button class="ee2-option-btn" [class.ee2-option-selected]="emptyAffix(stat) === option.value" type="button" (click)="setEmptyAffix(stat, option.value)">{{ option.key | t }}</button>
+                }
+              </div>
+            }
+          </div>
+          @let elements = elementalOptions(stat);
+          @if (elements.length) {
+            <div class="flex gap-x-1">
+              @for (option of elements; track option.value) {
+                <button class="ee2-option-btn" [class]="'ee2-type-' + option.tag" [class.ee2-option-selected]="option.selected" type="button"
+                  (click)="selectElemental(stat, option.value)" (contextmenu)="$event.preventDefault(); selectElemental(stat, option.value, true)">{{ option.key | t }}</button>
+              }
+            </div>
+          }
+        </div>
+        @if (stat.roll?.bounds) {
+          @let s = slider(stat);
+          <div #track class="ee2-slider mr-4" style="width: 12.5rem" [class]="'ee2-slider-' + s.mode" (mousedown)="slide($event, stat, track)">
+            <span class="ee2-bound" [class.ee2-inclusive]="s.minIn">{{ stat.roll.bounds.min }}</span>
+            @if (s.mode !== 'none') {
+              <div class="ee2-fill" [style.--left]="s.left + '%'" [style.--right]="s.right + '%'"></div>
+            }
+            <div class="ee2-tick" [style.left]="'max(0.125rem, min(' + s.tick + '% - 0.0625rem, 100% - 0.25rem))'"></div>
+            <span class="ee2-bound" [class.ee2-inclusive]="s.maxIn">{{ stat.roll.bounds.max }}</span>
+          </div>
+        }
+        <div style="width: calc(2 * 3rem + 1px)"></div>
+      </div>
+    </div>
+    @if (anointment(stat); as anoint) {
+      <div class="flex flex-col">
+        <div class="flex items-center gap-x-1">
+          <div class="flex">
+            @for (oil of anoint.oils; track $index) {
+              <img class="size-8" [src]="oil.icon" [title]="oil.name" alt="" />
+            }
+          </div>
+          <ee2-icon name="arrow-right" class="px-1 text-sm text-[#718096]" />
+          <div class="overflow-hidden whitespace-nowrap">
+            @if (anoint.price; as price) {
+              <span [class.ee2-golden]="price.div">{{ price.min }}</span><span [class.ee2-golden]="price.div">&nbsp;{{ price.currency }}</span>
+            } @else {
+              <span class="px-1">?</span>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</ng-template>
+
+<!-- TradeLinks.vue -->
+<ng-template #tradeLinks>
+  <div class="flex gap-px">
+    <button class="ee2-btn" (click)="openTradeSite()">{{ 'trade_result.trade' | t }} <ee2-icon name="external-link" class="text-xs" /></button>
+  </div>
+</ng-template>
+
+<!-- OnlineFilter.vue: the button and its popover -->
+<ng-template #onlineFilter let-api="api">
+  @if (active(); as preset) {
+    <span class="ee2-online relative">
+      <button class="mr-1 truncate rounded px-2" [class]="onlineWarning() ? 'text-[#ed8936]' : 'text-[#a0aec0]'" (click)="onlineOpen.set(!onlineOpen())">
+        <ee2-icon name="history" /> {{ onlineLabel() }}
+      </button>
+      @if (onlineOpen()) {
+        <div class="ee2-tippy absolute top-full left-0 z-30 mt-2 p-0!">
+          <div class="ee2-tippy-arrow left-6"></div>
+          <div class="flex gap-x-8 rounded bg-[#2d3748] p-2 text-[#cbd5e0]">
+            <div class="flex flex-col gap-y-1">
+              @for (option of api === 'bulk' ? bulkListingTypes : tradeListingTypes; track option.value) {
+                <ng-container *ngTemplateOutlet="radio; context: { on: preset.filters.trade.listingType === option.value, text: option.ee2Key ? (option.ee2Key | t) : (option.label | tr), act: 'type', value: option.value }" />
+              }
+              @if (api !== 'bulk') {
+                @for (option of listedOptions; track option.key; let first = $first) {
+                  <div [class.mt-3]="first">
+                    <ng-container *ngTemplateOutlet="radio; context: { on: preset.filters.trade.listed === option.value, text: (option.key | t), act: 'listed', value: option.value }" />
+                  </div>
+                }
+              }
+            </div>
+            @if (api !== 'bulk') {
+              <div class="flex flex-col gap-y-1">
+                @for (option of ee2CurrencyOptions; track option.key) {
+                  <ng-container *ngTemplateOutlet="radio; context: { on: (preset.filters.trade.currency ?? null) === option.value, text: (option.key | t), act: 'currency', value: option.value }" />
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </span>
+  }
+</ng-template>
+
+<ng-template #radio let-on="on" let-text="text" let-act="act" let-value="value">
+  <button class="flex items-center gap-x-1 whitespace-nowrap"
+    (click)="act === 'type' ? setListingType(value) : act === 'listed' ? setListed(value) : setCurrency(value)">
+    <span class="ee2-radio" [class.ee2-radio-on]="on"></span>{{ text }}
+  </button>
+</ng-template>
+
+<!-- TradeListing.vue + TradeItem.vue -->
+<ng-template #tradeResults>
+  @if (search.error(); as message) {
+    <ng-container *ngTemplateOutlet="searchErrorBox; context: { $implicit: message }" />
+  } @else {
+    <div class="flex min-h-0 flex-col">
+      <div class="mb-2 flex pl-2">
+        <div class="mr-2 flex items-baseline text-[#a0aec0]">
+          <span class="mr-1">{{ 'trade_result.matched' | t: '' }}</span>
+          @if (search.searchResult(); as list) {
+            <span>{{ list.total }}{{ list.inexact ? '+' : '' }}</span>
+          } @else {
+            <span class="text-[#718096]">...</span>
+          }
+        </div>
+        @if (search.searchResult()) {
+          <ng-container *ngTemplateOutlet="onlineFilter; context: { api: 'trade' }" />
+        }
+        <div class="flex-1"></div>
+        @if (search.searchResult()) {
+          <ng-container *ngTemplateOutlet="tradeLinks" />
+        }
+      </div>
+      <div class="ee2-scroll flex min-h-0 flex-col overflow-x-hidden overflow-y-auto">
+        <table class="ee2-table w-full">
+          <thead>
+            <tr class="text-left">
+              <th><div class="px-2">{{ 'trade_result.price' | t }}</div></th>
+              @if (item().stackSize) {
+                <th><div class="px-2">{{ 'trade_result.stock' | t }}</div></th>
+              }
+              @if (active()!.filters.itemLevel) {
+                <th><div class="px-2">{{ 'trade_result.item_level' | t }}</div></th>
+              }
+              @if (isGem() || isUncutGem()) {
+                <th><div class="px-2">{{ 'trade_result.gem_level' | t }}</div></th>
+              }
+              @if (isGem() || grantsSkill()) {
+                <th><div class="px-2">{{ 'trade_result.gem_sockets' | t }}</div></th>
+              }
+              @if (showQuality()) {
+                <th><div class="px-2">{{ 'trade_result.quality' | t }}</div></th>
+              }
+              <th class="w-full"><div class="pr-2 pl-4"><span class="ml-1" style="padding-left: 0.375rem">{{ 'trade_result.listed' | t }}</span></div></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of ee2Rows(); track $index) {
+              @if (!row) {
+                <tr><td colspan="100" class="text-transparent">***</td></tr>
+              } @else {
+                <tr>
+                  <td class="px-2 whitespace-nowrap">
+                    <span>{{ listingPrice(row) }}</span>
+                    @if (row.listedTimes > 2) {
+                      <span class="-mr-2 rounded bg-[#cbd5e0] px-1 text-[#2d3748]"><span class="ee2-sans">×</span> {{ row.listedTimes }}</span>
+                    } @else if (!row.hasNote) {
+                      <ee2-icon name="question" />
+                    }
+                  </td>
+                  @if (item().stackSize) {
+                    <td class="px-2 text-right">{{ row.stackSize }}</td>
+                  }
+                  @if (active()!.filters.itemLevel) {
+                    <td class="px-2 text-right whitespace-nowrap">{{ row.itemLevel }}</td>
+                  }
+                  @if (isGem() || isUncutGem()) {
+                    <td class="pl-2 whitespace-nowrap">{{ row.level }}</td>
+                  }
+                  @if (isGem() || grantsSkill()) {
+                    <td class="pl-2 whitespace-nowrap">{{ row.gemSockets }}</td>
+                  }
+                  @if (showQuality()) {
+                    <td class="px-2 text-right whitespace-nowrap text-[#63b3ed]">{{ row.quality }}</td>
+                  }
+                  <td class="pr-2 pl-4 whitespace-nowrap">
+                    <div class="inline-flex items-center">
+                      <div class="ee2-status" [class]="'ee2-status-' + (row.isInstantBuyout ? 'instant' : row.accountStatus)"></div>
+                      <div class="ee2-sans ml-1 text-xs">{{ row.relativeDate }}</div>
+                    </div>
+                    @if (row.isMine) {
+                      <span class="ml-1 rounded bg-[#cbd5e0] px-1 text-[#2d3748]">{{ 'You' | tr }}</span>
+                    }
+                    @if (row.inDemand) {
+                      <span class="ml-1 rounded bg-[#ecc94b] px-1 text-black">{{ 'in demand' | tr }}</span>
+                    }
+                    @if (row.gone) {
+                      <span class="ml-1 rounded border border-[#f56565] px-1 text-[#f56565]">{{ 'Gone' | tr }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+        @if (likelyPriceFixed()) {
+          <div class="mt-2 rounded border-2 border-[#718096] p-2">
+            <div class="flex leading-none text-[#cbd5e0]">
+              <div class="mt-1">{{ 'trade_result.likely_price_fixed' | t }}</div>
+              <div class="flex-1"></div>
+              <div class="pl-2">
+                <button class="ee2-btn" (click)="filterExaltDivine()">{{ 'trade_result.filter_exalt_divine' | t }} <ee2-icon name="history" class="text-xs" /></button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</ng-template>
+
+<!-- TradeBulk.vue: exalted / chaos / divine, no Market Ratio row -->
+<ng-template #bulkResults>
+  @if (bulk.error(); as message) {
+    <ng-container *ngTemplateOutlet="searchErrorBox; context: { $implicit: message }" />
+  } @else {
+    <div class="flex min-h-0 flex-col">
+      <div class="mb-2 flex items-baseline justify-between pl-2" style="min-height: 1.375rem">
+        <div class="flex items-center text-[#a0aec0]">
+          <span class="mr-1">{{ 'trade_result.matched' | t: '' }}</span>
+          @if (!bulk.haves().length) {
+            <span class="text-[#718096]">...</span>
+          } @else {
+            <div class="flex items-center">
+              @for (have of bulkCurrencies; track have) {
+                <button class="ee2-btn mr-1 flex items-center" [style.background]="have !== bulk.selected() ? 'transparent' : null"
+                  [class.cursor-default]="!bulkCanSelect(have)" (click)="bulkCanSelect(have) && selectHave(have)">
+                  <app-currency class="ee2-bulk-currency" [tag]="have" [size]="28" />
+                  <span>{{ bulk.results()[have]?.total ?? '?' }}</span>
+                </button>
+              }
+              <span class="ml-1"><ng-container *ngTemplateOutlet="onlineFilter; context: { api: 'bulk' }" /></span>
+            </div>
+          }
+        </div>
+        @if (bulk.current()) {
+          <ng-container *ngTemplateOutlet="tradeLinks" />
+        }
+      </div>
+      <div class="ee2-scroll flex min-h-0 flex-col overflow-x-hidden overflow-y-auto">
+        <table class="ee2-table w-full">
+          <thead>
+            <tr class="text-left">
+              <th><div class="px-2">{{ 'trade_result.price' | t }}</div></th>
+              <th>
+                <div class="flex pr-2 pl-1 text-xs" style="line-height: 1.3125rem">
+                  <span class="-ml-px mr-px inline-block w-8 text-right">{{ bulk.selected() === 'exalted' ? 'exalt' : bulk.selected() === 'chaos' ? 'chaos' : 'div' }}</span><span>&thinsp;/&thinsp;</span><span class="inline-block w-8">{{ 'trade_result.bulk' | t }}</span>
+                </div>
+              </th>
+              <th><div class="px-1">{{ 'trade_result.stock' | t }}</div></th>
+              <th><div class="px-1">{{ 'trade_result.fulfill' | t }}</div></th>
+              <th class="w-full"><div class="pr-2 pl-4"><span class="ml-1" style="padding-left: 0.375rem">{{ 'trade_result.listed' | t }}</span></div></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of ee2BulkRows(); track $index) {
+              @if (!row) {
+                <tr><td colspan="100" class="text-transparent">***</td></tr>
+              } @else {
+                <tr>
+                  <td class="px-2">{{ bulkNumber(row.exchangeAmount / row.itemAmount, 4) }}</td>
+                  <td class="pl-1 whitespace-nowrap">
+                    <span class="inline-block w-8 text-right">{{ row.exchangeAmount }}</span><span>&thinsp;/&thinsp;</span><span class="inline-block w-8">{{ row.itemAmount }}</span>
+                  </td>
+                  <td class="px-1 text-right">{{ row.stock }}</td>
+                  <td class="px-1 text-right">
+                    @if (row.stock < row.itemAmount) {
+                      <ee2-icon name="warning" class="mr-1 text-[#a0aec0]" />
+                    }
+                    {{ floor(row.stock / row.itemAmount) }}
+                  </td>
+                  <td class="pr-2 pl-4 whitespace-nowrap">
+                    <div class="inline-flex items-center">
+                      <div class="ee2-status" [class]="'ee2-status-' + row.accountStatus"></div>
+                      <div class="ee2-sans ml-1 text-xs">{{ row.relativeDate }}</div>
+                    </div>
+                    @if (row.isMine) {
+                      <span class="ml-1 rounded bg-[#cbd5e0] px-1 text-[#2d3748]">{{ 'You' | tr }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</ng-template>
+
+<!-- UiErrorBox.vue -->
+<ng-template #errorBox let-name="name" let-text="text">
+  <div class="ee2-error-box">
+    <h4 class="text-[#fc8181]">{{ name }}</h4>
+    <p>{{ text }}</p>
+  </div>
+</ng-template>
+
+<!-- TradeListing.vue's error: UiErrorBox with Retry / Browser -->
+<ng-template #searchErrorBox let-message>
+  <div class="ee2-error-box mb-4">
+    <h4 class="text-[#fc8181]">{{ 'trade_result.error' | t }}</h4>
+    @if (message === cloudflareError) {
+      <p class="ee2-sans">{{ '{0}. Pass the check in the built-in browser; the overlay then searches through it.' | tr: (message | tr) }}</p>
+      <div class="flex justify-end gap-x-1">
+        <button class="ee2-btn" (click)="openBrowserForCheck()">{{ 'Open browser' | tr }}</button>
+      </div>
+    } @else {
+      <p class="ee2-sans">Error: {{ message | trError }}</p>
+      <div class="flex justify-end gap-x-1">
+        <button class="ee2-btn" (click)="runSearch()">{{ 'Retry' | tr }}</button>
+        <button class="ee2-btn" (click)="openTradeSite()">{{ 'Browser' | tr }}</button>
+      </div>
+    }
+  </div>
+</ng-template>

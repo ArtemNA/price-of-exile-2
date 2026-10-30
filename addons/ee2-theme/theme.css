@@ -1,0 +1,137 @@
+/*
+ * The "Exiled Exchange 2" theme: the colours and fonts of EE2 (APT's Tailwind v1 palette plus EE2's
+ * additions, read off EE2 0.15.8 and its source, docs/screenshots/ee2/STYLE_NOTES.md) over our CSS
+ * tokens (src/styles.css). Every window takes them; the price check also gets EE2's layout
+ * (ee2-price-check.html).
+ */
+
+/* The price check's own styles (the EE2 components' look). */
+@import './ee2-price-check.css';
+
+@font-face {
+  font-family: 'FontinSmallCaps';
+  src: url('./fonts/Fontin-SmallCaps-Hinted.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Exo2';
+  font-weight: 600;
+  src: url('./fonts/Exo2-SemiBold.ttf') format('truetype');
+}
+
+html[data-theme='ee2'] {
+  /* Fontin has no Cyrillic: those letters fall back to Alegreya SC (EE2's FrizQuadrata is commercial). */
+  --font-sans: 'FontinSmallCaps', 'Alegreya SC', serif;
+  --font-display: 'FontinSmallCaps', 'Alegreya SC', serif;
+
+  --color-chrome: #1a202c; /* gray-900: title bars, sidebar */
+  --color-panel: #2d3748; /* gray-800: window body */
+  --color-raised: #4a5568; /* gray-700: buttons, active tab */
+  --color-well: #1a202c; /* inputs, chips */
+  --color-line: #4a5568;
+  --color-line-strong: #718096;
+  --color-frame: #1a202c;
+  --color-bronze: #718096;
+  --color-gold: #a0aec0; /* gray-500: active borders, focus */
+  --color-gold-soft: #f7fafc;
+  --color-text: #edf2f7;
+  --color-bright: #f7fafc;
+  --color-muted: #718096;
+  --color-mod: #edf2f7;
+  --color-mod-off: #718096;
+  --color-good: #48bb78;
+  --color-warn: #f6ad55;
+  --color-bad: #f56565;
+
+  --color-selected: #1a202c;
+  --color-selected-hover: #4a5568;
+  --color-toggle-on: #1a202c;
+  --color-error-bg: #742a2a;
+  --color-gold-hover: #cbd5e0;
+  --color-warn-bg: #7b341e;
+  --color-warn-line: #c05621;
+  --color-row-line: #4a5568;
+  --color-primary-from: #4a5568;
+  --color-primary-to: #4a5568;
+  --color-primary-text: #cbd5e0;
+  --color-ink: #1a202c;
+  --color-deadly: #c53030;
+  --color-deadly-icon: #fed7d7;
+  --color-bad-line: #c53030;
+  --color-menu: #1a202c;
+  --color-menu-shadow: rgba(0, 0, 0, 0.7);
+  --color-frame-shadow: #1a202c;
+  --color-focus-ring: rgba(160, 174, 192, 0.25);
+  --color-bait-text: #fbd38d;
+  --color-bait-line: #dd6b20;
+  --color-unique: #edf2f7;
+  --color-positive: #48bb78;
+  --color-positive-bg: #1a202c;
+  --color-corrupted-bg: #1a202c;
+  --color-heist: #c53030;
+  --color-deadly-bg: #c53030;
+  --color-deadly-hover: #e53e3e;
+  --color-warning-bg: #dd6b20;
+  --color-warning-hover: #ed8936;
+  --color-good-bg: #22543d;
+  --color-good-line: #2f855a;
+  --color-good-row-bg: #2f855a;
+  --color-good-row-hover: #38a169;
+  --color-tier1: #ecc94b;
+  --color-tier1-text: #1a202c;
+  --color-tier2: #2d3748;
+  --color-tier2-text: #ecc94b;
+  --color-fractured: #f6e05e;
+  --color-fractured-text: #1a202c;
+  --color-fractured-line: #b7791f;
+
+  /* EE2 writes item names in white on gray-900 (item check, map check), whatever the rarity. */
+  --color-rarity-normal: #f7fafc;
+  --color-rarity-magic: #f7fafc;
+  --color-rarity-rare: #f7fafc;
+  --color-rarity-unique: #f7fafc;
+  --color-rarity-gem: #f7fafc;
+  --color-rarity-currency: #f7fafc;
+  --color-rarity-divination-card: #f7fafc;
+  --plate-normal-bg: #1a202c;
+  --plate-normal-rule: #1a202c;
+  --plate-magic-bg: #1a202c;
+  --plate-magic-rule: #1a202c;
+  --plate-rare-bg: #1a202c;
+  --plate-rare-rule: #1a202c;
+  --plate-unique-bg: #1a202c;
+  --plate-unique-rule: #1a202c;
+  --plate-gem-bg: #1a202c;
+  --plate-gem-rule: #1a202c;
+  --plate-currency-bg: #1a202c;
+  --plate-currency-rule: #1a202c;
+  --plate-divination-card-bg: #1a202c;
+  --plate-divination-card-rule: #1a202c;
+}
+
+/* EE2 rounds its buttons, fields and chips. */
+html[data-theme='ee2'] button,
+html[data-theme='ee2'] input,
+html[data-theme='ee2'] select {
+  border-radius: 0.25rem;
+}
+
+/* The price check brings EE2's own title bar (ee2-title-bar.ts) and has no window frame. */
+html[data-theme='ee2'] section:has(> app-ee2-price-check, > app-ee2-unidentified-picker, > app-ee2-price-check-message) {
+  border: 0;
+  box-shadow: none;
+  /* Transparent beside the column: related items and the rate limiting tab stand there, as in EE2. */
+  background: transparent;
+}
+html[data-theme='ee2'] section:has(> app-ee2-price-check, > app-ee2-unidentified-picker, > app-ee2-price-check-message) > header {
+  display: none;
+}
+
+/* EE2 (Tailwind 3) shows a hand over everything clickable; Tailwind 4 does not by default. */
+html[data-theme='ee2'] button:not(:disabled),
+html[data-theme='ee2'] [role='button'],
+html[data-theme='ee2'] select:not(:disabled),
+html[data-theme='ee2'] input[type='checkbox']:not(:disabled),
+html[data-theme='ee2'] input[type='radio']:not(:disabled),
+html[data-theme='ee2'] label:has(> input[type='checkbox'], > input[type='radio']) {
+  cursor: pointer;
+}

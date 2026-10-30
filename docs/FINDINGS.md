@@ -305,6 +305,19 @@
 - [docs/GAME_SCENARIOS.md](GAME_SCENARIOS.md): 10 розділів — копіювання й попап, price check, bulk, item check, map check, чат і сховище, вбудований браузер, ru-клієнт, швидкість, загальне; там, де бракує справжніх текстів, позначено «надішли текст».
 - **PoE1: ні.**
 
+## Етап 15 — Теми (30.10.2026)
+
+### F-34. Тема «Exiled Exchange 2»
+- Як Price of Exile 0.1.13 (F-65 еталона): токени кольорів замість захардкоджених (наш вигляд — до пікселя той самий: `07-map-check-corrupted`, `06-item-check-ring`, `09-stash-panel` збіглися повністю), реєстр тем `src/app/themes.ts`, слот аддонів `src/app/addons.ts`, налаштування `theme` (Overlay → Theme), `html[data-theme]` у всіх вікнах, price check і вибір унікального теми через `NgComponentOutlet`. Rust: `fit_popup` повертає бік попапа (`left` / `right` / `center`), price check, вищий за гру, займає всю висоту гри (3 нові тести).
+- Аддон `addons/ee2-theme`: палітра й шрифти EE2 (= APT: gray-900 / 800 / 700, FontinSmallCaps, Exo 2 SemiBold), заокруглення, `cursor: pointer` у всіх вікнах; `Ee2PriceCheck extends PriceCheckPanel` — розкладка EE2 над нашою логікою: колонка 460 px на всю висоту гри біля панелі інвентаря / сховища (або по центру), related items збоку на прозорому ширшому вікні (клік по прозорому — закрити), ціни текстом «1 alch (5 ex)», exalted як основна дрібна валюта, «⇄ N» у заголовку, вкладка Rate limiting, теги EE2 (rune, added rune, desecrated, mutated, enchant), «fractured» — клікабельний тег замість нашого перемикача, bulk з трьома валютами без Market Ratio, «likely price fixed» за правилом EE2. Наші попередження (копія без деталей модів, мова гри) — плашкою EE2 усередині колонки. Решта вікон — наша розкладка в кольорах і шрифтах EE2.
+- Рішення власника (кінець `docs/EE2_THEME_PLAN.md`): редактор предмета не показуємо; у темі сховано наші вкладки poe.ninja / Wiki, cheapest / most listed, «≈ ex / ≈ c», футер, пресет «Mods»; приманки — мовчки; ліга — лише меню в заголовку. Підказка-предмет, ExtractionValue і обсяг /hr — «Пізніше».
+- Знімки EE2 0.15.8 на 55+ сценаріїв і наші поруч — `docs/screenshots/ee2/` (`ee2-*` / `ours-*`, README з відмінностями, STYLE_NOTES). EE2 у власника має завантажене оновлення 0.16.3 (ставиться на виході): на всіх знімках EE2 зверху плашка «Update available», якої немає в нормальному вигляді; кнопка редактора предмета з 0.16 на знімках відсутня. Знімок Debug (версія Windows) — поза git.
+- Шрифти: Fontin SmallCaps (вільна ліцензія exljbris) і Exo 2 (SIL OFL) — з EE2; FrizQuadrata (кирилиця в EE2) комерційний, не постачається — кирилиця падає на Alegreya SC. Ліцензія EE2 (MIT) — `addons/ee2-theme/LICENSE-exiled-exchange-2.txt`, `THIRD_PARTY_LICENSES.md`.
+- `displayRounding` (shim `prices.ts`) знову з тонкими пробілами EE2: «0.1 ex» замість «0 . 1 ex».
+- Відомі відмінності й відкрите: кнопки Any / Prefix / Suffix не оновлюють кількість, як EE2 (`setEmptyAffix` базового класу — змінювати його означало б змінити пошук і в нашій темі); у наших вікнах у темі EE2 шрифт 12 px проти 14 px в EE2; «likely price fixed» на живих даних ще не траплявся; бюджет початкового бандла піднято до 800 кБ (711 кБ з темою).
+- Як зробити тему — [THEMING.md](../THEMING.md).
+- **PoE1: так** — механізм той самий; тест покриття словників для аддонів і бік `center` — варто перенести.
+
 ---
 
 ## Ідеї на потім

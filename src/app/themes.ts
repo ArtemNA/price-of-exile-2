@@ -22,6 +22,12 @@ export interface Theme {
    * of a theme are created with NgComponentOutlet, which binds no outputs).
    */
   unidentifiedPicker?: Type<unknown>;
+  /**
+   * Own view of a price check that has no item to show (it cannot be read, it was copied in another
+   * game language, nothing was checked yet); inputs `message` (translated) and `tone`
+   * ('error' | 'warning' | 'info'). Without it the popup shows the message in its own layout.
+   */
+  priceCheckMessage?: Type<unknown>;
 }
 
 export const BASE_THEME: Theme = { id: 'price-of-exile-2', label: 'Price of Exile 2' };

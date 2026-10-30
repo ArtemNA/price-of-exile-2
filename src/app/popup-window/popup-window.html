@@ -71,7 +71,7 @@
       </div>
     </div>
   } @else if (parsed(); as parsedItem) {
-    @if (noModDetails()) {
+    @if (noModDetails() && !themeShowsWarning()) {
       <p class="flex-none border-b border-warn-line bg-warn-bg px-3 py-1.5 text-warn">{{ 'The game copied this item without its mod details, so its mods are missing here. Check the item copy keys in Settings → Hotkeys.' | tr }}</p>
     }
     @if (target() === 'item-check') {
@@ -92,9 +92,11 @@
           <app-unidentified-picker [baseName]="parsedItem.info.name" [variants]="variants()" (picked)="identify($event)" />
         }
       } @else {
-        <ng-container *ngComponentOutlet="priceCheckView(); inputs: { item: parsedItem, view: item()! }" />
+        <ng-container *ngComponentOutlet="priceCheckView(); inputs: { item: parsedItem, view: item()!, warning: noModDetails() ? ('The game copied this item without its mod details, so its mods are missing here. Check the item copy keys in Settings → Hotkeys.' | tr) : null }" />
       }
     }
+  } @else if (themeMessageView(); as messageView) {
+    <ng-container *ngComponentOutlet="messageView; inputs: { message: priceCheckMessage().text, tone: priceCheckMessage().tone }" />
   } @else {
     <div class="flex flex-1 items-center justify-center p-6 text-center">
       @if (languageMismatch(); as lang) {

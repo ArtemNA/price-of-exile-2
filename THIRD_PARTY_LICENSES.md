@@ -22,6 +22,11 @@ Used parts (`src/lib/ee2` mirrors EE2 `renderer/src`; changed lines are marked `
 - `scripts/make-data-indexes.mjs`: port of `renderer/src/assets/make-index-files.mjs`.
 - `public/data/{en,ru}/*`, `public/data/item-drop.json`: game data files and UI strings (`app_i18n.json`)
   from EE2 (derived from Path of Exile 2 game files, which belong to Grinding Gear Games).
+- `addons/ee2-theme/**`: the "Exiled Exchange 2" theme, EE2's look (its components' markup and styles
+  rewritten as Angular templates), `images/404.png` and the font files Fontin SmallCaps (Jos Buivenga,
+  exljbris free font licence) and Exo 2 SemiBold (Natanael Gama, SIL OFL) from EE2; credits and EE2's
+  licence in `addons/ee2-theme/README.md` and `LICENSE-exiled-exchange-2.txt`. EE2's Cyrillic font
+  (FrizQuadrata ITC, commercial) is not included.
 
 ## Awakened PoE Trade
 

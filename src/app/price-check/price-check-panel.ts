@@ -111,6 +111,11 @@ const TABS = [
 export class PriceCheckPanel {
   readonly item = input.required<ParsedItem>();
   readonly view = input.required<ItemView>();
+  /**
+   * A note about the copied item (copied without mod details), translated. Our view leaves it to
+   * the popup, which shows it above the panel; a theme's own view shows it inside its layout.
+   */
+  readonly warning = input<string | null>(null);
 
   protected readonly cloudflareError = CLOUDFLARE_CHECK_ERROR;
   protected readonly noPrice = NO_PRICE;

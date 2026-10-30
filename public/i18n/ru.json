@@ -128,7 +128,11 @@
       "spirit": "Дух: {0}",
       "sanctified": "Освящённый",
       "not_sanctified": "Не освящённый",
-      "unidentified_tier": "Неопознанный: "
+      "unidentified_tier": "Неопознанный: ",
+      "has_empty_affix": "Любой",
+      "has_empty_prefix": "Префикс",
+      "has_empty_suffix": "Суффикс",
+      "requires_level": "Треб. уровень: {0}"
     },
     "item_category": {
       "prop": "Категория: {0}",
@@ -239,7 +243,8 @@
       "hide_low_ilvl": "Уровень предмета слишком мал, чтобы на нём могли быть все моды",
       "hide_not_max_level": "Умения не максимального уровня редко добавляют ценности",
       "hide_revives": "Выбирайте, только если не 0 и вы не собираетесь улучшать его сферой возвышения",
-      "hide_total_all_res": "Добавляет мало по сравнению с общим сопротивлением, разве что значение высокое"
+      "hide_total_all_res": "Добавляет мало по сравнению с общим сопротивлением, разве что значение высокое",
+      "hidden_explicit_toggle": "Явные"
     },
     "online_filter": {
       "offline_toggle": "Офлайн и онлайн",
@@ -255,7 +260,9 @@
       "currency_any": "Любая валюта",
       "currency_only_chaos": "Сфера хаоса",
       "currency_only_div": "Божественная сфера",
-      "currency_chaos_div": "Обе сферы"
+      "currency_chaos_div": "Обе сферы",
+      "currency_exalted_div": "Возвышения/божественные",
+      "currency_only_exalted": "Сферы возвышения"
     },
     "widget": {
       "title": "заголовок виджета",
@@ -339,7 +346,10 @@
       "getting_price_from": "с poe.ninja …",
       "you_have": "У вас есть",
       "stack": "Стопка",
-      "legacy_bulk_xchg_msg": "Этот предмет доступен на рынке обмена валюты"
+      "legacy_bulk_xchg_msg": "Этот предмет доступен на рынке обмена валюты",
+      "filter_exalt_divine": "Только возвышения/божественные",
+      "gem_sockets": "Гнёзда",
+      "likely_price_fixed": "В основном нестандартная валюта: "
     },
     "settings": {
       "title": "Настройки - Awakened PoE Trade",
@@ -728,6 +738,19 @@
     "Worth in this currency at the poe.ninja rate": "Стоимость в этой валюте по курсу poe.ninja",
     "poe.ninja": "poe.ninja",
     "Wiki": "Вики",
-    "iLvl": "iLvl"
+    "iLvl": "iLvl",
+    "Wrong game language": "Не тот язык игры",
+    "Copied without mod details": "Скопировано без деталей модов",
+    "Not recognized modifier": "Нераспознанный модификатор",
+    "Unable to determine fractured stat": "Не удалось определить расколотый стат",
+    "min": "мин",
+    "You": "Вы",
+    "in demand": "спрос",
+    "Gone": "Пропало",
+    "Retry": "Повторить",
+    "Browser": "Браузер",
+    "Instant": "Мгновенно",
+    "Offline": "Офлайн",
+    "Instant or Online": "Мгновенно или онлайн"
   }
 }

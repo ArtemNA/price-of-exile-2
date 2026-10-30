@@ -24,6 +24,9 @@ import { loadI18nFromDisk } from './game-data';
 // our English texts (`tr`) and the EE2 keys (`t`) the app shows. English needs no file.
 
 const SRC = new URL('../src/app/', import.meta.url);
+/** Addon themes (addons/<name>) ship in every build: their texts need translations too. */
+const ADDONS = new URL('../addons/', import.meta.url);
+const dirPath = (url: URL) => url.pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const json = (path: string) => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf-8'));
 const UI_LANGS = ['uk', 'ru'] as const;
 const dictionaries = Object.fromEntries(UI_LANGS.map((lang) => [lang, json(`../public/i18n/${lang}.json`)])) as Record<
@@ -78,10 +81,10 @@ function groupBefore(code: string, end: number): string | null {
 function trTexts(): Map<string, string> {
   const found = new Map<string, string>();
   const add = (text: string, where: string) => found.has(text) || found.set(text, where);
-  for (const path of sources(SRC.pathname.replace(/^\/([A-Za-z]:)/, '$1'))) {
+  for (const path of [...sources(dirPath(SRC)), ...sources(dirPath(ADDONS))]) {
     const code = readFileSync(path, 'utf-8');
     const html = path.endsWith('.html');
-    const where = path.slice(path.indexOf('src'));
+    const where = path.slice(Math.max(path.indexOf('src'), path.indexOf('addons')));
     for (const match of code.matchAll(/\btr\(/g)) {
       const start = match.index + 3;
       const args = groupBefore(code, closing(code, start));
@@ -179,10 +182,15 @@ const VARIABLE_TEXTS = [
  */
 function tKeys(): string[] {
   const keys = new Set<string>();
-  for (const path of sources(SRC.pathname.replace(/^\/([A-Za-z]:)/, '$1'))) {
+  for (const path of [...sources(dirPath(SRC)), ...sources(dirPath(ADDONS))]) {
     const code = readFileSync(path, 'utf-8');
     for (const match of code.matchAll(/'([a-z_]+\.[a-z_.]+)'\s*\|\s*t\b|\bt\('([a-z_]+\.[a-z_.]+)'/g)) keys.add(match[1] ?? match[2]);
     for (const match of code.matchAll(/\['\w+', '(item\.[a-z_]+)'\]/g)) keys.add(match[1]);
+  }
+  // The addon themes keep EE2's keys in tables too ("online_filter.listed_1day" for a radio button).
+  for (const path of sources(dirPath(ADDONS))) {
+    const code = readFileSync(path, 'utf-8');
+    for (const match of code.matchAll(/'((?:item|filters|online_filter|trade_result)\.[a-z_]+)'/g)) keys.add(match[1]);
   }
   for (const id of _INTERNAL_TRADE_IDS) keys.add(id);
   for (const key of ['corrupted', 'mirrored', 'sanctified']) keys.add(`item.${key}`).add(`item.not_${key}`);

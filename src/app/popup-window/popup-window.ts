@@ -4,7 +4,7 @@ import { parseClipboard, type ParsedItem } from '@/parser';
 import { Currency } from '../shared/currency';
 import { currencyRates, trackCurrencyRates } from '../core/currency-rates';
 import { divineFractions, formatAmount, type NinjaRates } from '../core/ninja-prices';
-import { loadI18n, TranslatePipe, tr, TrErrorPipe, TrPipe } from '../core/i18n';
+import { loadI18n, t, TranslatePipe, tr, TrErrorPipe, TrPipe } from '../core/i18n';
 import { Leagues } from '../core/leagues';
 import { settings } from '../core/settings';
 import { loadGameData } from '../game-data';
@@ -47,6 +47,25 @@ export class PopupWindow {
   /** The theme's own unidentified unique picker, if it has one; `pick` is its callback. */
   protected readonly themePicker = computed(() => themeById(settings().theme).unidentifiedPicker ?? null);
   protected readonly pick = (unique: BaseType) => this.identify(unique);
+  /** The theme's own price check shows the "copied without mod details" note inside its layout. */
+  protected readonly themeShowsWarning = computed(() => this.target() === 'price-check' && !!themeById(settings().theme).priceCheck);
+  /** A price check with nothing to show, in the theme's own view (if it has one). */
+  protected readonly themeMessageView = computed(() =>
+    this.target() === 'price-check' ? (themeById(settings().theme).priceCheckMessage ?? null) : null,
+  );
+  /** What a price check without an item says: the same texts as our own layout. */
+  protected readonly priceCheckMessage = computed<{ text: string; tone: 'error' | 'warning' | 'info' }>(() => {
+    const lang = this.languageMismatch();
+    if (lang) {
+      return {
+        text: tr('The game copied this item in {0}, but the game language in the settings is {1}. Change it in Settings → General → Game language.', lang.copied, lang.chosen),
+        tone: 'warning',
+      };
+    }
+    const message = this.error();
+    if (message) return { text: tr('Cannot read this item: {0}', t(message)), tone: 'error' };
+    return { text: tr('Hover an item in the game and press the price check or item check hotkey.'), tone: 'info' };
+  });
   protected readonly menu = signal<'league' | 'divine' | null>(null);
   protected readonly settings = settings;
   protected readonly leagues = inject(Leagues);
