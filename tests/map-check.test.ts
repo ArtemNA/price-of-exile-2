@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { STAT_BY_MATCH_STR } from '@/assets/data';
 import { parseClipboard, type ParsedItem } from '@/parser';
-import { DEFAULT_MAP_CHECK, POE1_MAP_CHECK_MATCHERS } from '../src/app/constants';
+import { DEFAULT_MAP_CHECK, DEFAULT_MAP_MARKS, POE1_MAP_CHECK_MATCHERS } from '../src/app/constants';
 import {
   allAreaMods,
   cycleDecision,
@@ -109,7 +109,8 @@ describe('map check', () => {
 
   it('has default marks that all exist in the PoE2 stat data, and PoE1 ones that do not', () => {
     const areaMods = new Set(allAreaMods().map((m) => m.matchStr));
-    for (const { matcher } of DEFAULT_MAP_CHECK.selectedStats) {
+    // The Russian ones: game-language.test.ts.
+    for (const { matcher } of DEFAULT_MAP_MARKS.en) {
       expect(STAT_BY_MATCH_STR(matcher), matcher).toBeDefined();
       expect(areaMods.has(matcher), matcher).toBe(true);
     }
@@ -161,6 +162,7 @@ describe('map check', () => {
       TEMPORAL_CHAINS,
     ]);
     expect(search('LESS recovery')).toContain(LESS_RECOVERY);
-    expect(search('', true).toSorted()).toEqual(DEFAULT_MAP_CHECK.selectedStats.map((s) => s.matcher).toSorted());
+    // Only the marks of the game data's language: the Russian defaults are not English mods.
+    expect(search('', true).toSorted()).toEqual(DEFAULT_MAP_MARKS.en.map((s) => s.matcher).toSorted());
   });
 });

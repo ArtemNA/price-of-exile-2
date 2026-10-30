@@ -4,7 +4,7 @@ import { parseClipboard, type ParsedItem } from '@/parser';
 import { Currency } from '../shared/currency';
 import { currencyRates, trackCurrencyRates } from '../core/currency-rates';
 import { divineFractions, formatAmount, type NinjaRates } from '../core/ninja-prices';
-import { loadI18n, tr, TrPipe } from '../core/i18n';
+import { loadI18n, TranslatePipe, tr, TrPipe } from '../core/i18n';
 import { Leagues } from '../core/leagues';
 import { settings } from '../core/settings';
 import { loadGameData } from '../game-data';
@@ -25,7 +25,7 @@ import { ItemView, toItemView } from './item-view';
 /** The popup: price check (title bar with league and divine rates, filters, listings), item check or map check. */
 @Component({
   selector: 'app-popup-window',
-  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel, UnidentifiedPicker, Currency, TrPipe],
+  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel, UnidentifiedPicker, Currency, TranslatePipe, TrPipe],
   templateUrl: './popup-window.html',
   // Esc normally reaches the host's keyboard hook; while the popup has the keyboard
   // (typing into a field) it arrives here instead.
@@ -118,7 +118,7 @@ export class PopupWindow {
         this.item.set(null);
         this.error.set(result.error);
         // Copied in another language than the settings say: tell which one to pick.
-        const copiedIn = GAME_LANGS.find((lang) => payload.text.startsWith(lang.itemClass));
+        const copiedIn = GAME_LANGS.find((lang) => payload.text.startsWith(lang.itemClass) || payload.text.startsWith(lang.rarity));
         const chosen = GAME_LANGS.find((lang) => lang.id === settings().language);
         this.languageMismatch.set(copiedIn && chosen && copiedIn.id !== chosen.id ? { copied: copiedIn.label, chosen: chosen.label } : null);
       }

@@ -19,10 +19,13 @@ export const USER_AGENT = `${APP_NAME}/${APP_VERSION} (+${APP_CONTACT})`;
  */
 export type Lang = 'en' | 'ru';
 export const DEFAULT_LANG: Lang = 'en';
-/** `itemClass`: first line of an item the game copies in that language (as in client_strings.js). */
-export const GAME_LANGS: ReadonlyArray<{ id: Lang; label: string; itemClass: string }> = [
-  { id: 'en', label: 'English', itemClass: 'Item Class: ' },
-  { id: 'ru', label: 'Русский', itemClass: 'Класс предмета: ' },
+/**
+ * `itemClass`: first line of an item the game copies in that language (as in client_strings.js);
+ * `rarity`: the first line of items without a class (uncut gems), as in EE2 `LANGUAGE_DETECTOR`.
+ */
+export const GAME_LANGS: ReadonlyArray<{ id: Lang; label: string; itemClass: string; rarity: string }> = [
+  { id: 'en', label: 'English', itemClass: 'Item Class: ', rarity: 'Rarity: ' },
+  { id: 'ru', label: 'Русский', itemClass: 'Класс предмета: ', rarity: 'Редкость: ' },
 ];
 
 /**
@@ -36,6 +39,14 @@ export const UI_LANGS: ReadonlyArray<{ id: UiLang; label: string }> = [
   { id: 'uk', label: 'Українська' },
   { id: 'ru', label: 'Русский' },
 ];
+/**
+ * EE2 keys whose English text is wrong (FINDINGS F-23): the game's own words (client_strings.js
+ * `WAYSTONE_MAGIC_MONSTERS`, `WAYSTONE_RARE_MONSTERS`). The other languages have theirs in public/i18n.
+ */
+export const EE2_I18N_FIXES: Record<string, string> = {
+  'item.map_magic_monsters': 'Magic Monsters: +{0}%',
+  'item.map_rare_monsters': 'Rare Monsters: +{0}%',
+};
 /** Interface translations folder, relative to the app base URL. */
 export const UI_I18N_PATH = 'i18n';
 
@@ -367,7 +378,7 @@ export const SETTINGS_FILE = 'settings.json';
 /** Key of the whole settings object inside the store file. */
 export const SETTINGS_STORE_KEY = 'settings';
 /** Current settings format; `upgradeSettings` brings older files up to it. */
-export const SETTINGS_VERSION = 3;
+export const SETTINGS_VERSION = 4;
 /** Event the window that changed the settings sends to the other windows. */
 export const SETTINGS_CHANGED_EVENT = 'settings-changed';
 
@@ -483,15 +494,15 @@ export const STASH_PANEL_WIDTH = 360;
 /** Map check profiles, shown as roman numerals; decisions are stored one character per profile. */
 export const MAP_CHECK_PROFILES = ['I', 'II', 'III'];
 /**
- * Default map check marks. EE2 (`WidgetItemCheck.vue`) keeps APT's PoE1 marks: of them only
- * "#% maximum Player Resistances" exists in PoE2 data; reflect and "two Unique Bosses" do not.
- * The rest are PoE2 waystone mods that hurt most builds: less recovery (deadly), less cooldown
- * recovery and the periodic curses (warning).
+ * Default map check marks per game language: marks are kept by the mod text of the game data.
+ * EE2 (`WidgetItemCheck.vue`) keeps APT's PoE1 marks: of them only "#% maximum Player
+ * Resistances" exists in PoE2 data; reflect and "two Unique Bosses" do not. The rest are PoE2
+ * waystone mods that hurt most builds: less recovery (deadly), less cooldown recovery and the
+ * periodic curses (warning). The Russian ones are the same mods (stat id and matcher) in EE2's
+ * ru stats.ndjson.
  */
-export const DEFAULT_MAP_CHECK = {
-  profile: 1,
-  showNewStats: false,
-  selectedStats: [
+export const DEFAULT_MAP_MARKS: Record<Lang, ReadonlyArray<{ matcher: string; decision: string }>> = {
+  en: [
     { matcher: 'Players have #% less Recovery Rate of Life and Energy Shield', decision: 'd--' },
     { matcher: '#% maximum Player Resistances', decision: 'w--' },
     { matcher: 'Players have #% less Cooldown Recovery Rate', decision: 'w--' },
@@ -499,6 +510,20 @@ export const DEFAULT_MAP_CHECK = {
     { matcher: 'Players are periodically Cursed with Enfeeble', decision: 'w--' },
     { matcher: 'Players are periodically Cursed with Temporal Chains', decision: 'w--' },
   ],
+  ru: [
+    { matcher: 'Скорость восстановления здоровья и энергетического щита игроков на #% меньше', decision: 'd--' },
+    { matcher: '#% максимум сопротивлений игроков', decision: 'w--' },
+    { matcher: 'Игроки имеют на #% меньше скорости перезарядки умений', decision: 'w--' },
+    { matcher: 'Область проклята Уязвимостью к стихиям', decision: 'w--' },
+    { matcher: 'Область проклята Слабостью', decision: 'w--' },
+    { matcher: 'Область проклята Путами времени', decision: 'w--' },
+  ],
+};
+/** Marks of both languages: those of the other one are kept, but neither shown nor outdated. */
+export const DEFAULT_MAP_CHECK = {
+  profile: 1,
+  showNewStats: false,
+  selectedStats: [...DEFAULT_MAP_MARKS.en, ...DEFAULT_MAP_MARKS.ru].map((mark) => ({ ...mark })),
 };
 /**
  * PoE1 map marks of settings before version 3 (APT and EE2 defaults): the PoE2 mod that takes the

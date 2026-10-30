@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, effect, signal } from '@angular/core';
 import type { StatMatcher } from '@/web/map-check/common';
 import { MAP_CHECK_PROFILES } from '../constants';
 import { TrPipe } from '../core/i18n';
@@ -28,14 +28,22 @@ export class MapModsEditor {
   protected readonly search = signal('');
   protected readonly onlySelected = signal(false);
   private readonly all = signal<StatMatcher[]>([]);
+  /** Apart from the rest of the settings, so a new mark does not list the mods again. */
+  private readonly language = computed(() => settings().language);
   protected readonly error = signal<string | null>(null);
   protected readonly list = computed(() => filterAreaMods(this.all(), this.config(), this.search(), this.onlySelected()));
 
   constructor() {
-    loadGameData().then(
-      () => this.all.set(allAreaMods()),
-      (e) => this.error.set(String(e)),
-    );
+    // Marks are kept by the mod text of the game language: list the mods in that language, again
+    // when it changes in the settings.
+    effect(() => {
+      const lang = this.language();
+      this.all.set([]);
+      loadGameData(lang).then(
+        () => this.language() === lang && this.all.set(allAreaMods()),
+        (e) => this.error.set(String(e)),
+      );
+    });
   }
 
   protected decision(matcher: string): string {

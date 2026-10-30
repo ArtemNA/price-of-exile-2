@@ -59,7 +59,7 @@
       "mercenary_6link": "6 зв'язків з {0} каменями підтримки 3-го тиру",
       "item_level": "Рівень предмета: {0}",
       "stock": "Запас: {0}",
-      "map_tier": "Рівень мапи: {0}",
+      "map_tier": "Тир Waystone: {0}",
       "area_level": "Рівень локації: {0}",
       "heist_job_lockpicking": "Потрібен злам ({0} рівень)",
       "heist_job_bruteforce": "Потрібна груба сила ({0} рівень)",
@@ -108,7 +108,27 @@
       "split": "Розділений",
       "not_split": "Не розділений",
       "map_foil_reward": "Особлива {0}",
-      "chart_sulphur": "Сірка мерця: {0}%"
+      "chart_sulphur": "Сірка мерця: {0}%",
+      "ascendancy_points": "Очки Ascendancy: {0}",
+      "augment_sockets": "Гнізда: {0}",
+      "gem_sockets": "Гнізда: {0}",
+      "duplicates": "Дублікати: {0}",
+      "has_elemental_affix": "Будь-яка",
+      "has_elemental_fire_affix": "Вогонь",
+      "has_elemental_cold_affix": "Холод",
+      "has_elemental_lightning_affix": "Блискавка",
+      "map_revives": "Доступно відроджень: {0}",
+      "map_drop_chance": "Шанс випадіння Waystone: +{0}%",
+      "map_magic_monsters": "Магічні монстри: +{0}%",
+      "map_rare_monsters": "Рідкісні монстри: +{0}%",
+      "map_gold": "Знайдене золото: +{0}%",
+      "rarity_magic": "Рідкісність: Magic",
+      "reload_time": "Час перезаряджання: {0}",
+      "runic_ward": "Рунічний бар'єр: {0}",
+      "spirit": "Дух: {0}",
+      "sanctified": "Sanctified",
+      "not_sanctified": "Not sanctified",
+      "unidentified_tier": "Неідентифікований: "
     },
     "item_category": {
       "prop": "Категорія: {0}",
@@ -209,7 +229,17 @@
       "tag_mercenary_primary": "основний",
       "tag_mercenary_secondary": "додатковий",
       "tag_mercenary_utility": "допоміжний",
-      "tag_filter_group": "Група властивостей"
+      "tag_filter_group": "Група властивостей",
+      "tag_rune": "руна",
+      "tag_added_rune": "руна",
+      "tag_desecrated": "desecrated",
+      "tag_mutated": "mutated",
+      "tag_skill": "уміння",
+      "hide_for_map": "Більшість модів вейстоуна не впливають на ціну",
+      "hide_low_ilvl": "Рівень предмета замалий, щоб на ньому могли бути всі моди",
+      "hide_not_max_level": "Уміння не максимального рівня рідко додають цінності",
+      "hide_revives": "Вибирайте, лише якщо не 0 і ви не збираєтеся покращувати його сферою Exalted",
+      "hide_total_all_res": "Додає мало порівняно із загальним опором, хіба що значення високе"
     },
     "online_filter": {
       "offline_toggle": "Офлайн і онлайн",
@@ -687,6 +717,9 @@
     "loading…": "завантаження…",
     "from {0} listings": "з {0} пропозицій",
     "~{0} traded per hour": "~{0} продажів на годину",
-    "Worth in this currency at the poe.ninja rate": "Вартість у цій валюті за курсом poe.ninja"
+    "Worth in this currency at the poe.ninja rate": "Вартість у цій валюті за курсом poe.ninja",
+    "poe.ninja": "poe.ninja",
+    "Wiki": "Вікі",
+    "iLvl": "iLvl"
   }
 }

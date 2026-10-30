@@ -6,9 +6,9 @@
 // PoE2 waystones have no fixed area (no screenshot in the item data) and there is no Maven; the
 // header shows the waystone's own numbers instead. Tablets open the item check.
 
-import { STATS_ITERATOR } from '@/assets/data';
+import { CLIENT_STRINGS, STATS_ITERATOR } from '@/assets/data';
 import { ItemCategory, ItemRarity, type ParsedItem } from '@/parser';
-import { MAP_CHECK_NUMBERS } from '../constants';
+import { DEFAULT_LANG, GAME_LANGS, type Lang, MAP_CHECK_NUMBERS } from '../constants';
 import {
   type MapCheckConfig,
   type StatMatcher,
@@ -16,6 +16,7 @@ import {
   decisionCreate,
   decisionHasColor,
   isOutdated,
+  type MapCheckStat,
   nextDecision,
 } from '@/web/map-check/common';
 import { prepareMapStats } from '@/web/map-check/prepare-map-stats';
@@ -64,6 +65,24 @@ export function isMapLike(item: ParsedItem): boolean {
   );
 }
 
+/**
+ * Marks are mod texts of one game language; with the two we have, the Russian ones are those in
+ * Cyrillic. Marks of the other language than the game data's are kept for when it comes back.
+ */
+export function markLanguage(matcher: string): Lang {
+  return /[а-яё]/i.test(matcher) ? 'ru' : 'en';
+}
+
+/** The language of the loaded game data, by the first line of its items ("Item Class: "). */
+function dataLanguage(): Lang {
+  return GAME_LANGS.find((lang) => lang.itemClass === CLIENT_STRINGS?.ITEM_CLASS)?.id ?? DEFAULT_LANG;
+}
+
+/** A mark whose mod the game data no longer has (EE2 `isOutdated`), among those of its language. */
+function isOutdatedMark(profile: number, entry: MapCheckStat): boolean {
+  return markLanguage(entry.matcher) === dataLanguage() && isOutdated(profile, entry);
+}
+
 export function decisionOf(config: MapCheckConfig, matcher: string, profile = config.profile): Decision {
   const entry = config.selectedStats.find((stat) => stat.matcher === matcher);
   return (entry?.decision[profile - 1] ?? '-') as Decision;
@@ -105,7 +124,7 @@ export function mapCheckView(item: ParsedItem, config: MapCheckConfig): MapCheck
     numbers,
     stats: prepareMapStats(item).map(({ matcher, roll, type }) => ({ matcher, roll, type, decision: decisionOf(config, matcher) })),
     unknown: item.unknownModifiers.map((mod) => withoutRollRange(mod.text)),
-    hasOutdated: config.selectedStats.some((entry) => isOutdated(config.profile, entry)),
+    hasOutdated: config.selectedStats.some((entry) => isOutdatedMark(config.profile, entry)),
   };
 }
 
@@ -165,7 +184,7 @@ export function filterAreaMods(
     config.selectedStats.filter((entry) => decisionHasColor(entry.decision, config.profile)).map((entry) => entry.matcher),
   );
   const outdated = config.selectedStats
-    .filter((entry) => isOutdated(config.profile, entry))
+    .filter((entry) => isOutdatedMark(config.profile, entry))
     .map((entry) => ({ matchStr: entry.matcher, tag: StatTag.Outdated }));
   const found = all.filter((stat) => {
     const text = stat.matchStr.toLowerCase();

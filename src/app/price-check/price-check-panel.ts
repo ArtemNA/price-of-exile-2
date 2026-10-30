@@ -247,8 +247,10 @@ export class PriceCheckPanel {
     this.markChanged();
   }
 
+  /** Why EE2 hid the filter; some of EE2's reasons ("hide_attr_smallest_total") have no text in any language. */
   protected hiddenReason(filter: StatFilter): string {
-    return filter.hidden ? t(filter.hidden) : '';
+    const reason = filter.hidden ? t(filter.hidden) : '';
+    return reason === filter.hidden ? '' : reason;
   }
 
   /** Divine value of a listing price, by the poe.ninja rates (null until they arrive). */

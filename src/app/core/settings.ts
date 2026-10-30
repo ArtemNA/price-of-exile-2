@@ -9,6 +9,7 @@ import {
   DEFAULT_LANG,
   DEFAULT_UI_LANG,
   DEFAULT_MAP_CHECK,
+  DEFAULT_MAP_MARKS,
   DEFAULT_POPUP_POSITION,
   DEFAULT_STASH_SEARCH,
   HotkeyAction,
@@ -124,7 +125,7 @@ export function defaultSettings(): Settings {
  * Version 1 had APT's "instant buyout only" switch (`merchantOnly`) instead of EE2's four listing
  * types: on means instant buyout, off meant online sellers.
  * Version 2 had the PoE1 map marks and stash search presets: version 3 has PoE2 ones (`upgradeMapCheck`,
- * `upgradeStashSearch`).
+ * `upgradeStashSearch`). Version 3 had the default map marks of the English game only.
  * Fields added later (`copyKey`) get their defaults without a new version. Unknown or missing
  * fields fall back to the defaults, so a damaged file still loads.
  */
@@ -136,7 +137,8 @@ export function upgradeSettings(raw: unknown): Settings {
   if (priceCheck.listingType == null && typeof merchantOnly === 'boolean') {
     priceCheck.listingType = merchantOnly ? 'securable' : 'online';
   }
-  const poe1 = (stored.configVersion ?? 0) < 3;
+  const version = stored.configVersion ?? 0;
+  const poe1 = version < 3;
   const stashSearch = Array.isArray(stored.stashSearch) ? stored.stashSearch : defaults.stashSearch;
   const mapCheck = { ...defaults.mapCheck, ...stored.mapCheck };
   return {
@@ -148,7 +150,7 @@ export function upgradeSettings(raw: unknown): Settings {
     commands: Array.isArray(stored.commands) ? stored.commands : defaults.commands,
     stashSearch: poe1 ? upgradeStashSearch(stashSearch) : stashSearch,
     priceCheck: { ...defaults.priceCheck, ...priceCheck },
-    mapCheck: poe1 ? upgradeMapCheck(mapCheck) : mapCheck,
+    mapCheck: poe1 ? upgradeMapCheck(mapCheck) : version < 4 ? withDefaultMarks(mapCheck, DEFAULT_MAP_MARKS.ru) : mapCheck,
   };
 }
 
@@ -163,7 +165,13 @@ function upgradeMapCheck(config: MapCheckConfig): MapCheckConfig {
     const matcher = POE1_MAP_CHECK_MATCHERS[entry.matcher];
     return matcher && !stats.some((other) => other.matcher === matcher) ? [{ ...entry, matcher }] : [];
   });
-  for (const entry of DEFAULT_MAP_CHECK.selectedStats) {
+  return withDefaultMarks({ ...config, selectedStats }, DEFAULT_MAP_CHECK.selectedStats);
+}
+
+/** Adds the default `marks` whose mod has no entry yet. */
+function withDefaultMarks(config: MapCheckConfig, marks: ReadonlyArray<{ matcher: string; decision: string }>): MapCheckConfig {
+  const selectedStats = Array.isArray(config.selectedStats) ? [...config.selectedStats] : [];
+  for (const entry of marks) {
     if (!selectedStats.some((other) => other.matcher === entry.matcher)) selectedStats.push({ ...entry });
   }
   return { ...config, selectedStats };

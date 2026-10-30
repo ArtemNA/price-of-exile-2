@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DEFAULT_HOTKEYS, DEFAULT_MAP_CHECK, DEFAULT_STASH_SEARCH, SETTINGS_VERSION } from '../src/app/constants';
+import { DEFAULT_HOTKEYS, DEFAULT_MAP_CHECK, DEFAULT_MAP_MARKS, DEFAULT_STASH_SEARCH, SETTINGS_VERSION } from '../src/app/constants';
 import { defaultSettings, upgradeSettings } from '../src/app/core/settings';
 import { host, hostConfig } from '../src/app/host';
 import { hotkeyConflicts, hotkeyLabel, recordHotkey } from '../src/app/settings/hotkey';
@@ -61,7 +61,7 @@ describe('settings', () => {
   });
 
   it('moves the PoE1 map marks of version 2 to PoE2 mods and adds the PoE2 defaults', () => {
-    expect(SETTINGS_VERSION).toBe(3);
+    expect(SETTINGS_VERSION).toBe(4);
     const mine = { matcher: 'Monsters are Armoured', decision: '-g-' };
     const mapCheck = {
       profile: 2,
@@ -85,10 +85,13 @@ describe('settings', () => {
       { matcher: 'Players are periodically Cursed with Elemental Weakness', decision: 'w--' },
       { matcher: 'Players are periodically Cursed with Enfeeble', decision: 'w--' },
       { matcher: 'Players are periodically Cursed with Temporal Chains', decision: 'w--' },
+      ...DEFAULT_MAP_MARKS.ru,
     ]);
-    // Version 3 keeps the marks as they are, removed defaults stay removed.
+    // Version 3 gets the defaults of the Russian game; version 4 keeps the marks as they are,
+    // removed defaults stay removed.
     const v3 = { ...mapCheck, selectedStats: [mine] };
-    expect(upgradeSettings({ configVersion: 3, mapCheck: v3 }).mapCheck).toEqual(v3);
+    expect(upgradeSettings({ configVersion: 3, mapCheck: v3 }).mapCheck).toEqual({ ...v3, selectedStats: [mine, ...DEFAULT_MAP_MARKS.ru] });
+    expect(upgradeSettings({ configVersion: 4, mapCheck: v3 }).mapCheck).toEqual(v3);
     expect(upgradeSettings({ configVersion: 2 }).mapCheck).toEqual(DEFAULT_MAP_CHECK);
   });
 
@@ -127,7 +130,7 @@ describe('settings', () => {
   });
 
   it('reads the copy key from the game config unless the settings choose one', () => {
-    expect(SETTINGS_VERSION).toBe(3);
+    expect(SETTINGS_VERSION).toBe(4);
     expect(defaultSettings().copyKey).toBeNull();
     // Version 3 files from before the field get the default without a new version.
     expect(upgradeSettings({ configVersion: 3, gameTitle: 'Path of Exile 2' }).copyKey).toBeNull();

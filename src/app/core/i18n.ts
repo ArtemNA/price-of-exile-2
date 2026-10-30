@@ -1,5 +1,6 @@
 import { Pipe, PipeTransform, signal } from '@angular/core';
-import { DATA_PATH, DEFAULT_LANG, Lang, UI_I18N_PATH, UiLang } from '../constants';
+import { Settings as LuxonSettings } from 'luxon';
+import { DATA_PATH, DEFAULT_LANG, EE2_I18N_FIXES, Lang, UI_I18N_PATH, UiLang } from '../constants';
 
 // Two kinds of interface text:
 // - APT's keys ("filters.tag_crafted") from APT's public/data/<lang>/app_i18n.json, read with `t`;
@@ -24,7 +25,7 @@ function flatten(obj: Record<string, unknown>, prefix = '', out: Record<string, 
 
 export async function loadI18n(lang: Lang = DEFAULT_LANG): Promise<void> {
   const url = new URL(`${DATA_PATH}/${lang}/app_i18n.json`, document.baseURI).href;
-  dict.set(flatten(await (await fetch(url)).json()));
+  dict.set({ ...flatten(await (await fetch(url)).json()), ...EE2_I18N_FIXES });
 }
 
 /** Switches the interface texts; English needs no file. */
@@ -39,6 +40,8 @@ export async function loadUiLanguage(lang: UiLang): Promise<void> {
   }
   uiLang.set(lang);
   document.documentElement.lang = lang;
+  // Listing ages ("5 hr. ago") are EE2's luxon `toRelative`, in the interface language.
+  LuxonSettings.defaultLocale = lang;
 }
 
 const fill = (text: string, args: Array<string | number>) =>
