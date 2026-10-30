@@ -1,9 +1,10 @@
+<!-- No self-update yet (PLAN "Пізніше"): a new version is installed over the old one. -->
 ## ⬇ Which file should I download?
 
 | File | Size | |
 |---|---|---|
-| **{{SETUP}}** | {{SETUP_SIZE}} | 👍 **Recommended. Not sure? Take this one.** Installs in a few seconds, no administrator rights needed, and updates itself. |
-| **{{PORTABLE}}** | {{PORTABLE_SIZE}} | A single exe: run it, nothing to install. Does not update itself: it shows when a new version is out. |
+| **{{SETUP}}** | {{SETUP_SIZE}} | 👍 **Recommended. Not sure? Take this one.** Installs in a few seconds, no administrator rights needed. |
+| **{{PORTABLE}}** | {{PORTABLE_SIZE}} | A single exe: run it, nothing to install. |
 
 Both need Microsoft Edge WebView2, which Windows 10 and 11 already have. If Windows SmartScreen warns you, click **More info → Run anyway**.
 
@@ -14,8 +15,8 @@ After the start the overlay lives in the tray: hover an item in the game and pre
 
 | Файл | Розмір | |
 |---|---|---|
-| **{{SETUP}}** | {{SETUP_SIZE}} | 👍 **Рекомендовано. Не впевнений — бери цей.** Встановлюється за кілька секунд, без прав адміністратора, оновлюється сам. |
-| **{{PORTABLE}}** | {{PORTABLE_SIZE}} | Один exe: запустив, і працює, нічого не встановлює. Сам не оновлюється: лише показує, що вийшла нова версія. |
+| **{{SETUP}}** | {{SETUP_SIZE}} | 👍 **Рекомендовано. Не впевнений — бери цей.** Встановлюється за кілька секунд, без прав адміністратора. |
+| **{{PORTABLE}}** | {{PORTABLE_SIZE}} | Один exe: запустив, і працює, нічого не встановлює. |
 
 Обом потрібен Microsoft Edge WebView2, він уже є у Windows 10 і 11. Якщо Windows SmartScreen попереджає, натисни **Докладніше → Виконати однаково**.
 
@@ -28,8 +29,8 @@ After the start the overlay lives in the tray: hover an item in the game and pre
 
 | Файл | Размер | |
 |---|---|---|
-| **{{SETUP}}** | {{SETUP_SIZE}} | 👍 **Рекомендуется. Не уверен — бери этот.** Устанавливается за несколько секунд, без прав администратора, обновляется сам. |
-| **{{PORTABLE}}** | {{PORTABLE_SIZE}} | Один exe: запустил, и работает, ничего не устанавливает. Сам не обновляется: только показывает, что вышла новая версия. |
+| **{{SETUP}}** | {{SETUP_SIZE}} | 👍 **Рекомендуется. Не уверен — бери этот.** Устанавливается за несколько секунд, без прав администратора. |
+| **{{PORTABLE}}** | {{PORTABLE_SIZE}} | Один exe: запустил, и работает, ничего не устанавливает. |
 
 Обоим нужен Microsoft Edge WebView2, он уже есть в Windows 10 и 11. Если Windows SmartScreen предупреждает, нажми **Подробнее → Выполнить в любом случае**.
 
