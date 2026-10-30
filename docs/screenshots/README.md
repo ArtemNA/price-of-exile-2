@@ -31,3 +31,6 @@
 | `09-stash-panel.png` | Етап 9: Alt+F — панель пресетів сховища PoE2 (Map rolling, Dump sorting) |
 | `09-chat-and-stash-fake-game.png` | Етап 9: фейкова гра після F5 (`/hideout`) і кліку по пресету «Waystone Tier» |
 | `10-search-through-browser.png` | Етап 10: пошук кільця з «Use the built-in browser» — усі запити trade2 пішли через сторінку pathofexile.com у вбудованому браузері |
+| `11-unid-single.png` | Етап 11: неідентифікований Felt Cap — Goldrim вибрано сам, пошук неідентифікованих |
+| `11-unid-picker.png` | Етап 11: неідентифікований Sapphire Ring — «Which one?» з трьома унікальними |
+| `11-unid-picked.png` | Етап 11: після вибору Polcirkeln — пошук, ціна poe.ninja |

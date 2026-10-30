@@ -1,8 +1,9 @@
 import { Component, input, output } from '@angular/core';
 import type { BaseType } from '@/assets/data';
+import { ITEM_ICON_NOT_FOUND } from '../constants';
 import { TranslatePipe } from '../core/i18n';
 
-/** "Which unique is it?" for an unidentified unique (APT `UnidentifiedResolver.vue`). */
+/** "Which unique is it?" for an unidentified unique (EE2 `UnidentifiedResolver.vue`). */
 @Component({
   selector: 'app-unidentified-picker',
   imports: [TranslatePipe],
@@ -12,7 +13,7 @@ import { TranslatePipe } from '../core/i18n';
       @for (unique of variants(); track unique.refName) {
         <button class="flex items-center gap-2.5 border border-line-strong bg-raised p-2 text-left hover:border-gold hover:bg-[#2a2218]"
           (click)="picked.emit(unique)">
-          @if (unique.icon) {
+          @if (hasIcon(unique)) {
             <img class="size-10 flex-none object-contain" [src]="unique.icon" alt="" />
           }
           <span class="font-display text-[14px] leading-tight text-[#d97a3a]">{{ unique.name }}</span>
@@ -26,4 +27,9 @@ export class UnidentifiedPicker {
   readonly baseName = input.required<string>();
   readonly variants = input.required<BaseType[]>();
   readonly picked = output<BaseType>();
+
+  /** EE2's data marks a missing icon with a placeholder instead of leaving it out. */
+  protected hasIcon(unique: BaseType): boolean {
+    return Boolean(unique.icon) && unique.icon !== ITEM_ICON_NOT_FOUND;
+  }
 }

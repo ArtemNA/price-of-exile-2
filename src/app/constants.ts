@@ -532,3 +532,10 @@ export const MAP_MOD_TYPE_LABELS: Record<string, string> = {
   fractured: 'Fractured',
   crafted: 'Crafted',
 };
+
+/**
+ * Unique entries of EE2's items.ndjson that are not real uniques: the data parser's stand-in name
+ * for unfinished ones (on many weapon bases) and a missing icon. The "Which one?" picker skips them.
+ */
+export const UNIQUE_PLACEHOLDER_NAME = 'INCOMPLETE';
+export const ITEM_ICON_NOT_FOUND = '%NOT_FOUND%';

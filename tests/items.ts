@@ -30,6 +30,10 @@ export const MAGIC_UNID_TIER = fixture('magic-unid-tier');
 export const NORMAL_HELMET = fixture('normal-helmet');
 /** Uncut Skill Gem (Level 19). */
 export const UNCUT_GEM = fixture('uncut-gem');
+/** Unidentified unique Felt Cap: Goldrim is the only unique on it. */
+export const UNIQUE_UNIDENTIFIED = fixture('unique-unid');
+/** Unidentified unique Sapphire Ring: Dream Fragments, Polcirkeln or Whisper of the Brotherhood. */
+export const UNIQUE_UNIDENTIFIED_SEVERAL = fixture('unique-unid-several');
 /** Unidentified rare Volatile Wand. */
 export const RARE_UNIDENTIFIED = fixture('rare-unid');
 /** Mirage Archer, level 14, without the Item Class line. */

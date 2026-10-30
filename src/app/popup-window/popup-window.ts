@@ -107,7 +107,7 @@ export class PopupWindow {
         let item = result.value;
         if (payload.target === 'price-check' && needsIdentification(item)) {
           const variants = identifiedVariants(item);
-          // One possible unique: no need to ask (APT does the same).
+          // One possible unique: no need to ask (EE2 does the same).
           if (variants.length === 1) item = identifyAs(item, variants[0]);
           else this.variants.set(variants);
         }
