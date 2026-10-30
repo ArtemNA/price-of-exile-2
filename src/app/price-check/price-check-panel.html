@@ -15,14 +15,14 @@
       <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
         @if (base(); as b) {
           <div class="flex h-6 border border-line-strong" role="group" [attr.aria-label]="'Base' | tr">
-            <button class="px-2 not-last:border-r not-last:border-line-strong" [class]="!b.exact ? 'bg-[#2a2219] text-gold-soft' : 'text-muted hover:text-text'"
+            <button class="px-2 not-last:border-r not-last:border-line-strong" [class]="!b.exact ? 'bg-toggle-on text-gold-soft' : 'text-muted hover:text-text'"
               (click)="setBase(false)">{{ b.category }}</button>
-            <button class="px-2" [class]="b.exact ? 'bg-[#2a2219] text-gold-soft' : 'text-muted hover:text-text'" [title]="'Only {0}' | tr: b.base"
+            <button class="px-2" [class]="b.exact ? 'bg-toggle-on text-gold-soft' : 'text-muted hover:text-text'" [title]="'Only {0}' | tr: b.base"
               (click)="setBase(true)">{{ 'This base' | tr }}</button>
           </div>
         }
         @for (chip of headerChips(); track chip.key) {
-          <span class="flex h-6 items-center gap-1 border pl-2" [class]="chip.enabled ? 'border-bronze bg-[#2a2219] text-gold-soft' : 'border-line text-muted'"
+          <span class="flex h-6 items-center gap-1 border pl-2" [class]="chip.enabled ? 'border-bronze bg-toggle-on text-gold-soft' : 'border-line text-muted'"
             [class.pr-2]="!chip.numeric">
             <button class="whitespace-nowrap" [title]="chip.label" [attr.aria-pressed]="chip.enabled" (click)="toggleChip(chip)">
               {{ chipLabel(chip) }}{{ chip.numeric ? chipComparator(chip) : chip.enabled ? ' ✓' : '' }}
@@ -41,7 +41,7 @@
           <div class="flex h-6 border border-line-strong" role="group" [attr.aria-label]="'Corrupted' | tr">
             @for (option of corruptedOptions; track option.value) {
               <button class="px-2 not-last:border-r not-last:border-line-strong"
-                [class]="option.value !== state ? 'text-muted hover:text-text' : option.value === 'not' ? 'bg-[#1d2a1c] text-[#8fd493]' : option.value === 'only' ? 'bg-[#2e1a17] text-bad' : 'bg-[#2a2219] text-gold-soft'"
+                [class]="option.value !== state ? 'text-muted hover:text-text' : option.value === 'not' ? 'bg-positive-bg text-positive' : option.value === 'only' ? 'bg-corrupted-bg text-bad' : 'bg-toggle-on text-gold-soft'"
                 [attr.aria-pressed]="option.value === state" (click)="setCorruptedState(option.value)">{{ option.label | tr }}</button>
             }
           </div>
@@ -95,7 +95,7 @@
             <div class="flex h-6 border border-line">
               @for (p of all.presets; track p.id) {
                 <button class="px-2.5 text-xs not-last:border-r not-last:border-line"
-                  [class]="p.id === all.active ? 'bg-[#2a2219] font-medium text-gold-soft' : 'text-muted hover:text-text'"
+                  [class]="p.id === all.active ? 'bg-toggle-on font-medium text-gold-soft' : 'text-muted hover:text-text'"
                   (click)="selectPreset(p.id)">{{ presetLabel(p.id) }}</button>
               }
             </div>
@@ -109,7 +109,7 @@
     }
 
     @if (error(); as message) {
-      <p class="mx-2.5 my-1 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ message | tr }}</p>
+      <p class="mx-2.5 my-1 bg-error-bg px-2 py-1.5 text-bad">{{ message | tr }}</p>
     }
 
     @if (active(); as preset) {
@@ -184,7 +184,7 @@
         <!-- Trade options -->
         <div class="mt-2 flex items-center gap-2 border-t border-line pt-2 pb-1">
           @if (rarityChip(); as chip) {
-            <button class="h-6 border px-2" [class]="chip.enabled ? 'border-bronze bg-[#2a2219] text-gold-soft' : 'border-line text-muted'"
+            <button class="h-6 border px-2" [class]="chip.enabled ? 'border-bronze bg-toggle-on text-gold-soft' : 'border-line text-muted'"
               [attr.aria-pressed]="chip.enabled" (click)="toggleChip(chip)">{{ chip.label }}{{ chip.enabled ? ' ✓' : '' }}</button>
           }
           <span class="flex-1"></span>
@@ -196,7 +196,7 @@
             <div class="flex h-6 border border-line-strong" role="group" [attr.aria-label]="'Listings' | tr">
               @for (option of listingOptions(); track option.value) {
                 <button class="px-2 not-last:border-r not-last:border-line-strong"
-                  [class]="option.value === preset.filters.trade.listingType ? 'bg-[#2a2219] text-gold-soft' : 'text-muted hover:text-text'"
+                  [class]="option.value === preset.filters.trade.listingType ? 'bg-toggle-on text-gold-soft' : 'text-muted hover:text-text'"
                   [title]="option.hint | tr" [attr.aria-pressed]="option.value === preset.filters.trade.listingType"
                   (click)="setListingType(option.value)">{{ option.label | tr }}</button>
               }
@@ -214,7 +214,7 @@
                 @for (option of currencyOptions; track option.value) {
                   @let on = option.value === (preset.filters.trade.currency ?? null);
                   <button class="flex items-center gap-0.5 px-2 not-last:border-r not-last:border-line-strong"
-                    [class]="on ? 'bg-[#2a2219] text-gold-soft' : 'text-muted opacity-70 hover:text-text hover:opacity-100'"
+                    [class]="on ? 'bg-toggle-on text-gold-soft' : 'text-muted opacity-70 hover:text-text hover:opacity-100'"
                     [title]="option.label | tr" [attr.aria-pressed]="on" (click)="setCurrency(option.value)">
                     @if (option.value === null) {
                       {{ 'Any' | tr }}
@@ -234,7 +234,7 @@
       <div class="p-2.5">
         <button
           class="h-8 w-full border text-[13px] font-semibold disabled:cursor-default"
-          [class]="stale() ? 'border-gold bg-linear-to-b from-[#a7823f] to-[#7a5c26] text-[#1a1208]' : 'border-line-strong bg-raised text-text hover:border-gold'"
+          [class]="stale() ? 'border-gold bg-linear-to-b from-primary-from to-primary-to text-primary-text' : 'border-line-strong bg-raised text-text hover:border-gold'"
           [disabled]="isSearching()"
           (click)="runSearch()"
         >
@@ -261,9 +261,9 @@
       }
       <span class="flex-1"></span>
       @if (activeTab() === 'trade' || activeTab() === 'bulk') {
-        <button class="px-1 py-1.5 text-gold hover:text-[#e6c88a]" (click)="openTradeSite()">{{ 'Open on trade site ↗' | tr }}</button>
+        <button class="px-1 py-1.5 text-gold hover:text-gold-hover" (click)="openTradeSite()">{{ 'Open on trade site ↗' | tr }}</button>
       } @else if (activeTab() === 'ninja' && ninja()?.url) {
-        <button class="px-1 py-1.5 text-gold hover:text-[#e6c88a]" (click)="openTradeSite()">{{ 'Open on poe.ninja ↗' | tr }}</button>
+        <button class="px-1 py-1.5 text-gold hover:text-gold-hover" (click)="openTradeSite()">{{ 'Open on poe.ninja ↗' | tr }}</button>
       }
     </nav>
 
@@ -294,12 +294,12 @@
 
     @if (search.error(); as message) {
       @if (message === cloudflareError) {
-      <div class="mx-3 my-2 flex items-center gap-3 border border-[#5a3a12] bg-[#2a1f0e] px-2.5 py-2 text-warn">
+      <div class="mx-3 my-2 flex items-center gap-3 border border-warn-line bg-warn-bg px-2.5 py-2 text-warn">
         <span class="flex-1">{{ '{0}. Pass the check in the built-in browser; the overlay then searches through it.' | tr: (message | tr) }}</span>
-        <button class="h-7 flex-none border border-gold bg-[#2a2218] px-2.5 text-gold-soft hover:bg-[#3a2e1e]" (click)="openBrowserForCheck()">{{ 'Open browser' | tr }}</button>
+        <button class="h-7 flex-none border border-gold bg-selected px-2.5 text-gold-soft hover:bg-selected-hover" (click)="openBrowserForCheck()">{{ 'Open browser' | tr }}</button>
       </div>
     } @else {
-      <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message | trError }}</p>
+      <p class="mx-3 my-2 bg-error-bg px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message | trError }}</p>
     }
     }
 
@@ -315,7 +315,7 @@
     <div class="min-h-0 flex-1 overflow-y-auto">
       @for (row of rows; track row.id; let odd = $odd) {
         <div
-          class="grid items-center gap-2 border-b border-[#1f1c18] px-3 py-1 tabular-nums"
+          class="grid items-center gap-2 border-b border-row-line px-3 py-1 tabular-nums"
           [style.grid-template-columns]="columns"
           [class.bg-white/[0.015]]="odd"
           [class.opacity-60]="row.accountStatus === 'offline'"
@@ -358,7 +358,7 @@
       <div class="flex border border-line">
         @for (have of bulk.haves(); track have) {
           <button class="flex h-6 items-center px-2 not-last:border-r not-last:border-line"
-            [class]="have === bulk.selected() ? 'bg-[#2a2219]' : 'opacity-50 hover:opacity-100'"
+            [class]="have === bulk.selected() ? 'bg-toggle-on' : 'opacity-50 hover:opacity-100'"
             [attr.aria-pressed]="have === bulk.selected()" (click)="selectHave(have)"><app-currency [tag]="have" />
             <span class="ml-1 tabular-nums">{{ bulk.results()[have]?.total ?? '?' }}</span></button>
         }
@@ -396,12 +396,12 @@
 
   @if (searchError(); as message) {
     @if (message === cloudflareError) {
-      <div class="mx-3 my-2 flex items-center gap-3 border border-[#5a3a12] bg-[#2a1f0e] px-2.5 py-2 text-warn">
+      <div class="mx-3 my-2 flex items-center gap-3 border border-warn-line bg-warn-bg px-2.5 py-2 text-warn">
         <span class="flex-1">{{ '{0}. Pass the check in the built-in browser; the overlay then searches through it.' | tr: (message | tr) }}</span>
-        <button class="h-7 flex-none border border-gold bg-[#2a2218] px-2.5 text-gold-soft hover:bg-[#3a2e1e]" (click)="openBrowserForCheck()">{{ 'Open browser' | tr }}</button>
+        <button class="h-7 flex-none border border-gold bg-selected px-2.5 text-gold-soft hover:bg-selected-hover" (click)="openBrowserForCheck()">{{ 'Open browser' | tr }}</button>
       </div>
     } @else {
-      <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message | trError }}</p>
+      <p class="mx-3 my-2 bg-error-bg px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message | trError }}</p>
     }
   }
 
@@ -419,13 +419,13 @@
           <span class="col-span-3 text-right text-[11px] text-muted">{{ 'Market ratio' | tr }} · poe.ninja</span>
         </div>
       } @else {
-        <div class="grid grid-cols-[minmax(0,1fr)_70px_64px_70px] items-center gap-2 border-b border-[#1f1c18] px-3 py-1 tabular-nums"
+        <div class="grid grid-cols-[minmax(0,1fr)_70px_64px_70px] items-center gap-2 border-b border-row-line px-3 py-1 tabular-nums"
           [class.bg-white/[0.015]]="odd" [class.opacity-55]="line.row.isBait || line.row.accountStatus === 'offline'" [class.text-gold-soft]="line.row.isMine">
           <span class="flex min-w-0 items-center gap-1 text-bright">
             {{ amount(line.row.exchangeAmount) }} <app-currency [tag]="bulk.selected()" /> → {{ amount(line.row.itemAmount) }}
             <ng-container *ngTemplateOutlet="bulkItem" />
             @if (line.row.isBait) {
-              <span class="ml-1 border border-[#a5553f] px-1 text-[10px] text-[#f0a08a]">{{ 'bait?' | tr }}</span>
+              <span class="ml-1 border border-bait-line px-1 text-[10px] text-bait-text">{{ 'bait?' | tr }}</span>
             }
           </span>
           <span class="text-right">{{ line.row.stock.toLocaleString('en') }}</span>
@@ -512,7 +512,7 @@
       } @else if (entry.pending) {
         <p class="px-3 py-3 text-muted">{{ 'Loading poe.ninja prices…' | tr }}</p>
       } @else if (ninjaError(); as message) {
-        <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">poe.ninja: {{ message | trError }}</p>
+        <p class="mx-3 my-2 bg-error-bg px-2 py-1.5 text-bad">poe.ninja: {{ message | trError }}</p>
       } @else {
         @let noPrice = around('poe.ninja has no price for {0}.' | tr);
         <p class="px-3 py-3 text-muted">{{ noPrice[0] }}<span class="text-text">{{ entry.label }}</span>{{ noPrice[1] }}</p>
@@ -520,7 +520,7 @@
     } @else if (ninjaLoading()) {
       <p class="px-3 py-3 text-muted">{{ 'Loading poe.ninja prices…' | tr }}</p>
     } @else if (ninjaError(); as message) {
-      <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">poe.ninja: {{ message | trError }}</p>
+      <p class="mx-3 my-2 bg-error-bg px-2 py-1.5 text-bad">poe.ninja: {{ message | trError }}</p>
     } @else {
       <p class="px-3 py-3 text-muted">{{ 'poe.ninja has no prices for this kind of item.' | tr }}</p>
     }
@@ -540,7 +540,7 @@
   </div>
   <div class="grid grid-cols-2 gap-x-2 py-1">
     @for (entry of entries; track $index) {
-      <div class="flex min-w-0 items-center gap-1.5 px-1 py-[3px]" [class]="entry.highlight ? 'bg-[#2a2219] text-bright' : 'text-text'">
+      <div class="flex min-w-0 items-center gap-1.5 px-1 py-[3px]" [class]="entry.highlight ? 'bg-toggle-on text-bright' : 'text-text'">
         <img [src]="entry.icon" alt="" class="size-6 flex-none object-contain" loading="lazy" />
         <span class="min-w-0 flex-1 truncate text-[12px]" [title]="entry.name">{{ entry.name }}</span>
         @if (relatedPrice(entry.div); as p) {
@@ -568,7 +568,7 @@
     <input type="checkbox" class="size-3.5 flex-none accent-gold" [checked]="!stat.disabled" (change)="toggleStat(stat)" />
     @let level = tier(stat);
     <span class="flex h-4 w-6 flex-none items-center justify-center text-[10px] font-bold"
-      [class]="level === 1 ? 'bg-[#c9a15a] text-[#15130f]' : level === 2 ? 'bg-[#7a5f36] text-[#f0d48a]' : level ? 'border border-line text-muted' : ''">
+      [class]="level === 1 ? 'bg-tier1 text-tier1-text' : level === 2 ? 'bg-tier2 text-tier2-text' : level ? 'border border-line text-muted' : ''">
       {{ level ? 'T' + level : '' }}
     </span>
     <span class="flex min-w-0 flex-1 items-center gap-1.5">
@@ -578,18 +578,18 @@
       }
     </span>
     @if (fracturedState(stat); as fractured) {
-      <button class="flex h-[18px] flex-none items-center gap-1 rounded-[9px] border border-[#6a5a2e] pr-1.5 pl-0.5 text-[10px] leading-none"
-        [class]="fractured === 'on' ? 'bg-[#c4ad6e] text-[#15130f]' : 'text-muted opacity-60 hover:opacity-100'"
+      <button class="flex h-[18px] flex-none items-center gap-1 rounded-[9px] border border-fractured-line pr-1.5 pl-0.5 text-[10px] leading-none"
+        [class]="fractured === 'on' ? 'bg-fractured text-fractured-text' : 'text-muted opacity-60 hover:opacity-100'"
         [title]="(fractured === 'on' ? 'Searched as a fractured mod: click to search it as a regular one' : 'Click to search it as a fractured mod') | tr"
         [attr.aria-pressed]="fractured === 'on'" (click)="$event.preventDefault(); toggleFractured(stat)">
-        <span class="size-3 rounded-full" [class]="fractured === 'on' ? 'bg-[#15130f]' : 'bg-[#6a5a2e]'"></span>{{ 'Fractured' | tr }}
+        <span class="size-3 rounded-full" [class]="fractured === 'on' ? 'bg-fractured-text' : 'bg-fractured-line'"></span>{{ 'Fractured' | tr }}
       </button>
     }
     @if (emptyAffix(stat) != null) {
       <span class="flex h-5 flex-none border border-line-strong text-[11px]" (click)="$event.preventDefault()">
         @for (option of emptyAffixOptions; track option.value) {
           <button class="px-1.5 not-last:border-r not-last:border-line-strong"
-            [class]="option.value === emptyAffix(stat) ? 'bg-[#2a2219] text-gold-soft' : 'text-muted hover:text-text'"
+            [class]="option.value === emptyAffix(stat) ? 'bg-toggle-on text-gold-soft' : 'text-muted hover:text-text'"
             (click)="setEmptyAffix(stat, option.value)">{{ option.label | tr }}</button>
         }
       </span>

@@ -12,7 +12,9 @@
     "watch": "ng build --watch --configuration development",
     "pretest": "npm run data:index",
     "test": "vitest run",
-    "dev": "tauri dev --config src-tauri/tauri.dev.conf.json"
+    "dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
+    "prebuild:ee2-default": "npm run data:index",
+    "build:ee2-default": "ng build -c production,ee2-default"
   },
   "private": true,
   "packageManager": "npm@11.19.0",

@@ -18,6 +18,7 @@ import {
   ITEM_CHIPS_EXACT,
   MODS_PRESET_ID,
   MODS_PRESET_LABEL,
+  PRICE_CHECK_FULL_HEIGHT,
   PRICE_CHECK_MAX_HEIGHT,
   PRICE_CHECK_MIN_HEIGHT,
   PRICE_CHECK_WIDTH,
@@ -41,7 +42,8 @@ import {
 } from '../core/ninja-prices';
 import { t, tr, TrErrorPipe, TranslatePipe, TrPipe } from '../core/i18n';
 import { settings, updateSettings } from '../core/settings';
-import { host } from '../host';
+import { host, type PopupSide } from '../host';
+import { themeById } from '../themes';
 import type { ItemView } from '../popup-window/item-view';
 import {
   bestOffer,
@@ -255,7 +257,7 @@ export class PriceCheckPanel {
   }
 
   /** Divine value of a listing price, by the poe.ninja rates (null until they arrive). */
-  private readonly toDivine = computed(() => {
+  protected readonly toDivine = computed(() => {
     const rates = currencyRates.rates();
     const db = currencyRates.prices();
     return rates ? (amount: number, currency: string) => toDivine(amount, currency, rates, db) : null;
@@ -319,7 +321,7 @@ export class PriceCheckPanel {
   }
 
   /** A listing type the current tab's API takes (EE2 sets "online" for bulk). */
-  private fitListing(): void {
+  protected fitListing(): void {
     const active = this.active();
     if (!active || INFO_TABS.includes(this.activeTab())) return;
     fitListingType(active.filters.trade, this.tradeApi(), settings().priceCheck.listingType);
@@ -434,7 +436,7 @@ export class PriceCheckPanel {
     rates: currencyRates.rates(),
   }));
 
-  private readonly bulkPriced = computed(() =>
+  protected readonly bulkPriced = computed(() =>
     priceOffers(this.bulk.current()?.listed ?? [], this.bulk.selected(), this.bulkPrices()),
   );
 
@@ -504,11 +506,42 @@ export class PriceCheckPanel {
     this.fitHeightToFilters();
   }
 
+  /** The side of the game the popup is on, for a theme laying things out beside its column. */
+  protected readonly popupSide = signal<PopupSide>('center');
+
+  /**
+   * The window width a full-height theme needs now (a theme may put related items beside its
+   * column, over the transparent rest of a wider window). Ours: the column itself.
+   */
+  protected themeWindowWidth(width: number): number {
+    return width;
+  }
+
+  /**
+   * A click on the transparent part of a theme's wider window (on the view's host element itself,
+   * not on its content) closes the popup, as a click into the game beside it would: the host's
+   * click watch does not see clicks on our own window. A theme binds it to its host's mousedown.
+   */
+  protected backdropDown(event: MouseEvent): void {
+    if (event.target === event.currentTarget) void host.hidePopup();
+  }
+
   /**
    * The window is as tall as the filters need (within PRICE_CHECK_MIN/MAX_HEIGHT and the game),
    * so items with many mods do not scroll. Watches the filter list for any change.
+   * A theme with `priceCheckSize.fullHeight` is as tall as the game instead.
    */
   private fitHeightToFilters(): void {
+    const size = themeById(settings().theme).priceCheckSize;
+    if (size?.fullHeight) {
+      effect(() => {
+        this.item(); // a new item: the theme may want another width (related items or not)
+        const width = this.themeWindowWidth(size.width);
+        void host.fitPopup(width, PRICE_CHECK_FULL_HEIGHT).then((side) => this.popupSide.set(side));
+      });
+      return;
+    }
+    const width = size?.width ?? PRICE_CHECK_WIDTH;
     let frame = 0;
     let lastHeight = 0;
     const fit = () => {
@@ -524,7 +557,7 @@ export class PriceCheckPanel {
         const height = Math.min(PRICE_CHECK_MAX_HEIGHT, Math.max(PRICE_CHECK_MIN_HEIGHT, wanted));
         if (height === lastHeight) return;
         lastHeight = height;
-        void host.fitPopup(PRICE_CHECK_WIDTH, height);
+        void host.fitPopup(width, height).then((side) => this.popupSide.set(side));
       });
     };
     const observer = new MutationObserver(fit);
@@ -612,7 +645,7 @@ export class PriceCheckPanel {
   }
 
   /** Stat and item filter edits wait for the Search button, like in APT. */
-  private markChanged(): void {
+  protected markChanged(): void {
     this.revision.update((n) => n + 1);
     this.stale.set(true);
   }
@@ -653,7 +686,7 @@ export class PriceCheckPanel {
     this.runSearchSoon();
   }
 
-  private runSearchSoon(): void {
+  protected runSearchSoon(): void {
     this.stale.set(true);
     if (!this.isSearching()) this.runSearch();
   }

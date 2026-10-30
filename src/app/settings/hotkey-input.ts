@@ -11,9 +11,9 @@ import { hotkeyLabel, recordHotkey } from './hotkey';
       class="h-7 w-44 border px-2 text-center tabular-nums outline-none"
       [class]="
         recording()
-          ? 'border-gold bg-[#2a2218] text-gold-soft'
+          ? 'border-gold bg-selected text-gold-soft'
           : invalid()
-            ? 'border-[#8a3a2c] bg-well text-bad'
+            ? 'border-bad-line bg-well text-bad'
             : 'border-line-strong bg-well text-bright hover:border-gold'
       "
       [attr.aria-label]="'{0} hotkey' | tr: label()"

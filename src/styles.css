@@ -23,6 +23,77 @@
   --color-good: #6fbf73;
   --color-warn: #d9a441;
   --color-bad: #e0806a;
+
+  /* Named for what they mean, so a theme can recolour them (html[data-theme='<id>'], THEMING). */
+  --color-selected: #2a2218; /* chosen option, active button */
+  --color-selected-hover: #3a2e1e;
+  --color-toggle-on: #2a2219; /* price check: segment on, enabled chip, active preset */
+  --color-error-bg: #3a1a14;
+  --color-gold-hover: #e6c88a; /* text links */
+  --color-warn-bg: #2a1f0e;
+  --color-warn-line: #5a3a12;
+  --color-row-line: #1f1c18;
+  --color-primary-from: #a7823f; /* primary button gradient */
+  --color-primary-to: #7a5c26;
+  --color-primary-text: #1a1208;
+  --color-deadly: #d0503c;
+  --color-deadly-icon: #ff8a76;
+  --color-bad-line: #8a3a2c;
+  --color-menu: #12100d;
+  --color-menu-shadow: rgba(0, 0, 0, 0.8);
+  --color-frame-shadow: #000; /* 1 px outline around the popup and the toast */
+  --color-focus-ring: rgba(201, 161, 90, 0.25);
+  --color-bait-text: #f0a08a;
+  --color-bait-line: #a5553f;
+  --color-unique: #d97a3a;
+  --color-positive: #8fd493;
+  --color-positive-bg: #1d2a1c;
+  --color-corrupted-bg: #2e1a17;
+  --color-heist: #5a1d18;
+  --color-deadly-bg: #3f1813;
+  --color-deadly-hover: #4a1d17;
+  --color-warning-bg: #38290f;
+  --color-warning-hover: #433112;
+  --color-good-bg: #14261a;
+  --color-good-line: #2f5a32;
+  --color-good-row-bg: #16301a;
+  --color-good-row-hover: #1b3a20;
+  --color-tier1: #c9a15a;
+  --color-tier1-text: #15130f;
+  --color-tier2: #7a5f36;
+  --color-tier2-text: #f0d48a;
+  --color-fractured: #c4ad6e;
+  --color-fractured-text: #15130f;
+  --color-fractured-line: #6a5a2e;
+}
+
+/*
+ * Item name plates (item check, map check) and name colours (also the price check), by rarity:
+ * RARITY_COLORS in src/app/constants.ts builds their names, which Tailwind cannot see in the
+ * sources, so they are always emitted ("static").
+ */
+@theme static {
+  --color-rarity-normal: #c8c8c8;
+  --color-rarity-magic: #8888ff;
+  --color-rarity-rare: #ffff77;
+  --color-rarity-unique: #d97a3a;
+  --color-rarity-gem: #1ba29b;
+  --color-rarity-currency: #d8cfa8;
+  --color-rarity-divination-card: #0ebaff;
+  --plate-normal-bg: linear-gradient(#2a2826, #161514);
+  --plate-normal-rule: #5e5a54;
+  --plate-magic-bg: linear-gradient(#22223a, #12121f);
+  --plate-magic-rule: #4a4a8a;
+  --plate-rare-bg: linear-gradient(#3a2c18, #1f170d);
+  --plate-rare-rule: #7a5f36;
+  --plate-unique-bg: linear-gradient(#3a2414, #1f130a);
+  --plate-unique-rule: #8a5426;
+  --plate-gem-bg: linear-gradient(#123230, #0a1a19);
+  --plate-gem-rule: #2a6a66;
+  --plate-currency-bg: linear-gradient(#2a2822, #16150f);
+  --plate-currency-rule: #5e5a4a;
+  --plate-divination-card-bg: linear-gradient(#0f2a36, #08161d);
+  --plate-divination-card-rule: #2a5a70;
 }
 
 html,

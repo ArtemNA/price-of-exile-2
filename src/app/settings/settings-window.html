@@ -15,28 +15,28 @@
     </ul>
     <span class="flex-1"></span>
     @if (updates.status() === 'available' || updates.status() === 'installing') {
-      <div class="mx-3 mb-0 flex flex-col gap-1.5 border border-gold bg-[#2a2218] px-2.5 py-2 text-[12px]">
+      <div class="mx-3 mb-0 flex flex-col gap-1.5 border border-gold bg-selected px-2.5 py-2 text-[12px]">
         <span class="flex items-center gap-2 text-gold-soft">
           {{ 'Version {0} is out' | tr: updates.version() ?? '' }}
           <span class="flex-1"></span>
           @if (updates.version(); as next) {
-            <button class="text-gold hover:text-[#e6c88a]" (click)="openRelease(next)">{{ "What's new ↗" | tr }}</button>
+            <button class="text-gold hover:text-gold-hover" (click)="openRelease(next)">{{ "What's new ↗" | tr }}</button>
           }
         </span>
-        <button class="h-7 border border-gold bg-linear-to-b from-[#a7823f] to-[#7a5c26] font-semibold text-[#1a1208] disabled:opacity-60"
+        <button class="h-7 border border-gold bg-linear-to-b from-primary-from to-primary-to font-semibold text-primary-text disabled:opacity-60"
           [disabled]="updates.status() === 'installing'" (click)="updates.install()">
           {{ (updates.status() === 'installing' ? 'Installing…' : updates.portable() ? 'Download' : 'Install and restart') | tr }}
         </button>
       </div>
     }
     @if (exclusiveFullscreen()) {
-      <div class="mx-3 mt-3 border border-[#5a3a12] bg-[#2a1f0e] px-2.5 py-2 text-[12px] leading-snug text-warn">
+      <div class="mx-3 mt-3 border border-warn-line bg-warn-bg px-2.5 py-2 text-[12px] leading-snug text-warn">
         {{ 'The game runs in exclusive fullscreen, so the overlay cannot show over it.' | tr }}
         {{ "In the game's options set Display mode to {0}." | tr: 'Windowed Fullscreen' }}
       </div>
     }
     <div class="m-3 flex items-center gap-2 border px-2.5 py-1.5 text-[12px]"
-      [class]="gameActive() ? 'border-[#2f5a32] bg-[#14261a] text-good' : 'border-line bg-panel text-muted'">
+      [class]="gameActive() ? 'border-good-line bg-good-bg text-good' : 'border-line bg-panel text-muted'">
       <span class="size-2 rounded-full" [class]="gameActive() ? 'bg-good' : 'bg-muted'"></span>
       {{ (gameActive() ? 'Game active, hotkeys on' : 'Game not active') | tr }}
     </div>
@@ -60,7 +60,7 @@
               <div class="flex gap-1">
                 @for (lang of uiLangs; track lang.id) {
                   <button class="h-8 border px-3" [attr.lang]="lang.id"
-                    [class]="settings().uiLanguage === lang.id ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [class]="settings().uiLanguage === lang.id ? 'border-gold bg-selected text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
                     [attr.aria-pressed]="settings().uiLanguage === lang.id" (click)="setUiLanguage(lang.id)">{{ lang.label }}</button>
                 }
               </div>
@@ -72,14 +72,14 @@
               <div class="flex gap-1">
                 @for (lang of gameLangs; track lang.id) {
                   <button class="h-8 border px-3" [attr.lang]="lang.id"
-                    [class]="settings().language === lang.id ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [class]="settings().language === lang.id ? 'border-gold bg-selected text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
                     [attr.aria-pressed]="settings().language === lang.id" (click)="setGameLanguage(lang.id)">{{ lang.label }}</button>
                 }
               </div>
               <span class="text-[12px] text-muted">{{ 'The language your game runs in: the overlay reads the items it copies and searches the trade site {0}.' | tr: tradeSite() }}</span>
               @if (settings().language !== 'en') {
                 <label class="mt-1 flex items-center gap-2">
-                  <input type="checkbox" class="accent-[#c9a15a]" [checked]="settings().useIntlSite" (change)="setUseIntlSite($any($event.target).checked)" />
+                  <input type="checkbox" class="accent-gold" [checked]="settings().useIntlSite" (change)="setUseIntlSite($any($event.target).checked)" />
                   <span>{{ 'Search on the international site {0}' | tr: intlSite }}</span>
                 </label>
               }
@@ -92,7 +92,7 @@
               <span class="text-[12px] text-muted">{{ 'Hotkeys work only while the window with exactly this title is in front.' | tr }}</span>
               @if (hostGameTitle(); as title) {
                 @if (title !== settings().gameTitle) {
-                  <span class="bg-[#2a1f0e] px-2 py-1 text-[12px] text-warn">{{ 'The POE_GAME_TITLE variable overrides it: the overlay looks for "{0}".' | tr: title }}</span>
+                  <span class="bg-warn-bg px-2 py-1 text-[12px] text-warn">{{ 'The POE_GAME_TITLE variable overrides it: the overlay looks for "{0}".' | tr: title }}</span>
                 }
               }
             </label>
@@ -110,7 +110,7 @@
                   [disabled]="leagues.isLoading()" (click)="loadLeagues()">{{ (leagues.isLoading() ? 'Loading…' : 'Reload') | tr }}</button>
               </div>
               @if (leagues.error(); as error) {
-                <span class="bg-[#3a1a14] px-2 py-1 text-bad">{{ 'Failed to load leagues: {0}' | tr: (error | trError) }}</span>
+                <span class="bg-error-bg px-2 py-1 text-bad">{{ 'Failed to load leagues: {0}' | tr: (error | trError) }}</span>
               }
             </div>
 
@@ -125,12 +125,24 @@
 
         @case ('overlay') {
           <div class="flex max-w-xl flex-col gap-5">
+            @if (themes.length > 1) {
+              <div class="flex flex-col gap-1.5">
+                <span class="text-bright">{{ 'Theme' | tr }}</span>
+                <div class="flex gap-1">
+                  @for (theme of themes; track theme.id) {
+                    <button class="h-8 border px-3"
+                      [class]="currentTheme() === theme.id ? 'border-gold bg-selected text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                      [attr.aria-pressed]="currentTheme() === theme.id" (click)="setTheme(theme.id)">{{ theme.label }}</button>
+                  }
+                </div>
+              </div>
+            }
             <div class="flex flex-col gap-1.5">
               <span class="text-bright">{{ 'Popup position' | tr }}</span>
               <div class="flex gap-1">
                 @for (option of positions; track option.value) {
                   <button class="h-8 border px-3"
-                    [class]="settings().popupPosition === option.value ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [class]="settings().popupPosition === option.value ? 'border-gold bg-selected text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
                     [attr.aria-pressed]="settings().popupPosition === option.value" (click)="setPopupPosition(option.value)">{{ option.label | tr }}</button>
                 }
               </div>
@@ -138,7 +150,7 @@
             </div>
 
             <label class="flex items-start gap-2.5">
-              <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().startMessage"
+              <input type="checkbox" class="mt-0.5 accent-gold" [checked]="settings().startMessage"
                 (change)="setStartMessage($any($event.target).checked)" />
               <span class="flex flex-col"><span class="text-bright">{{ 'Show a message when the overlay starts' | tr }}</span>
                 <span class="text-[12px] text-muted">{{ 'A few seconds in the corner of the screen: the overlay runs, its hotkeys, where the settings are.' | tr }}</span></span>
@@ -153,7 +165,7 @@
               <div class="flex items-center gap-3">
                 <span class="tabular-nums">{{ version() }}@if (updates.portable()) {<span class="text-muted"> · {{ 'portable' | tr }}</span>}</span>
                 @if (version()) {
-                  <button class="text-gold hover:text-[#e6c88a]" [title]="'The release page of this version on GitHub' | tr" (click)="openRelease(version())">{{ "What's new ↗" | tr }}</button>
+                  <button class="text-gold hover:text-gold-hover" [title]="'The release page of this version on GitHub' | tr" (click)="openRelease(version())">{{ "What's new ↗" | tr }}</button>
                 }
                 <button class="h-7 border border-line-strong bg-raised px-3 hover:border-gold disabled:opacity-50"
                   [disabled]="updates.status() === 'checking' || updates.status() === 'installing'" (click)="updates.check()">{{ 'Check for updates' | tr }}</button>
@@ -169,7 +181,7 @@
             <div class="flex flex-col gap-1.5">
               <span class="text-bright">{{ 'Source code' | tr }}</span>
               <div class="flex items-center gap-3">
-                <button class="text-gold hover:text-[#e6c88a]" (click)="openRepository()">github.com/ArtemNA/price-of-exile-2 ↗</button>
+                <button class="text-gold hover:text-gold-hover" (click)="openRepository()">github.com/ArtemNA/price-of-exile-2 ↗</button>
                 <span class="text-[12px] text-muted">{{ 'MIT license' | tr }}</span>
               </div>
             </div>
@@ -193,7 +205,7 @@
               </div>
             }
             @for (error of hotkeyErrors(); track error) {
-              <p class="mt-2 bg-[#3a1a14] px-2 py-1 text-bad">{{ error }}</p>
+              <p class="mt-2 bg-error-bg px-2 py-1 text-bad">{{ error }}</p>
             }
 
             <div class="mt-5 flex flex-col gap-1.5">
@@ -207,7 +219,7 @@
               <div class="mt-1 flex gap-1">
                 @for (option of copyKeyOptions; track option.value) {
                   <button class="h-8 border px-3"
-                    [class]="settings().copyKey === option.value ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [class]="settings().copyKey === option.value ? 'border-gold bg-selected text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
                     [attr.aria-pressed]="settings().copyKey === option.value" (click)="setCopyKey(option.value)">{{ option.label | tr }}</button>
                 }
               </div>
@@ -229,7 +241,7 @@
                   placeholder="/hideout" [attr.aria-label]="'Chat command {0}' | tr: i + 1" [value]="command.text"
                   (blur)="updateCommand(i, { text: text.value })" (keydown.enter)="updateCommand(i, { text: text.value })" />
                 <label class="flex items-center gap-1.5 text-[12px] text-muted" [title]="'Press Enter after typing' | tr">
-                  <input type="checkbox" class="accent-[#c9a15a]" [checked]="command.send" (change)="updateCommand(i, { send: $any($event.target).checked })" />
+                  <input type="checkbox" class="accent-gold" [checked]="command.send" (change)="updateCommand(i, { send: $any($event.target).checked })" />
                   {{ 'Send' | tr }}
                 </label>
                 @if (conflicts().has('chat-' + i)) {
@@ -258,7 +270,7 @@
                     [placeholder]="'Group title' | tr" [attr.aria-label]="'Group title' | tr" [value]="group.title"
                     (blur)="updateGroup(group.id, { title: title.value })" (keydown.enter)="updateGroup(group.id, { title: title.value })" />
                   <label class="flex items-center gap-1.5 text-[12px] text-muted">
-                    <input type="checkbox" class="accent-[#c9a15a]" [checked]="group.enableHotkeys"
+                    <input type="checkbox" class="accent-gold" [checked]="group.enableHotkeys"
                       (change)="updateGroup(group.id, { enableHotkeys: $any($event.target).checked })" />
                     {{ 'Hotkeys on' | tr }}
                   </label>
@@ -266,10 +278,10 @@
                     (click)="removeGroup(group.id)">{{ 'Remove group' | tr }}</button>
                 </div>
                 @for (entry of group.entries; track entry.id) {
-                  <div class="flex items-center gap-2 border-b border-[#1f1c18] px-2.5 py-1.5">
+                  <div class="flex items-center gap-2 border-b border-row-line px-2.5 py-1.5">
                     <div class="flex min-w-0 flex-1 flex-col gap-1">
                       <input #text class="h-7 border bg-panel px-2 text-bright outline-none focus:border-gold"
-                        [class]="entry.text.length > stashTextMax ? 'border-[#8a3a2c]' : 'border-line-strong'"
+                        [class]="entry.text.length > stashTextMax ? 'border-bad-line' : 'border-line-strong'"
                         [placeholder]="'Search text, e.g. &quot;Waystone Tier&quot;' | tr" [attr.aria-label]="'Search text' | tr" [value]="entry.text"
                         (blur)="updateEntry(group.id, entry.id, { text: text.value })" (keydown.enter)="updateEntry(group.id, entry.id, { text: text.value })" />
                       <input #name class="h-6 border border-line bg-panel px-2 text-[12px] text-text outline-none focus:border-gold"
@@ -314,7 +326,7 @@
               <div class="flex gap-1">
                 @for (option of currencies; track option.value) {
                   <button class="h-8 border px-3"
-                    [class]="settings().priceCheck.defaultCurrency === option.value ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [class]="settings().priceCheck.defaultCurrency === option.value ? 'border-gold bg-selected text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
                     [attr.aria-pressed]="settings().priceCheck.defaultCurrency === option.value"
                     (click)="setPriceCheck({ defaultCurrency: option.value })">{{ option.label | tr }}</button>
                 }
@@ -326,7 +338,7 @@
               <div class="flex gap-1">
                 @for (option of listingTypes; track option.value) {
                   <button class="h-8 border px-3"
-                    [class]="settings().priceCheck.listingType === option.value ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [class]="settings().priceCheck.listingType === option.value ? 'border-gold bg-selected text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
                     [attr.aria-pressed]="settings().priceCheck.listingType === option.value" [title]="option.hint | tr"
                     (click)="setPriceCheck({ listingType: option.value })">{{ option.label | tr }}</button>
                 }
@@ -336,20 +348,20 @@
 
             <div class="flex flex-col gap-3">
               <label class="flex items-start gap-2.5">
-                <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().priceCheck.smartInitialSearch"
+                <input type="checkbox" class="mt-0.5 accent-gold" [checked]="settings().priceCheck.smartInitialSearch"
                   (change)="setPriceCheck({ smartInitialSearch: $any($event.target).checked })" />
                 <span class="flex flex-col"><span class="text-bright">{{ 'Search right away' | tr }}</span>
                   <span class="text-[12px] text-muted">{{ 'For uniques, currency, gems and other items whose price rarely needs filter changes.' | tr }}</span></span>
               </label>
               <label class="flex items-start gap-2.5">
-                <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().priceCheck.activateStockFilter"
+                <input type="checkbox" class="mt-0.5 accent-gold" [checked]="settings().priceCheck.activateStockFilter"
                   (change)="setPriceCheck({ activateStockFilter: $any($event.target).checked })" />
                 <span class="flex flex-col"><span class="text-bright">{{ 'Always select the "Stock" filter' | tr }}</span>
                   <span class="text-[12px] text-muted">{{ 'For stacks: only sellers with at least as many as you hover.' | tr }}</span></span>
               </label>
               <div class="flex flex-col gap-2 border border-line bg-well px-2.5 py-2">
                 <label class="flex items-start gap-2.5">
-                  <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().priceCheck.builtinBrowser"
+                  <input type="checkbox" class="mt-0.5 accent-gold" [checked]="settings().priceCheck.builtinBrowser"
                     (change)="setPriceCheck({ builtinBrowser: $any($event.target).checked })" />
                   <span class="flex flex-col"><span class="text-bright">{{ 'Use the built-in browser' | tr }}</span>
                     <span class="text-[12px] text-muted">{{ 'Trade requests go through a pathofexile.com window, with your login and the Cloudflare check passed there.' | tr }}
@@ -358,7 +370,7 @@
                 <button class="h-7 self-start border border-line-strong bg-raised px-3 hover:border-gold" (click)="openBrowser()">{{ 'Open the browser to log in' | tr }}</button>
               </div>
               <label class="flex items-start gap-2.5">
-                <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().priceCheck.collapseListings === 'app'"
+                <input type="checkbox" class="mt-0.5 accent-gold" [checked]="settings().priceCheck.collapseListings === 'app'"
                   (change)="setPriceCheck({ collapseListings: $any($event.target).checked ? 'app' : 'api' })" />
                 <span class="flex flex-col"><span class="text-bright">{{ 'Show how many listings a seller has' | tr }}</span>
                   <span class="text-[12px] text-muted">{{ 'Asks the trade site for more results, so the rate limit is reached sooner.' | tr }}</span></span>

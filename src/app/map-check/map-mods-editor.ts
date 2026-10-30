@@ -8,9 +8,9 @@ import { allAreaMods, decisionHasColor, decisionOf, filterAreaMods, StatTag, wit
 
 /** Marks the user can set per mod in the editor; the order of APT's columns. `label` is English, the template translates it. */
 const COLUMNS = [
-  { decision: 'w', label: 'Warning', class: 'accent-[#d9a441]' },
-  { decision: 'd', label: 'Deadly', class: 'accent-[#d0503c]' },
-  { decision: 'g', label: 'Good', class: 'accent-[#6fbf73]' },
+  { decision: 'w', label: 'Warning', class: 'accent-warn' },
+  { decision: 'd', label: 'Deadly', class: 'accent-deadly' },
+  { decision: 'g', label: 'Good', class: 'accent-good' },
 ] as const;
 
 /** Settings page of the map check (APT `settings-maps.vue` + `SettingsMatcherEntry.vue`). */

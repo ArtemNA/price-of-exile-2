@@ -18,7 +18,7 @@ import { host } from '../host';
       [attr.aria-label]="label()"
       [placeholder]="placeholder()"
       [value]="shown()"
-      class="h-5 w-10 border border-line-strong bg-well px-1 text-right text-xs text-bright tabular-nums outline-none placeholder:text-muted/70 focus:border-gold focus:shadow-[0_0_0_2px_rgba(201,161,90,0.25)]"
+      class="h-5 w-10 border border-line-strong bg-well px-1 text-right text-xs text-bright tabular-nums outline-none placeholder:text-muted/70 focus:border-gold focus:shadow-[0_0_0_2px_var(--color-focus-ring)]"
       (mousedown)="takeFocus($event)"
       (focus)="editing.set(true)"
       (input)="typed(field.value)"

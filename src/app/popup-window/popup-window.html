@@ -1,4 +1,4 @@
-<section [attr.aria-label]="title()" class="relative flex h-full flex-col border border-frame bg-panel font-sans text-xs text-text shadow-[0_0_0_1px_#000]"
+<section [attr.aria-label]="title()" class="relative flex h-full flex-col border border-frame bg-panel font-sans text-xs text-text shadow-[0_0_0_1px_var(--color-frame-shadow)]"
   (mousedown.capture)="pointerDown($event)">
   <header class="flex h-[34px] flex-none items-center gap-2 border-b border-line bg-chrome pr-2 pl-3">
     <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0l6 6-6 6-6-6z" fill="var(--color-gold)" /></svg>
@@ -14,7 +14,7 @@
 
     <button
       class="flex h-6 items-center gap-1.5 border px-2"
-      [class]="menu() === 'divine' ? 'border-gold bg-[#2a2218]' : 'border-line bg-raised hover:border-line-strong'"
+      [class]="menu() === 'divine' ? 'border-gold bg-selected' : 'border-line bg-raised hover:border-line-strong'"
       [disabled]="!rates()"
       (click)="toggleMenu('divine')"
     >
@@ -35,7 +35,7 @@
   </header>
 
   @if (menu() === 'league') {
-    <div class="absolute top-[33px] right-[200px] z-10 flex w-56 flex-col border border-bronze bg-[#12100d] shadow-[0_12px_30px_rgba(0,0,0,0.8)]">
+    <div class="absolute top-[33px] right-[200px] z-10 flex w-56 flex-col border border-bronze bg-menu shadow-[0_12px_30px_var(--color-menu-shadow)]">
       @for (league of leagues.list(); track league.id) {
         <button class="px-2.5 py-1.5 text-left hover:bg-raised" [class.text-gold-soft]="league.id === settings().leagueId" (click)="selectLeague(league.id)">
           {{ league.id }}
@@ -51,10 +51,10 @@
   }
 
   @if (menu() === 'divine' && rates(); as r) {
-    <div class="absolute top-[33px] right-[36px] z-10 flex w-[240px] flex-col border border-bronze bg-[#12100d] shadow-[0_12px_30px_rgba(0,0,0,0.8)]">
+    <div class="absolute top-[33px] right-[36px] z-10 flex w-[240px] flex-col border border-bronze bg-menu shadow-[0_12px_30px_var(--color-menu-shadow)]">
       <div class="grid grid-cols-3 border-b border-line px-2.5 py-1.5 text-[11px] text-muted"><span>Divine</span><span class="text-right">Exalted</span><span class="text-right">Chaos</span></div>
       @for (row of fractions(r); track row.divine) {
-        <div class="grid grid-cols-3 border-b border-[#1f1c18] px-2.5 py-[3px] tabular-nums" [class.bg-gold/[0.08]]="row.divine === 1">
+        <div class="grid grid-cols-3 border-b border-row-line px-2.5 py-[3px] tabular-nums" [class.bg-gold/[0.08]]="row.divine === 1">
           <span class="flex items-center gap-1 text-bright">{{ row.divine === 1 ? '1' : row.divine.toFixed(1) }} <app-currency tag="divine" [size]="14" /></span>
           <span class="flex items-center justify-end gap-1" [class]="row.divine === 1 ? 'text-gold-soft' : 'text-bright'">{{ amount(row.exalted) }} <app-currency tag="exalted" [size]="14" /></span>
           <span class="flex items-center justify-end gap-1" [class]="row.divine === 1 ? 'text-gold-soft' : 'text-bright'">{{ amount(row.chaos) }} <app-currency tag="chaos" [size]="14" /></span>
@@ -72,7 +72,7 @@
     </div>
   } @else if (parsed(); as parsedItem) {
     @if (noModDetails()) {
-      <p class="flex-none border-b border-[#5a3a12] bg-[#2a1f0e] px-3 py-1.5 text-warn">{{ 'The game copied this item without its mod details, so its mods are missing here. Check the item copy keys in Settings → Hotkeys.' | tr }}</p>
+      <p class="flex-none border-b border-warn-line bg-warn-bg px-3 py-1.5 text-warn">{{ 'The game copied this item without its mod details, so its mods are missing here. Check the item copy keys in Settings → Hotkeys.' | tr }}</p>
     }
     @if (target() === 'item-check') {
       <div class="min-h-0 flex-1 overflow-y-auto">
@@ -86,9 +86,13 @@
       </div>
     } @else {
       @if (variants().length) {
-        <app-unidentified-picker [baseName]="parsedItem.info.name" [variants]="variants()" (picked)="identify($event)" />
+        @if (themePicker(); as picker) {
+          <ng-container *ngComponentOutlet="picker; inputs: { baseName: parsedItem.info.name, variants: variants(), pick: pick }" />
+        } @else {
+          <app-unidentified-picker [baseName]="parsedItem.info.name" [variants]="variants()" (picked)="identify($event)" />
+        }
       } @else {
-        <app-price-check [item]="parsedItem" [view]="item()!" />
+        <ng-container *ngComponentOutlet="priceCheckView(); inputs: { item: parsedItem, view: item()! }" />
       }
     }
   } @else {

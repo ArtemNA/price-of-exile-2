@@ -2,18 +2,18 @@
   <input class="h-8 min-w-32 flex-1 border border-line-strong bg-well px-2 text-bright outline-none focus:border-gold"
     [placeholder]="'Search…' | tr" [value]="search()" (input)="search.set($any($event.target).value)" />
   <label class="flex items-center gap-1.5">
-    <input type="checkbox" class="accent-[#c9a15a]" [checked]="onlySelected()" (change)="onlySelected.set($any($event.target).checked)" />
+    <input type="checkbox" class="accent-gold" [checked]="onlySelected()" (change)="onlySelected.set($any($event.target).checked)" />
     {{ 'Only marked' | tr }}
   </label>
   <label class="flex items-center gap-1.5" [title]="'In the map check, new mods get a dot; click it to mark the mod as seen' | tr">
-    <input type="checkbox" class="accent-[#c9a15a]" [checked]="config().showNewStats" (change)="setShowNewStats($any($event.target).checked)" />
+    <input type="checkbox" class="accent-gold" [checked]="config().showNewStats" (change)="setShowNewStats($any($event.target).checked)" />
     {{ 'Show icon for new mods' | tr }}
   </label>
   <span class="text-muted">{{ 'Profile' | tr }}</span>
   <div class="flex gap-1">
     @for (profile of profiles; track profile; let i = $index) {
       <button class="h-7 w-9 border font-display"
-        [class]="config().profile === i + 1 ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+        [class]="config().profile === i + 1 ? 'border-gold bg-selected text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
         (click)="selectProfile(i + 1)">{{ profile }}</button>
     }
   </div>
@@ -28,15 +28,15 @@
 </div>
 
 @if (error(); as message) {
-  <p class="bg-[#3a1a14] px-2 py-1.5 text-bad">{{ 'Cannot load map mods: {0}' | tr: message }}</p>
+  <p class="bg-error-bg px-2 py-1.5 text-bad">{{ 'Cannot load map mods: {0}' | tr: message }}</p>
 }
 <ol class="min-h-0 flex-1 overflow-y-auto border border-line bg-well">
   @for (mod of list(); track mod.matchStr + mod.tag) {
-    <li class="group flex h-8 items-center not-last:border-b not-last:border-[#1f1c18] hover:bg-raised">
+    <li class="group flex h-8 items-center not-last:border-b not-last:border-row-line hover:bg-raised">
       <span class="flex min-w-0 flex-1 items-center gap-1.5 px-2">
         @switch (mod.tag) {
           @case (tags.Outdated) { <span class="bg-bad px-1 text-[11px] text-black">{{ 'outdated' | tr }}</span> }
-          @case (tags.HeistExclusive) { <span class="bg-[#5a1d18] px-1 text-[11px] text-bright">{{ 'heist' | tr }}</span> }
+          @case (tags.HeistExclusive) { <span class="bg-heist px-1 text-[11px] text-bright">{{ 'heist' | tr }}</span> }
           @case (tags.UberMapExclusive) { <span class="border border-line-strong bg-chrome px-1 text-[11px]">{{ 'uber' | tr }}</span> }
         }
         <span class="truncate" [title]="mod.matchStr">{{ mod.matchStr }}</span>

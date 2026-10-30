@@ -30,6 +30,7 @@ import { CopyKeysSource, CopyKeysStatus, ForegroundEvent, host, hostConfig } fro
 import { MapModsEditor } from '../map-check/map-mods-editor';
 import { hotkeyConflicts } from './hotkey';
 import { HotkeyInput } from './hotkey-input';
+import { THEMES, themeById } from '../themes';
 
 interface LogLine {
   time: string;
@@ -219,6 +220,14 @@ export class SettingsWindow {
 
   protected setStartMessage(startMessage: boolean): void {
     updateSettings({ startMessage });
+  }
+
+  /** The themes built in; the choice shows only when there is more than ours. */
+  protected readonly themes = THEMES;
+  protected readonly currentTheme = computed(() => themeById(settings().theme).id);
+
+  protected setTheme(theme: string): void {
+    updateSettings({ theme });
   }
 
   protected setPopupPosition(popupPosition: PopupPosition): void {

@@ -134,6 +134,8 @@ export const MODS_PRESET_LABEL = 'Mods';
 export const PRICE_CHECK_WIDTH = 960;
 export const PRICE_CHECK_MIN_HEIGHT = 590;
 export const PRICE_CHECK_MAX_HEIGHT = 900;
+/** Asked by a theme whose price check is as tall as the game: the host clamps it to the game. */
+export const PRICE_CHECK_FULL_HEIGHT = 100_000;
 
 /**
  * Price check stat filter headings in display order, and which EE2 filter tags go under each (F-54).
@@ -374,16 +376,22 @@ export const BULK_BAIT_RATIO = 0.5;
 /** Rows of the divine → exalted · chaos tooltip in the window title bar. */
 export const DIVINE_FRACTIONS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
-/** Name plate colors per item rarity (PoE conventions). Keyed by ParsedItem rarity or category. */
-export const RARITY_COLORS: Record<string, { text: string; plate: string; rule: string }> = {
-  Normal: { text: '#c8c8c8', plate: 'linear-gradient(#2a2826, #161514)', rule: '#5e5a54' },
-  Magic: { text: '#8888ff', plate: 'linear-gradient(#22223a, #12121f)', rule: '#4a4a8a' },
-  Rare: { text: '#ffff77', plate: 'linear-gradient(#3a2c18, #1f170d)', rule: '#7a5f36' },
-  Unique: { text: '#d97a3a', plate: 'linear-gradient(#3a2414, #1f130a)', rule: '#8a5426' },
-  Gem: { text: '#1ba29b', plate: 'linear-gradient(#123230, #0a1a19)', rule: '#2a6a66' },
-  Currency: { text: '#d8cfa8', plate: 'linear-gradient(#2a2822, #16150f)', rule: '#5e5a4a' },
-  'Divination Card': { text: '#0ebaff', plate: 'linear-gradient(#0f2a36, #08161d)', rule: '#2a5a70' },
-};
+/**
+ * Name plate colors per item rarity (PoE conventions). Keyed by ParsedItem rarity or category.
+ * CSS variables of src/styles.css (`--color-rarity-<id>`, `--plate-<id>-bg`, `--plate-<id>-rule`),
+ * so a theme can recolour them.
+ */
+export const RARITY_COLORS: Record<string, { text: string; plate: string; rule: string }> = Object.fromEntries(
+  Object.entries({
+    Normal: 'normal',
+    Magic: 'magic',
+    Rare: 'rare',
+    Unique: 'unique',
+    Gem: 'gem',
+    Currency: 'currency',
+    'Divination Card': 'divination-card',
+  }).map(([rarity, id]) => [rarity, { text: `var(--color-rarity-${id})`, plate: `var(--plate-${id}-bg)`, rule: `var(--plate-${id}-rule)` }]),
+);
 
 /** Dot color next to listing prices, by trade currency id. */
 export const CURRENCY_COLORS: Record<string, string> = {

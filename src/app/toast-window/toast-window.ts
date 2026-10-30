@@ -11,7 +11,7 @@ import { hotkeyLabel } from '../settings/hotkey';
   selector: 'app-toast-window',
   imports: [TrPipe],
   template: `
-    <button class="flex h-full w-full items-center gap-3 border border-frame bg-panel px-3.5 text-left font-sans text-text shadow-[0_0_0_1px_#000]"
+    <button class="flex h-full w-full items-center gap-3 border border-frame bg-panel px-3.5 text-left font-sans text-text shadow-[0_0_0_1px_var(--color-frame-shadow)]"
       (click)="openSettings()">
       <svg class="flex-none" width="30" height="30" viewBox="0 0 12 12" aria-hidden="true">
         <path d="M6 0l6 6-6 6-6-6z" fill="var(--color-gold)" />

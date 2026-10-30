@@ -3,6 +3,7 @@ import { DEFAULT_HOTKEYS, DEFAULT_MAP_CHECK, DEFAULT_MAP_MARKS, DEFAULT_STASH_SE
 import { defaultSettings, upgradeSettings } from '../src/app/core/settings';
 import { host, hostConfig } from '../src/app/host';
 import { hotkeyConflicts, hotkeyLabel, recordHotkey } from '../src/app/settings/hotkey';
+import { BASE_THEME, DEFAULT_THEME, THEMES, themeById } from '../src/app/themes';
 
 const invoke = vi.hoisted(() => vi.fn(async () => [] as string[]));
 vi.mock('@tauri-apps/api/core', () => ({ invoke }));
@@ -136,6 +137,21 @@ describe('settings', () => {
     expect(upgradeSettings({ configVersion: 3, gameTitle: 'Path of Exile 2' }).copyKey).toBeNull();
     for (const key of ['Alt', 'Shift', 'Ctrl'] as const) expect(upgradeSettings({ configVersion: 3, copyKey: key }).copyKey).toBe(key);
     for (const key of ['alt', 'Z', 18, true, {}]) expect(upgradeSettings({ configVersion: 3, copyKey: key }).copyKey).toBeNull();
+  });
+
+  it('keeps the theme id without a new version and falls back to the build default when unusable', () => {
+    expect(defaultSettings().theme).toBe('');
+    // Version 4 files from before the field get the build's default.
+    expect(upgradeSettings({ configVersion: 4, gameTitle: 'Path of Exile 2' }).theme).toBe('');
+    expect(upgradeSettings({ configVersion: 4, theme: 'price-of-exile-2' }).theme).toBe('price-of-exile-2');
+    for (const theme of [null, 7, true, {}, ['ee2']]) expect(upgradeSettings({ configVersion: 4, theme }).theme).toBe('');
+    // An id this build does not have stays stored (another build may have it) and shows the default.
+    expect(upgradeSettings({ configVersion: 4, theme: 'no-such-theme' }).theme).toBe('no-such-theme');
+    expect(themeById('no-such-theme')).toBe(BASE_THEME);
+    expect(themeById('')).toBe(BASE_THEME);
+    expect(themeById(BASE_THEME.id)).toBe(BASE_THEME);
+    expect(DEFAULT_THEME).toBe('price-of-exile-2');
+    expect(THEMES[0]).toBe(BASE_THEME);
   });
 
   it('sends the host its part of the settings, with the copy key', async () => {

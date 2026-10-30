@@ -7,6 +7,7 @@ import { interfaceLanguage, loadUiLanguage, tr } from './core/i18n';
 import { host } from './host';
 import { poeWebApi } from '@/web/Config';
 import { settings } from './core/settings';
+import { themeById } from './themes';
 
 /** Both Tauri windows load the same app; the window label picks the view. */
 @Component({
@@ -29,6 +30,10 @@ export class App {
     if (this.label === 'popup' || this.label === 'toast') {
       document.documentElement.classList.add('popup');
     }
+    // The theme's tokens apply under html[data-theme], in every window; each follows the setting.
+    effect(() => {
+      document.documentElement.dataset['theme'] = themeById(settings().theme).id;
+    });
     // Every window follows the setting when it changes in the settings window.
     effect(() => {
       const lang = settings().uiLanguage;

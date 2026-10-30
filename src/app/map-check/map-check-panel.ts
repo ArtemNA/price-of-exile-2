@@ -48,11 +48,11 @@ export class MapCheckPanel {
   protected rowClass(decision: Decision): string {
     switch (decision) {
       case 'd':
-        return 'border-l-[#d0503c] bg-[#3f1813] hover:bg-[#4a1d17]';
+        return 'border-l-deadly bg-deadly-bg hover:bg-deadly-hover';
       case 'w':
-        return 'border-l-warn bg-[#38290f] hover:bg-[#433112]';
+        return 'border-l-warn bg-warning-bg hover:bg-warning-hover';
       case 'g':
-        return 'border-l-good bg-[#16301a] hover:bg-[#1b3a20]';
+        return 'border-l-good bg-good-row-bg hover:bg-good-row-hover';
     }
     return 'border-l-transparent hover:bg-raised';
   }

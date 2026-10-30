@@ -74,6 +74,8 @@ export interface Settings {
   /** A short message in the corner when the overlay starts (APT `showAttachNotification`). */
   startMessage: boolean;
   popupPosition: PopupPosition;
+  /** The app's look: ours or an addon theme built in (src/app/themes.ts); '' = the build's default. */
+  theme: string;
   hotkeys: Record<HotkeyAction, string | null>;
   /**
    * The game's "show advanced item descriptions" key, for players whose game config the overlay
@@ -106,6 +108,7 @@ export function defaultSettings(): Settings {
     gameTitle: DEFAULT_GAME_TITLE,
     startMessage: true,
     popupPosition: DEFAULT_POPUP_POSITION,
+    theme: '',
     hotkeys: { ...DEFAULT_HOTKEYS },
     copyKey: null,
     commands: DEFAULT_CHAT_COMMANDS.map((command) => ({ ...command })),
@@ -130,7 +133,7 @@ export function defaultSettings(): Settings {
  * types: on means instant buyout, off meant online sellers.
  * Version 2 had the PoE1 map marks and stash search presets: version 3 has PoE2 ones (`upgradeMapCheck`,
  * `upgradeStashSearch`). Version 3 had the default map marks of the English game only.
- * Fields added later (`copyKey`) get their defaults without a new version. Unknown or missing
+ * Fields added later (`copyKey`, `theme`) get their defaults without a new version. Unknown or missing
  * fields fall back to the defaults, so a damaged file still loads; so do values the app cannot use
  * (a game language without data, a listing type the trade site does not know, a hotkey that is
  * not text, which would make the host refuse every hotkey).
@@ -156,6 +159,8 @@ export function upgradeSettings(raw: unknown): Settings {
     uiLanguage: UI_LANGS.some((lang) => lang.id === stored.uiLanguage) ? stored.uiLanguage! : defaults.uiLanguage,
     hotkeys: upgradeHotkeys(stored.hotkeys, defaults.hotkeys),
     copyKey: COPY_KEYS.includes(stored.copyKey as CopyKey) ? (stored.copyKey as CopyKey) : null,
+    // A theme id this build does not have stays (another build may have it); themeById falls back.
+    theme: typeof stored.theme === 'string' ? stored.theme : defaults.theme,
     commands: Array.isArray(stored.commands) ? stored.commands.filter(isChatCommand) : defaults.commands,
     stashSearch: poe1 ? upgradeStashSearch(withValidEntries(stashSearch)) : withValidEntries(stashSearch),
     priceCheck: { ...defaults.priceCheck, ...priceCheck },

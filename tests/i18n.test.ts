@@ -16,6 +16,7 @@ import {
   UI_LANGS as LANGUAGES,
 } from '../src/app/constants';
 import { t } from '../src/app/core/i18n';
+import { THEMES } from '../src/app/themes';
 import { _INTERNAL_TRADE_IDS, FilterTag } from '../src/lib/ee2/web/price-check/filters/interfaces';
 import { loadI18nFromDisk } from './game-data';
 
@@ -46,8 +47,8 @@ function sources(dir: string): string[] {
   });
 }
 
-/** Language names are shown as they call themselves, untranslated. */
-const NATIVE_NAMES = new Set(LANGUAGES.map((lang) => lang.label));
+/** Language names are shown as they call themselves, theme names as they are: untranslated. */
+const NATIVE_NAMES = new Set([...LANGUAGES.map((lang) => lang.label), ...THEMES.map((theme) => theme.label)]);
 
 const STRING = /'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"/g;
 /** The texts of the string literals in `code`, skipping those compared with `===` / `!==` (values, not texts). */

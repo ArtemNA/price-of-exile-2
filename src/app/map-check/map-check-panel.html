@@ -29,7 +29,7 @@
   <div class="flex gap-0.5">
     @for (profile of profiles; track profile; let i = $index) {
       <button class="h-5 w-7 border font-display text-[12px]"
-        [class]="config().profile === i + 1 ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line bg-raised text-text hover:border-line-strong'"
+        [class]="config().profile === i + 1 ? 'border-gold bg-selected text-gold-soft' : 'border-line bg-raised text-text hover:border-line-strong'"
         [attr.aria-pressed]="config().profile === i + 1" (click)="selectProfile(i + 1)">{{ profile }}</button>
     }
   </div>
@@ -43,10 +43,10 @@
         <span class="flex w-3.5 flex-none justify-center" aria-hidden="true">
           @switch (stat.decision) {
             @case ('d') {
-              <svg width="13" height="13" viewBox="0 0 14 14"><path d="M7 1C3.7 1 1.5 3.3 1.5 6.2c0 1.8.9 3 2 3.7V12h2v-1.3h1V12h1v-1.3h1V12h2V9.9c1.1-.7 2-1.9 2-3.7C12.5 3.3 10.3 1 7 1z" fill="#ff8a76"/><circle cx="4.9" cy="6.4" r="1.3" fill="#3f1813"/><circle cx="9.1" cy="6.4" r="1.3" fill="#3f1813"/></svg>
+              <svg width="13" height="13" viewBox="0 0 14 14"><path d="M7 1C3.7 1 1.5 3.3 1.5 6.2c0 1.8.9 3 2 3.7V12h2v-1.3h1V12h1v-1.3h1V12h2V9.9c1.1-.7 2-1.9 2-3.7C12.5 3.3 10.3 1 7 1z" fill="var(--color-deadly-icon)"/><circle cx="4.9" cy="6.4" r="1.3" fill="var(--color-deadly-bg)"/><circle cx="9.1" cy="6.4" r="1.3" fill="var(--color-deadly-bg)"/></svg>
             }
             @case ('w') {
-              <svg width="13" height="13" viewBox="0 0 14 14"><path d="M7 1l6.5 11.5h-13z" fill="var(--color-warn)"/><path d="M7 5v3.5M7 10v.8" stroke="#38290f" stroke-width="1.6"/></svg>
+              <svg width="13" height="13" viewBox="0 0 14 14"><path d="M7 1l6.5 11.5h-13z" fill="var(--color-warn)"/><path d="M7 5v3.5M7 10v.8" stroke="var(--color-warning-bg)" stroke-width="1.6"/></svg>
             }
             @case ('g') {
               <svg width="13" height="13" viewBox="0 0 14 14"><path d="M2 7.5l3.2 3.2L12 3.5" fill="none" stroke="var(--color-good)" stroke-width="2.2"/></svg>
@@ -83,5 +83,5 @@
 </div>
 
 @if (map().hasOutdated) {
-  <p class="mx-2.5 mb-2.5 border border-[#5a3a12] bg-[#2a1f0e] px-2.5 py-1.5 text-[12px] leading-snug text-warn">{{ 'map_check.has_outdated' | t }}</p>
+  <p class="mx-2.5 mb-2.5 border border-warn-line bg-warn-bg px-2.5 py-1.5 text-[12px] leading-snug text-warn">{{ 'map_check.has_outdated' | t }}</p>
 }

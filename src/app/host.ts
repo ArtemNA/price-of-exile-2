@@ -78,6 +78,9 @@ export function hostConfig(settings: Settings): HostConfig {
   return { gameTitle, hotkeys, commands: commands.filter((command) => command.text.trim()), stashPresets, popupPosition, copyKey };
 }
 
+/** Which side of the game the popup is on: next to the stash ('left'), the inventory ('right'), or centred. */
+export type PopupSide = 'left' | 'right' | 'center';
+
 /** Where the copy keys came from: the settings, the game config, or the default (config not read). */
 export type CopyKeysSource = 'settings' | 'game-config' | 'default';
 
@@ -109,8 +112,11 @@ export const host = {
   },
   /** Hides the popup and types `text` into the game's stash search (Ctrl+F, paste, Enter). */
   stashSearch: (text: string) => invoke<void>('stash_search', { text }),
-  /** Resizes the shown popup to its content (logical pixels), keeping its side and anchor. */
-  fitPopup: (width: number, height: number) => invoke<void>('fit_popup', { width, height }),
+  /**
+   * Resizes the shown popup to its content (logical pixels), keeping its side and anchor; a price
+   * check height of PRICE_CHECK_FULL_HEIGHT or more takes the whole game height. Returns the side.
+   */
+  fitPopup: (width: number, height: number) => invoke<PopupSide>('fit_popup', { width, height }),
   /** The start message in the screen corner, for a few seconds. */
   showToast: () => invoke<void>('show_toast'),
   openSettings: () => invoke<void>('open_settings'),

@@ -79,6 +79,14 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "ee2-default": {
+              "fileReplacements": [
+                {
+                  "replace": "src/app/addons.ts",
+                  "with": "addons/ee2-theme/addons.default.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -91,6 +99,9 @@
             },
             "development": {
               "buildTarget": "price-of-exile-2:build:development"
+            },
+            "ee2-default": {
+              "buildTarget": "price-of-exile-2:build:development,ee2-default"
             }
           },
           "defaultConfiguration": "development"

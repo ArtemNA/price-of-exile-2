@@ -96,7 +96,14 @@ pub fn geometry(
     let (logical_width, logical_height) = size;
     let margin = px(POPUP_MARGIN_LOGICAL);
     let width = px(logical_width).min(game.width - 2 * margin).max(0);
-    let height = px(logical_height).min(game.height - 2 * margin).max(0);
+    // Asked taller than the game (a theme whose price check is as tall as the game): the whole
+    // game height, top to bottom, without margins.
+    let full_height = target == CheckTarget::PriceCheck && px(logical_height) >= game.height;
+    let height = if full_height {
+        game.height
+    } else {
+        px(logical_height).min(game.height - 2 * margin).max(0)
+    };
 
     let cursor_on_right = cursor.x > game.x + game.width / 2;
     let x = if centred || target == CheckTarget::StashSearch {
@@ -115,12 +122,30 @@ pub fn geometry(
         CheckTarget::PriceCheck => (game.height as f64 * POPUP_TOP_RATIO).round() as i32,
         CheckTarget::ItemCheck | CheckTarget::StashSearch => (game.height - height) / 2,
     };
-    let y = game.y + top.min(game.height - margin - height).max(margin);
+    let y = if full_height {
+        game.y
+    } else {
+        game.y + top.min(game.height - margin - height).max(margin)
+    };
     Rect {
         x,
         y,
         width,
         height,
+    }
+}
+
+/// Which side of the game the popup went to: "right" when the item is in the inventory (the popup
+/// sits just left of that panel, in the right half), "left" for the stash, or "center" (the
+/// setting, or the stash search panel). Same decision as `geometry`. A theme whose window is wider
+/// than its price check (related items beside the column) lays itself out by it.
+pub fn side(game: Rect, cursor: Point, target: CheckTarget, centred: bool) -> &'static str {
+    if centred || target == CheckTarget::StashSearch {
+        "center"
+    } else if cursor.x > game.x + game.width / 2 {
+        "right"
+    } else {
+        "left"
     }
 }
 
@@ -145,6 +170,128 @@ mod tests {
         width: 1920,
         height: 1080,
     };
+
+    #[test]
+    fn side_of_the_popup() {
+        let cursor = |x| Point { x, y: 300 };
+        assert_eq!(
+            side(GAME, cursor(1700), CheckTarget::PriceCheck, false),
+            "right"
+        );
+        assert_eq!(
+            side(GAME, cursor(200), CheckTarget::PriceCheck, false),
+            "left"
+        );
+        assert_eq!(
+            side(GAME, cursor(200), CheckTarget::PriceCheck, true),
+            "center"
+        );
+        assert_eq!(
+            side(GAME, cursor(1700), CheckTarget::StashSearch, false),
+            "center"
+        );
+        // The side matches where `geometry` put the popup: right of the middle for "right".
+        let right = geometry(
+            GAME,
+            cursor(1700),
+            1.0,
+            CheckTarget::PriceCheck,
+            (460.0, 590.0),
+            false,
+            PANEL,
+        );
+        assert_eq!(right.x, 1920 - 666 - 460);
+    }
+
+    #[test]
+    fn full_height_takes_the_whole_game() {
+        for (cursor_x, centred) in [(1700, false), (200, false), (1700, true)] {
+            let rect = geometry(
+                GAME,
+                Point {
+                    x: cursor_x,
+                    y: 300,
+                },
+                1.0,
+                CheckTarget::PriceCheck,
+                (460.0, 100_000.0),
+                centred,
+                PANEL,
+            );
+            assert_eq!((rect.y, rect.width, rect.height), (0, 460, 1080));
+        }
+        let x_of = |cursor_x, centred| {
+            geometry(
+                GAME,
+                Point {
+                    x: cursor_x,
+                    y: 300,
+                },
+                1.0,
+                CheckTarget::PriceCheck,
+                (460.0, 100_000.0),
+                centred,
+                PANEL,
+            )
+            .x
+        };
+        assert_eq!(x_of(1700, false), 1920 - 666 - 460);
+        assert_eq!(x_of(200, false), 666);
+        assert_eq!(x_of(1700, true), (1920 - 460) / 2);
+        // On a game not at the screen origin and with DPI scaling: still exactly the game.
+        let moved = Rect {
+            x: 100,
+            y: 50,
+            width: 1600,
+            height: 900,
+        };
+        let rect = geometry(
+            moved,
+            Point { x: 1500, y: 300 },
+            1.25,
+            CheckTarget::PriceCheck,
+            (460.0, 100_000.0),
+            false,
+            PANEL,
+        );
+        assert_eq!((rect.y, rect.height, rect.width), (50, 900, 575));
+    }
+
+    #[test]
+    fn exactly_the_game_height_is_full_height_but_only_for_the_price_check() {
+        let price = geometry(
+            GAME,
+            Point { x: 1700, y: 300 },
+            1.0,
+            CheckTarget::PriceCheck,
+            (460.0, 1080.0),
+            false,
+            PANEL,
+        );
+        assert_eq!((price.y, price.height), (0, 1080));
+        // Our own price check asks less than the game: margins and the top anchor as before.
+        let ours = geometry(
+            GAME,
+            Point { x: 1700, y: 300 },
+            1.0,
+            CheckTarget::PriceCheck,
+            (960.0, 1079.0),
+            false,
+            PANEL,
+        );
+        assert_eq!((ours.y, ours.height), (24, 1080 - 48));
+        // The item / map check keeps its margins even when it asks more than the game.
+        let item = geometry(
+            GAME,
+            Point { x: 1700, y: 300 },
+            1.0,
+            CheckTarget::ItemCheck,
+            (440.0, 100_000.0),
+            false,
+            PANEL,
+        );
+        assert_eq!((item.y, item.height), (24, 1080 - 48));
+    }
 
     #[test]
     fn opposite_side_of_cursor() {
@@ -337,10 +484,11 @@ pub fn show(app: &AppHandle, game: Rect, cursor: Point, target: CheckTarget) {
 }
 
 /// The page measured its content (the map check grows with the mods): resize the shown popup to it,
-/// keeping its side and anchor. Ignored once the popup is hidden.
-pub fn fit(app: &AppHandle, width: f64, height: f64) {
+/// keeping its side and anchor. Ignored once the popup is hidden. Returns the side the popup is on
+/// (see `side`); "center" when there is nothing to fit.
+pub fn fit(app: &AppHandle, width: f64, height: f64) -> &'static str {
     let Some(window) = app.get_webview_window(LABEL) else {
-        return;
+        return "center";
     };
     let state = app.state::<AppState>();
     let Some(Placement {
@@ -349,12 +497,13 @@ pub fn fit(app: &AppHandle, width: f64, height: f64) {
         target,
     }) = state.placement()
     else {
-        return;
+        return "center";
     };
     if !state.popup_visible() {
-        return;
+        return "center";
     }
     let scale = game_scale(&state);
+    let centred = state.popup_centred();
     place(
         &window,
         state.popup_hwnd(),
@@ -364,11 +513,12 @@ pub fn fit(app: &AppHandle, width: f64, height: f64) {
             scale,
             target,
             (width, height),
-            state.popup_centred(),
+            centred,
             POE_PANEL_WIDTH_RATIO,
         ),
         scale,
     );
+    side(game, cursor, target, centred)
 }
 
 /// Where the popup was last shown, for `fit`.
