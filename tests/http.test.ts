@@ -1,6 +1,8 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CLOUDFLARE_CHECK_ERROR, USER_AGENT } from '../src/app/constants';
 import { isCloudflareCheck, poeFetch, restrictedSeconds, setHttpFetch } from '../src/app/core/http';
+import { loadUiLanguage, trError } from '../src/app/core/i18n';
 
 const challenge = () =>
   new Response('<html>Just a moment...</html>', { status: 403, headers: { 'content-type': 'text/html; charset=UTF-8', 'cf-mitigated': 'challenge' } });
@@ -57,6 +59,62 @@ describe('poe fetch', () => {
     clock += 1_000;
     await expect(poeFetch(url)).resolves.toBeInstanceOf(Response);
     expect(calls).toBe(3);
+  });
+});
+
+describe('poe fetch when something is off', () => {
+  afterEach(() => setHttpFetch(globalThis.fetch));
+  const url = 'https://www.pathofexile.com/api/trade2/search/poe2/Standard';
+
+  it('says there is no connection instead of the raw error of tauri-plugin-http', async () => {
+    // The plugin rejects with a bare string.
+    setHttpFetch(() => Promise.reject('error sending request for url (https://www.pathofexile.com/api/trade2/search/poe2/Standard)'));
+    await expect(poeFetch(url)).rejects.toThrow('No connection to www.pathofexile.com. Check the internet connection.');
+    setHttpFetch(() => Promise.reject(new TypeError('fetch failed')));
+    await expect(poeFetch('https://poe.ninja/poe2/api/economy/x')).rejects.toThrow('No connection to poe.ninja.');
+    // A cancelled request stays cancelled (trade data aborts its downloads).
+    const controller = new AbortController();
+    controller.abort();
+    setHttpFetch(() => Promise.reject(new Error('Request cancelled')));
+    await expect(poeFetch(url, { signal: controller.signal })).rejects.toThrow('Request cancelled');
+  });
+
+  it('turns a web page where the API sends JSON into a clear error, not a JSON parse error', async () => {
+    setHttpFetch(async () => new Response('<html>502 Bad gateway</html>', { status: 502, headers: { 'content-type': 'text/html' } }));
+    await expect(poeFetch(url)).rejects.toThrow('pathofexile.com sent a web page instead of data (HTTP 502).');
+    // The trade site's JSON errors ("Unknown item base type") reach EE2, which shows their message.
+    const body = '{"error":{"code":2,"message":"Unknown item base type"}}';
+    setHttpFetch(async () => new Response(body, { status: 400, headers: { 'content-type': 'application/json' } }));
+    expect((await (await poeFetch(url)).json()).error.message).toBe('Unknown item base type');
+  });
+
+  it('counts the long restrictions of the 6 hour window in minutes', async () => {
+    // The fetch rule `1000:21600:1800` reached: restricted for half an hour.
+    const headers = {
+      'x-rate-limit-policy': 'trade-fetch-request-limit',
+      'x-rate-limit-rules': 'Ip',
+      'x-rate-limit-ip': '12:4:10,16:12:300,50:300:300,1000:21600:1800',
+      'x-rate-limit-ip-state': '3:4:0,9:12:0,48:300:0,1001:21600:1800',
+    };
+    setHttpFetch(async () => new Response('{"error":{"code":3,"message":"Rate limit exceeded"}}', { status: 429, headers }), () => 0);
+    await expect(poeFetch(url)).rejects.toThrow('pathofexile.com limits requests: retry in 30 min');
+    await expect(poeFetch(url)).rejects.toThrow('retry in 30 min');
+  });
+
+  it('translates the errors it builds, with their numbers; other messages stay as they came', async () => {
+    const uk = readFileSync(new URL('../public/i18n/uk.json', import.meta.url), 'utf-8');
+    vi.stubGlobal('document', { baseURI: 'http://localhost/', documentElement: {} });
+    vi.stubGlobal('fetch', async () => new Response(uk));
+    try {
+      await loadUiLanguage('uk');
+      expect(trError('pathofexile.com limits requests: retry in 12 s')).toBe('pathofexile.com обмежує запити: повторіть за 12 с');
+      expect(trError('No connection to poe.ninja. Check the internet connection.')).toBe('Немає з’єднання з poe.ninja. Перевірте підключення до інтернету.');
+      expect(trError('Retry after 40 seconds')).toBe('Повторіть за 40 с');
+      expect(trError('Unknown item base type')).toBe('Unknown item base type');
+    } finally {
+      await loadUiLanguage('en');
+      vi.unstubAllGlobals();
+    }
   });
 });
 

@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform, signal } from '@angular/core';
 import { Settings as LuxonSettings } from 'luxon';
-import { DATA_PATH, DEFAULT_LANG, EE2_I18N_FIXES, Lang, UI_I18N_PATH, UiLang } from '../constants';
+import { DATA_PATH, DEFAULT_LANG, EE2_I18N_FIXES, ERROR_TEMPLATES, Lang, UI_I18N_PATH, UiLang } from '../constants';
 
 // Two kinds of interface text:
 // - APT's keys ("filters.tag_crafted") from APT's public/data/<lang>/app_i18n.json, read with `t`;
@@ -57,7 +57,38 @@ export function tr(text: string, ...args: Array<string | number>): string {
   return fill(ui().ui[text] ?? text, args);
 }
 
+/** `template` with `{0}`, `{1}`… filled: an error message `trError` can translate later. */
+export function formatText(template: string, ...args: Array<string | number>): string {
+  return fill(template, args);
+}
+
+/** The values a `{0}` template was filled with, or null when `message` was not built from it. */
+function templateArgs(template: string, message: string): string[] | null {
+  const parts = template.split(/\{\d\}/);
+  const pattern = parts.map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('(.+?)');
+  return new RegExp(`^${pattern}$`).exec(message)?.slice(1) ?? null;
+}
+
+/**
+ * An error message to show: one built from an `ERROR_TEMPLATES` entry is translated with its
+ * values; anything else (the trade site's own messages) stays as it came.
+ */
+export function trError(message: string): string {
+  for (const template of ERROR_TEMPLATES) {
+    const args = templateArgs(template, message);
+    if (args) return tr(template, ...args);
+  }
+  return message;
+}
+
 // Not pure: the result changes when the language does, not only when the key does.
+@Pipe({ name: 'trError', pure: false })
+export class TrErrorPipe implements PipeTransform {
+  transform(message: string): string {
+    return trError(message);
+  }
+}
+
 @Pipe({ name: 't', pure: false })
 export class TranslatePipe implements PipeTransform {
   transform(key: string, ...args: Array<string | number>): string {

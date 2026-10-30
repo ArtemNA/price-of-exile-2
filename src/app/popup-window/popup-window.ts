@@ -4,7 +4,7 @@ import { parseClipboard, type ParsedItem } from '@/parser';
 import { Currency } from '../shared/currency';
 import { currencyRates, trackCurrencyRates } from '../core/currency-rates';
 import { divineFractions, formatAmount, type NinjaRates } from '../core/ninja-prices';
-import { loadI18n, TranslatePipe, tr, TrPipe } from '../core/i18n';
+import { loadI18n, TranslatePipe, tr, TrErrorPipe, TrPipe } from '../core/i18n';
 import { Leagues } from '../core/leagues';
 import { settings } from '../core/settings';
 import { loadGameData } from '../game-data';
@@ -20,12 +20,12 @@ import { PriceCheckPanel } from '../price-check/price-check-panel';
 import { identifiedVariants, identifyAs, needsIdentification } from '../price-check/unidentified';
 import { UnidentifiedPicker } from '../price-check/unidentified-picker';
 import type { BaseType } from '@/assets/data';
-import { ItemView, toItemView } from './item-view';
+import { ItemView, lacksModDetails, toItemView } from './item-view';
 
 /** The popup: price check (title bar with league and divine rates, filters, listings), item check or map check. */
 @Component({
   selector: 'app-popup-window',
-  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel, UnidentifiedPicker, Currency, TranslatePipe, TrPipe],
+  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel, UnidentifiedPicker, Currency, TranslatePipe, TrPipe, TrErrorPipe],
   templateUrl: './popup-window.html',
   // Esc normally reaches the host's keyboard hook; while the popup has the keyboard
   // (typing into a field) it arrives here instead.
@@ -45,6 +45,11 @@ export class PopupWindow {
   protected readonly leagues = inject(Leagues);
   protected readonly rates = currencyRates.rates;
   protected readonly ratesUpdated = currencyRates.updatedAt;
+  /** Copied without advanced descriptions: its mods are missing, the copy keys need a look. */
+  protected readonly noModDetails = computed(() => {
+    const item = this.parsed();
+    return item !== null && lacksModDetails(item);
+  });
   protected readonly mapCheck = computed(() => {
     const item = this.parsed();
     return this.target() === 'item-check' && item !== null && isMapLike(item);

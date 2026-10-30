@@ -5,6 +5,9 @@ import type { GroupedResult } from './trade-search';
 /** Short amount: 0.24, 3.8, 343 (`formatAmount`; the name is the PoE1 app's). */
 export const formatChaos = formatAmount;
 
+/** EE2's `priceCurrency` of a listing without a price (Online and Any listings have them). */
+export const NO_PRICE = 'no price';
+
 /** Divine value of a listing price; undefined for a currency poe.ninja has no price for. */
 export type ToDivine = (amount: number, currency: string) => number | undefined;
 
@@ -18,8 +21,9 @@ export interface ListingSummary {
   mostListed?: string;
 }
 
-/** `toDivine` null: no rates (yet). */
-export function summarizeListings(rows: GroupedResult[], toDivine: ToDivine | null): ListingSummary {
+/** `toDivine` null: no rates (yet). Listings without a price count for neither. */
+export function summarizeListings(allRows: GroupedResult[], toDivine: ToDivine | null): ListingSummary {
+  const rows = allRows.filter((row) => row.priceCurrency !== NO_PRICE);
   let cheapest: ListingSummary['cheapest'];
   const counts = new Map<string, number>();
   for (const row of rows) {

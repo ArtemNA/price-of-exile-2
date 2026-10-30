@@ -119,7 +119,7 @@ async function load(type: string, leagueId: string): Promise<void> {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = (await response.json()) as NinjaExchangeOverview | NinjaStashOverview;
       if (leagueId !== league) return;
-      const parsed = ratesFromCore(data.core);
+      const parsed = ratesFromCore(data?.core);
       if (type === POE_NINJA_RATES_TYPE || !rates()) {
         if (parsed) rates.set(parsed);
         else if (type === POE_NINJA_RATES_TYPE) throw new Error(`no currency rates for ${leagueId}`);

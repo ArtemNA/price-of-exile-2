@@ -39,7 +39,7 @@ import {
   type SmallCurrency,
   sparkline,
 } from '../core/ninja-prices';
-import { t, tr, TranslatePipe, TrPipe } from '../core/i18n';
+import { t, tr, TrErrorPipe, TranslatePipe, TrPipe } from '../core/i18n';
 import { settings, updateSettings } from '../core/settings';
 import { host } from '../host';
 import type { ItemView } from '../popup-window/item-view';
@@ -56,7 +56,7 @@ import {
   stackWorth,
 } from './bulk-search';
 import { ItemFilterChip, itemFilterChips } from './item-filter-chips';
-import { formatChaos, limiterUsage, summarizeListings } from './listing-summary';
+import { formatChaos, limiterUsage, NO_PRICE, summarizeListings } from './listing-summary';
 import { ItemCheckPanel } from '../item-check/item-check-panel';
 import { Currency } from '../shared/currency';
 import {
@@ -79,7 +79,7 @@ import {
   unrevealedRow,
 } from './filter-view';
 import { NumInput } from './num-input';
-import { activePreset, createItemPresets, Presets, shouldSearchImmediately } from './price-check';
+import { activePreset, createItemPresets, Presets, setPresetsLeague, shouldSearchImmediately } from './price-check';
 import { GroupedResult, TradeSearch, tradeSiteUrl } from './trade-search';
 
 type Tab = 'trade' | 'bulk' | 'ninja' | 'wiki';
@@ -102,7 +102,7 @@ const TABS = [
  */
 @Component({
   selector: 'app-price-check',
-  imports: [NgTemplateOutlet, TranslatePipe, TrPipe, NumInput, ItemCheckPanel, Currency],
+  imports: [NgTemplateOutlet, TranslatePipe, TrPipe, TrErrorPipe, NumInput, ItemCheckPanel, Currency],
   templateUrl: './price-check-panel.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
@@ -111,6 +111,7 @@ export class PriceCheckPanel {
   readonly view = input.required<ItemView>();
 
   protected readonly cloudflareError = CLOUDFLARE_CHECK_ERROR;
+  protected readonly noPrice = NO_PRICE;
   protected readonly presets = signal<Presets | null>(null);
   protected readonly error = signal<string | null>(null);
   /** Filters changed since the last search: the user starts the next one. */
@@ -494,6 +495,10 @@ export class PriceCheckPanel {
       const item = this.item();
       untracked(() => this.start(item));
     });
+    effect(() => {
+      const leagueId = settings().leagueId;
+      untracked(() => this.leagueChanged(leagueId));
+    });
     // poe.ninja: the overview types of the item and its related items, the first time one is checked.
     effect(() => requestNinjaPrices(idsToPrice(this.item())));
     this.fitHeightToFilters();
@@ -557,6 +562,26 @@ export class PriceCheckPanel {
     this.fitListing();
     this.stale.set(true);
     if (shouldSearchImmediately(item, presets)) this.runSearch();
+  }
+
+  /**
+   * The league changed while the window shows an item: search there, not in the league the
+   * filters were made for. Without a league so far (the list was still loading) the check starts now.
+   */
+  private leagueChanged(leagueId: string | undefined): void {
+    const presets = this.presets();
+    if (!leagueId) return;
+    if (!presets) {
+      if (this.error()) this.start(this.item());
+      return;
+    }
+    if (!setPresetsLeague(presets, leagueId)) return;
+    const searched = this.searchedOnce() || this.isSearching();
+    this.search.reset();
+    this.bulk.reset();
+    this.revision.update((n) => n + 1);
+    this.stale.set(true);
+    if (searched || shouldSearchImmediately(this.item(), presets)) this.runSearch();
   }
 
   protected runSearch(): void {

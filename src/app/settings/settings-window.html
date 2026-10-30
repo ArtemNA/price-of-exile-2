@@ -110,7 +110,7 @@
                   [disabled]="leagues.isLoading()" (click)="loadLeagues()">{{ (leagues.isLoading() ? 'Loading…' : 'Reload') | tr }}</button>
               </div>
               @if (leagues.error(); as error) {
-                <span class="bg-[#3a1a14] px-2 py-1 text-bad">{{ 'Failed to load leagues: {0}' | tr: error }}</span>
+                <span class="bg-[#3a1a14] px-2 py-1 text-bad">{{ 'Failed to load leagues: {0}' | tr: (error | trError) }}</span>
               }
             </div>
 

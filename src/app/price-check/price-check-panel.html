@@ -299,7 +299,7 @@
         <button class="h-7 flex-none border border-gold bg-[#2a2218] px-2.5 text-gold-soft hover:bg-[#3a2e1e]" (click)="openBrowserForCheck()">{{ 'Open browser' | tr }}</button>
       </div>
     } @else {
-      <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message }}</p>
+      <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message | trError }}</p>
     }
     }
 
@@ -323,7 +323,11 @@
         >
           <span class="flex min-w-0 items-center gap-1.5 text-bright">
             <span class="size-[9px] flex-none rounded-full" [style.background]="dot(row)"></span>
-            {{ row.priceAmount }} <app-currency [tag]="row.priceCurrency" />
+            @if (row.priceCurrency === noPrice) {
+              <span class="text-muted">{{ 'No price' | tr }}</span>
+            } @else {
+              {{ row.priceAmount }} <app-currency [tag]="row.priceCurrency" />
+            }
             @if (row.listedTimes > 1) {
               <span class="text-muted">×{{ row.listedTimes }}</span>
             }
@@ -397,7 +401,7 @@
         <button class="h-7 flex-none border border-gold bg-[#2a2218] px-2.5 text-gold-soft hover:bg-[#3a2e1e]" (click)="openBrowserForCheck()">{{ 'Open browser' | tr }}</button>
       </div>
     } @else {
-      <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message }}</p>
+      <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message | trError }}</p>
     }
   }
 
@@ -508,7 +512,7 @@
       } @else if (entry.pending) {
         <p class="px-3 py-3 text-muted">{{ 'Loading poe.ninja prices…' | tr }}</p>
       } @else if (ninjaError(); as message) {
-        <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">poe.ninja: {{ message }}</p>
+        <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">poe.ninja: {{ message | trError }}</p>
       } @else {
         @let noPrice = around('poe.ninja has no price for {0}.' | tr);
         <p class="px-3 py-3 text-muted">{{ noPrice[0] }}<span class="text-text">{{ entry.label }}</span>{{ noPrice[1] }}</p>
@@ -516,7 +520,7 @@
     } @else if (ninjaLoading()) {
       <p class="px-3 py-3 text-muted">{{ 'Loading poe.ninja prices…' | tr }}</p>
     } @else if (ninjaError(); as message) {
-      <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">poe.ninja: {{ message }}</p>
+      <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">poe.ninja: {{ message | trError }}</p>
     } @else {
       <p class="px-3 py-3 text-muted">{{ 'poe.ninja has no prices for this kind of item.' | tr }}</p>
     }

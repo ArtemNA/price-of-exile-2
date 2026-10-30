@@ -103,6 +103,14 @@ describe('poe.ninja overviews', () => {
     expect(pricesFromOverview('Currency', data).map((line) => line.name)).toEqual(['B']);
   });
 
+  it('survives odd answers: no items list, zero and negative prices, no core', () => {
+    const lines = [{ id: 'a', primaryValue: 0, volumePrimaryValue: 5 }, { id: 'b', primaryValue: -1, volumePrimaryValue: 5 }];
+    expect(pricesFromOverview('Runes', { lines } as unknown as Parameters<typeof pricesFromOverview>[1])).toEqual([]);
+    expect(pricesFromOverview('Runes', { lines, items: [{ id: 'a', name: 'A', detailsId: 'a' }] } as Parameters<typeof pricesFromOverview>[1])).toEqual([]);
+    expect(ratesFromCore(undefined)).toBeNull();
+    expect(ratesFromCore({ primary: 'divine', rates: { exalted: 0, chaos: 10 } } as Parameters<typeof ratesFromCore>[0])).toBeNull();
+  });
+
   it('prefers a line that is not corrupted for the same name', () => {
     const line = (primaryValue: number, corrupted: boolean): NinjaPrice => ({
       type: 'UniqueAccessories', ns: 'UNIQUE', name: 'X', variant: 'Ring', primaryValue, detailsId: 'x', sparkline: { totalChange: 0, data: [] }, corrupted,

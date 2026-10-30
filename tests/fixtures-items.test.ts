@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { ItemCategory, ItemRarity, parseClipboard, type ParsedItem } from '@/parser';
 import { ModifierType } from '@/parser/modifiers';
+import { lacksModDetails } from '../src/app/popup-window/item-view';
 import { loadGameDataFromDisk } from './game-data';
 
 // PoE2 item texts copied with Ctrl+Alt+C (tests/fixtures/items, docs/analysis/poe2-items-features.md §6).
@@ -35,6 +36,20 @@ describe('PoE2 item fixtures', () => {
     expect(item.isCorrupted).toBe(true);
     expect(item.note).toBe('~b/o 1 exalted');
     expect(item.unknownModifiers).toEqual([]);
+  });
+
+  it('tells an item copied without advanced descriptions (plain Ctrl+C), whose mods EE2 cannot read', () => {
+    // As scripts/fake-game.ps1 copies with Ctrl+C: the `{ … }` mod headers gone.
+    const plain = (file: string) => parseClipboard(text(file).replace(/^\{ .* \}\r?\n/gm, ''))._unsafeUnwrap();
+    for (const file of ['rare-ring.txt', 'unique.txt', 'magic-mace.txt', 'amulet-fractured-desecrated.txt', 'waystone.txt']) {
+      expect(lacksModDetails(parse(file)), file).toBe(false);
+      expect(lacksModDetails(plain(file)), file).toBe(true);
+    }
+    expect(plain('rare-ring.txt').newMods).toEqual([]);
+    // Nothing to tell from: no mods without headers either, or the mods unknown anyway.
+    for (const file of ['currency.txt', 'normal-helmet.txt', 'rare-unid.txt', 'uncut-gem.txt']) {
+      expect(lacksModDetails(plain(file)), file).toBe(false);
+    }
   });
 
   it('reads the rare ring: base, implicit and explicit mods with tiers', () => {

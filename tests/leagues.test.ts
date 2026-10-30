@@ -75,11 +75,40 @@ describe('Leagues.load', () => {
     expect(leagues.list()).toEqual([]);
   });
 
+  it('asks again a minute after the list failed (started offline), not hours later', async () => {
+    let online = false;
+    setHttpFetch(async () => {
+      if (!online) throw 'error sending request for url (https://www.pathofexile.com/api/trade2/data/leagues)';
+      return new Response(API_RESPONSE, { status: 200 });
+    });
+    const leagues = new Leagues();
+    await leagues.load(0);
+    expect(leagues.error()).toBe('No connection to www.pathofexile.com. Check the internet connection.');
+    expect(settings().leagueId).toBeUndefined();
+    online = true;
+    await leagues.refreshIfOld(30 * 1000);
+    expect(leagues.list()).toEqual([]);
+    await leagues.refreshIfOld(60 * 1000);
+    expect(leagues.error()).toBeNull();
+    expect(settings().leagueId).toBe('Forbidden Rites');
+  });
+
+  it('replaces a stored league that ended and keeps the HTTP error short', async () => {
+    updateSettings({ leagueId: 'Dawn of the Hunt' });
+    setHttpFetch(async () => new Response(API_RESPONSE, { status: 200 }));
+    await new Leagues().load();
+    expect(settings().leagueId).toBe('Forbidden Rites');
+    setHttpFetch(async () => new Response('{}', { status: 500, headers: { 'x-a': '1', 'content-type': 'application/json' } }));
+    const failed = new Leagues();
+    await failed.load();
+    expect(failed.error()).toBe('HTTP 500');
+  });
+
   it('reloads the list on a check only when it is old', async () => {
     let calls = 0;
     setHttpFetch(async () => {
       calls += 1;
-      return Response.json([{ id: 'Standard', rules: [] }, { id: 'Keepers', rules: [] }]);
+      return new Response(API_RESPONSE, { status: 200 });
     });
     const leagues = new Leagues();
     await leagues.load(0);

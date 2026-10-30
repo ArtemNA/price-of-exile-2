@@ -22,7 +22,7 @@ import {
   UI_LANGS,
   UiLang,
 } from '../constants';
-import { TrPipe } from '../core/i18n';
+import { TrErrorPipe, TrPipe } from '../core/i18n';
 import { Leagues } from '../core/leagues';
 import { type ChatCommand, isFirstStart, type PriceCheckSettings, settings, type StashSearchGroup, updateSettings } from '../core/settings';
 import { updates } from '../core/updates';
@@ -74,7 +74,7 @@ const COPY_KEYS_SOURCES: Record<CopyKeysSource, string> = {
 /** The main window: settings (APT `SettingsWindow.vue`) and the host log. Pushes the host's part of the settings. */
 @Component({
   selector: 'app-settings-window',
-  imports: [HotkeyInput, MapModsEditor, TrPipe],
+  imports: [HotkeyInput, MapModsEditor, TrPipe, TrErrorPipe],
   templateUrl: './settings-window.html',
 })
 export class SettingsWindow {

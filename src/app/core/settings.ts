@@ -12,9 +12,13 @@ import {
   DEFAULT_MAP_MARKS,
   DEFAULT_POPUP_POSITION,
   DEFAULT_STASH_SEARCH,
+  GAME_LANGS,
+  HOTKEY_ACTIONS,
   HotkeyAction,
   Lang,
+  LISTING_TYPES,
   ListingType,
+  UI_LANGS,
   UiLang,
   PopupPosition,
   POE1_MAP_CHECK_MATCHERS,
@@ -127,13 +131,16 @@ export function defaultSettings(): Settings {
  * Version 2 had the PoE1 map marks and stash search presets: version 3 has PoE2 ones (`upgradeMapCheck`,
  * `upgradeStashSearch`). Version 3 had the default map marks of the English game only.
  * Fields added later (`copyKey`) get their defaults without a new version. Unknown or missing
- * fields fall back to the defaults, so a damaged file still loads.
+ * fields fall back to the defaults, so a damaged file still loads; so do values the app cannot use
+ * (a game language without data, a listing type the trade site does not know, a hotkey that is
+ * not text, which would make the host refuse every hotkey).
  */
 export function upgradeSettings(raw: unknown): Settings {
   const defaults = defaultSettings();
   if (!raw || typeof raw !== 'object') return defaults;
   const stored = raw as Partial<Settings>;
   const { merchantOnly, ...priceCheck } = (stored.priceCheck ?? {}) as Partial<PriceCheckSettings> & { merchantOnly?: boolean };
+  if (!LISTING_TYPES.some((type) => type.value === priceCheck.listingType)) delete priceCheck.listingType;
   if (priceCheck.listingType == null && typeof merchantOnly === 'boolean') {
     priceCheck.listingType = merchantOnly ? 'securable' : 'online';
   }
@@ -145,13 +152,46 @@ export function upgradeSettings(raw: unknown): Settings {
     ...defaults,
     ...stored,
     configVersion: SETTINGS_VERSION,
-    hotkeys: { ...defaults.hotkeys, ...stored.hotkeys },
+    language: GAME_LANGS.some((lang) => lang.id === stored.language) ? stored.language! : defaults.language,
+    uiLanguage: UI_LANGS.some((lang) => lang.id === stored.uiLanguage) ? stored.uiLanguage! : defaults.uiLanguage,
+    hotkeys: upgradeHotkeys(stored.hotkeys, defaults.hotkeys),
     copyKey: COPY_KEYS.includes(stored.copyKey as CopyKey) ? (stored.copyKey as CopyKey) : null,
-    commands: Array.isArray(stored.commands) ? stored.commands : defaults.commands,
-    stashSearch: poe1 ? upgradeStashSearch(stashSearch) : stashSearch,
+    commands: Array.isArray(stored.commands) ? stored.commands.filter(isChatCommand) : defaults.commands,
+    stashSearch: poe1 ? upgradeStashSearch(withValidEntries(stashSearch)) : withValidEntries(stashSearch),
     priceCheck: { ...defaults.priceCheck, ...priceCheck },
     mapCheck: poe1 ? upgradeMapCheck(mapCheck) : version < 4 ? withDefaultMarks(mapCheck, DEFAULT_MAP_MARKS.ru) : mapCheck,
   };
+}
+
+/**
+ * The host takes the hotkeys only all together (one value it cannot read refuses them all): known
+ * actions with a text or null; a missing or unreadable one gets its default.
+ */
+function upgradeHotkeys(stored: unknown, defaults: Record<HotkeyAction, string | null>): Record<HotkeyAction, string | null> {
+  const hotkeys = { ...defaults };
+  if (!stored || typeof stored !== 'object') return hotkeys;
+  for (const action of HOTKEY_ACTIONS) {
+    const value = (stored as Record<string, unknown>)[action];
+    if (typeof value === 'string' || value === null) hotkeys[action] = value;
+  }
+  return hotkeys;
+}
+
+const isHotkey = (value: unknown): value is string | null | undefined => value == null || typeof value === 'string';
+
+function isChatCommand(command: unknown): command is ChatCommand {
+  const c = command as Partial<ChatCommand> | null;
+  return typeof c?.text === 'string' && typeof c.send === 'boolean' && isHotkey(c.hotkey);
+}
+
+/** Stash search groups and presets the settings page and the host can read; damaged ones are dropped. */
+function withValidEntries(groups: StashSearchGroup[]): StashSearchGroup[] {
+  return groups
+    .filter((group) => group && typeof group === 'object' && Array.isArray(group.entries))
+    .map((group) => ({
+      ...group,
+      entries: group.entries.filter((entry) => typeof entry?.text === 'string' && isHotkey(entry.hotkey)),
+    }));
 }
 
 /**

@@ -37,6 +37,14 @@ describe('listing summary', () => {
     expect(summarizeListings(rows, null)).toEqual({ cheapest: { price: '2 exalted' }, mostListed: '1 chaos' });
   });
 
+  it('leaves listings without a price out of the cheapest and most listed prices', () => {
+    // Online listings include items with no price: EE2 gives them 0 "no price", the trade site lists them last.
+    const unpriced = [row(0, 'no price', 3), row(0, 'no price', 2)];
+    expect(summarizeListings([...unpriced, row(5, 'exalted')], toDivine)).toEqual({ cheapest: { price: '5 exalted', div: 5 * DIVINES.exalted }, mostListed: '5 exalted' });
+    expect(summarizeListings([...unpriced, row(5, 'exalted')], null)).toEqual({ cheapest: { price: '5 exalted' }, mostListed: '5 exalted' });
+    expect(summarizeListings(unpriced, null)).toEqual({});
+  });
+
   it('formats amounts compactly', () => {
     expect(formatChaos(0.0152)).toBe('0.015');
     expect(formatChaos(0.2435)).toBe('0.24');

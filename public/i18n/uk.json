@@ -395,6 +395,13 @@
   },
   "ui": {
     "({0} at Q20)": "({0} при Q20)",
+    "No connection to {0}. Check the internet connection.": "Немає з’єднання з {0}. Перевірте підключення до інтернету.",
+    "No price": "Без ціни",
+    "pathofexile.com limits requests: retry in {0} min": "pathofexile.com обмежує запити: повторіть за {0} хв",
+    "pathofexile.com limits requests: retry in {0} s": "pathofexile.com обмежує запити: повторіть за {0} с",
+    "pathofexile.com sent a web page instead of data (HTTP {0}). The site may be down for maintenance.": "pathofexile.com надіслав вебсторінку замість даних (HTTP {0}). Можливо, на сайті технічні роботи.",
+    "Retry after {0} seconds": "Повторіть за {0} с",
+    "The game copied this item without its mod details, so its mods are missing here. Check the item copy keys in Settings → Hotkeys.": "Гра скопіювала цей предмет без подробиць модифікаторів, тож їх тут немає. Перевірте клавіші копіювання предмета: Налаштування → Гарячі клавіші.",
     "{0} · 7d": "{0} · 7 дн.",
     "{0} hotkey": "{0}: гаряча клавіша",
     "{0} is out: install it from the left": "Вийшла {0}: встановіть її ліворуч",

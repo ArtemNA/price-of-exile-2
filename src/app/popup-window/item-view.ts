@@ -1,4 +1,4 @@
-import type { ParsedItem } from '@/parser';
+import { ItemRarity, type ParsedItem } from '@/parser';
 
 /** Display-ready view of a parsed item. Stage 1 debug UI; the real design comes later. */
 export interface ItemView {
@@ -66,4 +66,14 @@ export function toItemView(item: ParsedItem): ItemView {
     mods,
     unknown: item.unknownModifiers.map((m) => `${m.type}: ${m.text}`),
   };
+}
+
+/**
+ * The game copied the item without advanced descriptions (plain Ctrl+C: the overlay pressed another
+ * key than the game's "show advanced item descriptions" one): no `{ … }` mod headers, and EE2 reads
+ * none of the mods. Only items that always have mods can tell: identified magic, rare and unique ones.
+ */
+export function lacksModDetails(item: ParsedItem): boolean {
+  const withMods = [ItemRarity.Magic, ItemRarity.Rare, ItemRarity.Unique].includes(item.rarity!);
+  return withMods && !item.isUnidentified && !/^\{ .* \}\r?$/m.test(item.rawText);
 }

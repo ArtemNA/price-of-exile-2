@@ -3,7 +3,7 @@ import { parseClipboard, type ParsedItem } from '@/parser';
 import { createTradeRequest } from '../src/lib/ee2/web/price-check/trade/pathofexile-trade';
 import { USER_AGENT } from '../src/app/constants';
 import { setHttpFetch } from '../src/app/core/http';
-import { activePreset, createItemPresets, shouldSearchImmediately } from '../src/app/price-check/price-check';
+import { activePreset, createItemPresets, setPresetsLeague, shouldSearchImmediately } from '../src/app/price-check/price-check';
 import { TradeSearch, tradeSiteUrl } from '../src/app/price-check/trade-search';
 import { loadGameDataFromDisk } from './game-data';
 import * as items from './items';
@@ -49,6 +49,19 @@ describe('createTradeRequest', () => {
     expect(ids.length).toBeGreaterThan(0);
     expect(body.query.status).toEqual({ option: 'securable' });
     expect(body.sort).toEqual({ price: 'asc' });
+  });
+});
+
+describe('setPresetsLeague', () => {
+  it('moves every preset to the league chosen while the item is shown, keeping filter edits', () => {
+    const item = parse(items.RARE_RING);
+    const presets = createItemPresets(item, 'Dawn of the Hunt');
+    activePreset(presets).stats[0].disabled = true;
+    expect(setPresetsLeague(presets, 'Forbidden Rites')).toBe(true);
+    expect(presets.presets.map((p) => p.filters.trade.league)).toEqual(presets.presets.map(() => 'Forbidden Rites'));
+    expect(activePreset(presets).stats[0].disabled).toBe(true);
+    expect(tradeSiteUrl(activePreset(presets).filters, activePreset(presets).stats, item)).toContain('/trade2/search/poe2/Forbidden Rites?q=');
+    expect(setPresetsLeague(presets, 'Forbidden Rites')).toBe(false);
   });
 });
 
@@ -132,7 +145,7 @@ describe('TradeSearch', () => {
     const { filters, stats } = activePreset(createItemPresets(item, 'Standard'));
     const search = new TradeSearch();
     await search.search(filters, stats, item);
-    expect(search.error()).toContain('error sending request');
+    expect(search.error()).toBe('No connection to www.pathofexile.com. Check the internet connection.');
     expect(search.isSearching()).toBe(false);
   });
 });

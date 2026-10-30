@@ -3,7 +3,7 @@
 
 import { computed, Injectable, signal } from '@angular/core';
 import { poeWebApi } from '@/web/Config';
-import { HC_LEAGUE_PREFIX, LEAGUES_REFRESH_AFTER, PERMANENT_HC_LEAGUES, PERMANENT_SC_LEAGUES } from '../constants';
+import { HC_LEAGUE_PREFIX, LEAGUES_REFRESH_AFTER, LEAGUES_RETRY_AFTER, PERMANENT_HC_LEAGUES, PERMANENT_SC_LEAGUES } from '../constants';
 import { poeFetch } from './http';
 import { settings, updateSettings } from './settings';
 
@@ -68,10 +68,12 @@ export class Leagues {
 
   /**
    * The app may sit in the tray for weeks: on a check, reload the list if it is old, so an
-   * ended league gets replaced (one request per LEAGUES_REFRESH_AFTER at most).
+   * ended league gets replaced (one request per LEAGUES_REFRESH_AFTER at most). A list that failed
+   * to load (the app started before the network was up) is asked for again after LEAGUES_RETRY_AFTER.
    */
   async refreshIfOld(now = Date.now()): Promise<void> {
-    if (this.isLoading() || now - this.loadedAt < LEAGUES_REFRESH_AFTER) return;
+    const after = this.error() ? LEAGUES_RETRY_AFTER : LEAGUES_REFRESH_AFTER;
+    if (this.isLoading() || now - this.loadedAt < after) return;
     await this.load(now);
   }
 
@@ -82,7 +84,7 @@ export class Leagues {
     try {
       const response = await poeFetch(leaguesUrl());
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${JSON.stringify(Object.fromEntries(response.headers))}`);
+        throw new Error(`HTTP ${response.status}`);
       }
       const leagues = toTradeLeagues(((await response.json()) as { result: ApiLeague[] }).result);
       this.list.set(leagues);

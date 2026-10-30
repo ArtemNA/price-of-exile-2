@@ -105,6 +105,26 @@ export const PRICE_CHECK_DEFAULTS = {
 export const POE_OFFICIAL_HOSTS: readonly string[] = ['www.pathofexile.com', 'ru.pathofexile.com'];
 /** Error text when pathofexile.com answers with a Cloudflare check instead of data; the UI offers the browser. */
 export const CLOUDFLARE_CHECK_ERROR = 'pathofexile.com asks to confirm you are human (Cloudflare)';
+/** pathofexile.com restricts our requests (429 or a rate limit state): seconds, or minutes from RATE_LIMIT_MINUTES_FROM s. */
+export const RATE_LIMIT_ERROR = 'pathofexile.com limits requests: retry in {0} s';
+export const RATE_LIMIT_ERROR_MINUTES = 'pathofexile.com limits requests: retry in {0} min';
+export const RATE_LIMIT_MINUTES_FROM = 120;
+/** The request did not reach the site (offline, DNS, the connection dropped): `{0}` is the host. */
+export const NETWORK_ERROR = 'No connection to {0}. Check the internet connection.';
+/** pathofexile.com sent a web page (maintenance, a Cloudflare error) where its API sends JSON. */
+export const NOT_DATA_ERROR = 'pathofexile.com sent a web page instead of data (HTTP {0}). The site may be down for maintenance.';
+/**
+ * Error messages built from a `{0}` template, shown translated with their number (`trError`).
+ * The last one is EE2's (`preventQueueCreation`).
+ */
+export const ERROR_TEMPLATES: readonly string[] = [
+  CLOUDFLARE_CHECK_ERROR,
+  RATE_LIMIT_ERROR,
+  RATE_LIMIT_ERROR_MINUTES,
+  NETWORK_ERROR,
+  NOT_DATA_ERROR,
+  'Retry after {0} seconds',
+];
 
 /** Id and label of the price check preset with every mod on its own (no pseudo totals). */
 export const MODS_PRESET_ID = 'mods';
@@ -180,6 +200,8 @@ export const BULK_LISTING_TYPES: ReadonlyArray<{ value: BulkListingType; label: 
 
 /** The leagues list is loaded again on a check when it is older than this (ms). */
 export const LEAGUES_REFRESH_AFTER = 3 * 60 * 60 * 1000;
+/** After the league list failed to load, a check asks for it again this much later. */
+export const LEAGUES_RETRY_AFTER = 60 * 1000;
 
 /** Upper limit of the stat filter range setting, % (APT `settings-price-check.vue`). */
 export const SEARCH_STAT_RANGE_MAX = 50;

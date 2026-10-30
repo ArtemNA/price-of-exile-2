@@ -42,6 +42,16 @@ export function createItemPresets(item: ParsedItem, leagueId: string, previous?:
 }
 
 /**
+ * Another league was chosen while the item is shown (in the title bar, or by the league list that
+ * replaced an ended one): every preset searches there, the filter edits stay. False if nothing changed.
+ */
+export function setPresetsLeague(presets: Presets, leagueId: string): boolean {
+  if (activePreset(presets).filters.trade.league === leagueId) return false;
+  for (const preset of presets.presets) preset.filters.trade.league = leagueId;
+  return true;
+}
+
+/**
  * Next to "Pseudo", a "Mods" preset with every mod on its own (APT has none): "+70 to maximum
  * Life" and "+18 to Strength" instead of "+79 total maximum Life". Only when pseudo totals exist.
  */

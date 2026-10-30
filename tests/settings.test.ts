@@ -185,6 +185,57 @@ describe('settings', () => {
     expect(upgradeSettings('not json')).toEqual(defaultSettings());
     expect(upgradeSettings(null)).toEqual(defaultSettings());
   });
+
+  it('drops hotkeys the host cannot read, which would make it refuse all of them', () => {
+    const settings = upgradeSettings({
+      configVersion: SETTINGS_VERSION,
+      hotkeys: { 'price-check': 'Ctrl+KeyE', 'item-check': 5, wiki: null, overlay: 'Shift+Space', poedb: { key: 'P' } },
+      commands: [{ text: '/hideout', hotkey: 'F5', send: true }, { hotkey: 'F6' }, null, { text: '/exit', hotkey: 9, send: true }],
+      stashSearch: [null, { id: 1, title: 'Maps', enableHotkeys: true, entries: [{ id: 1, name: '', text: 'pack', hotkey: 'Alt+Digit1' }, { id: 2, hotkey: 'Alt+Digit2' }] }],
+    });
+    expect(settings.hotkeys).toEqual({ ...DEFAULT_HOTKEYS, 'price-check': 'Ctrl+KeyE', wiki: null });
+    expect(settings.commands).toEqual([{ text: '/hideout', hotkey: 'F5', send: true }]);
+    expect(settings.stashSearch).toEqual([{ id: 1, title: 'Maps', enableHotkeys: true, entries: [{ id: 1, name: '', text: 'pack', hotkey: 'Alt+Digit1' }] }]);
+    // What the host gets deserialises: every action known, every hotkey a text or null.
+    const config = hostConfig(settings);
+    expect(Object.keys(config.hotkeys).sort()).toEqual(Object.keys(DEFAULT_HOTKEYS).sort());
+    expect(config.stashPresets).toEqual([{ hotkey: 'Alt+Digit1', text: 'pack' }]);
+  });
+
+  it('falls back to defaults for languages and a listing type the app does not have', () => {
+    const settings = upgradeSettings({ configVersion: SETTINGS_VERSION, language: 'de', uiLanguage: 'fr', priceCheck: { listingType: 'instant' } });
+    expect([settings.language, settings.uiLanguage, settings.priceCheck.listingType]).toEqual(['en', 'en', defaultSettings().priceCheck.listingType]);
+    expect(upgradeSettings({ language: 'ru', uiLanguage: 'uk' })).toMatchObject({ language: 'ru', uiLanguage: 'uk' });
+  });
+
+  it('takes the settings of Price of Exile (PoE1) copied over', () => {
+    // A PoE1 settings.json of 0.1.13: version 1, merchantOnly, a PoE1 league, theme and autoUpdate.
+    const poe1 = {
+      configVersion: 1,
+      leagueId: 'Mercenaries',
+      language: 'ru',
+      uiLanguage: 'uk',
+      useIntlSite: false,
+      accountName: 'me#1234',
+      gameTitle: 'Path of Exile',
+      startMessage: true,
+      autoUpdate: true,
+      popupPosition: 'opposite-cursor',
+      theme: 'apt',
+      hotkeys: { ...DEFAULT_HOTKEYS, wiki: 'Alt+KeyW' },
+      commands: [{ text: '/hideout', hotkey: 'F5', send: true }],
+      stashSearch: structuredClone(DEFAULT_STASH_SEARCH),
+      priceCheck: { searchStatRange: 10, merchantOnly: false, collapseListings: 'app', activateStockFilter: false, defaultCurrency: null, smartInitialSearch: true, builtinBrowser: false },
+      mapCheck: { ...DEFAULT_MAP_CHECK, selectedStats: [] },
+    };
+    const settings = upgradeSettings(poe1);
+    expect(settings).toMatchObject({ configVersion: SETTINGS_VERSION, language: 'ru', uiLanguage: 'uk', popupPosition: 'opposite-cursor' });
+    expect(settings.priceCheck.listingType).toBe('online');
+    expect(settings.hotkeys.wiki).toBe('Alt+KeyW');
+    // The PoE1 league goes once the trade2 league list arrives (leagues.test.ts: pickLeague).
+    expect(settings.leagueId).toBe('Mercenaries');
+    expect(settings.mapCheck.selectedStats.length).toBeGreaterThan(0);
+  });
 });
 
 describe('hotkey recording', () => {

@@ -1,6 +1,16 @@
 import { invoke } from '@tauri-apps/api/core';
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
-import { CLOUDFLARE_CHECK_ERROR, POE_OFFICIAL_HOSTS, USER_AGENT } from '../constants';
+import {
+  CLOUDFLARE_CHECK_ERROR,
+  NETWORK_ERROR,
+  NOT_DATA_ERROR,
+  POE_OFFICIAL_HOSTS,
+  RATE_LIMIT_ERROR,
+  RATE_LIMIT_ERROR_MINUTES,
+  RATE_LIMIT_MINUTES_FROM,
+  USER_AGENT,
+} from '../constants';
+import { formatText } from './i18n';
 import { settings } from './settings';
 
 type Fetch = typeof globalThis.fetch;
@@ -57,12 +67,20 @@ export function restrictedSeconds(headers: Headers): number {
   return seconds;
 }
 
+/** "retry in 45 s", or in minutes for the long restrictions (the 6 hour window blocks for an hour, F-12). */
+function rateLimitError(seconds: number): Error {
+  return seconds < RATE_LIMIT_MINUTES_FROM
+    ? new Error(formatText(RATE_LIMIT_ERROR, seconds))
+    : new Error(formatText(RATE_LIMIT_ERROR_MINUTES, Math.ceil(seconds / 60)));
+}
+
 /** fetch for PoE and related sites, always with our User-Agent (or the browser's, see `browserFetch`). */
 export async function poeFetch(url: string, init: RequestInit = {}): Promise<Response> {
-  const official = POE_OFFICIAL_HOSTS.includes(new URL(url).hostname);
+  const { hostname } = new URL(url);
+  const official = POE_OFFICIAL_HOSTS.includes(hostname);
   if (official && now() < restrictedUntil) {
     // Not even a request: it would only make the restriction longer.
-    throw new Error(`pathofexile.com limits requests: retry in ${Math.ceil((restrictedUntil - now()) / 1000)} s`);
+    throw rateLimitError(Math.ceil((restrictedUntil - now()) / 1000));
   }
   let response: Response;
   if (official && settings().priceCheck.builtinBrowser) {
@@ -70,15 +88,24 @@ export async function poeFetch(url: string, init: RequestInit = {}): Promise<Res
   } else {
     const headers = new Headers(init.headers);
     headers.set('User-Agent', USER_AGENT);
-    response = await impl(url, { ...init, headers });
+    try {
+      response = await impl(url, { ...init, headers });
+    } catch (e) {
+      // tauri-plugin-http rejects with a bare string ("error sending request for url (…)").
+      if (init.signal?.aborted) throw e;
+      console.warn(`${url}: ${e instanceof Error ? e.message : String(e)}`);
+      throw new Error(formatText(NETWORK_ERROR, hostname));
+    }
   }
   if (official && isCloudflareCheck(response)) throw new Error(CLOUDFLARE_CHECK_ERROR);
   if (official) {
     const seconds = restrictedSeconds(response.headers);
     if (seconds > 0 || response.status === 429) {
       restrictedUntil = Math.max(restrictedUntil, now() + Math.max(seconds, 1) * 1000);
-      if (response.status === 429) throw new Error(`pathofexile.com limits requests: retry in ${Math.max(seconds, 1)} s`);
+      if (response.status === 429) throw rateLimitError(Math.max(seconds, 1));
     }
+    // A maintenance or Cloudflare error page where the API sends JSON: JSON.parse would fail with "Unexpected token '<'".
+    if (response.headers.get('content-type')?.includes('text/html')) throw new Error(formatText(NOT_DATA_ERROR, response.status));
   }
   return response;
 }

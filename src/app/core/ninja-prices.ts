@@ -101,7 +101,7 @@ export function pricesFromOverview(type: string, data: NinjaExchangeOverview | N
   if (!known) return [];
   const empty: NinjaSparkline = { totalChange: 0, data: [] };
   if (known.api === 'exchange') {
-    const items = new Map((data as NinjaExchangeOverview).items.map((item) => [item.id, item]));
+    const items = new Map(((data as NinjaExchangeOverview).items ?? []).map((item) => [item.id, item]));
     return (data as NinjaExchangeOverview).lines.flatMap((line) => {
       const item = items.get(line.id);
       if (!item || !(line.primaryValue > 0)) return [];
