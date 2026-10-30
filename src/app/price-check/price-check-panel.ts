@@ -22,16 +22,21 @@ import {
   PRICE_CHECK_MIN_HEIGHT,
   PRICE_CHECK_WIDTH,
   RARITY_COLORS,
+  SMALL_CURRENCIES,
 } from '../constants';
-import { currencyRates, toChaos } from '../core/currency-rates';
+import { currencyRates, requestNinjaPrices, toDivine } from '../core/currency-rates';
 import {
   autoCurrency,
-  CurrencyValue,
+  currencyTag,
+  type CurrencyValue,
+  formatAmount,
   formatPercent,
   formatValue,
+  idsToPrice,
   itemQuote,
   queryId,
   relatedItems,
+  type SmallCurrency,
   sparkline,
 } from '../core/ninja-prices';
 import { t, tr, TranslatePipe, TrPipe } from '../core/i18n';
@@ -245,7 +250,14 @@ export class PriceCheckPanel {
     return filter.hidden ? t(filter.hidden) : '';
   }
 
-  protected readonly summary = computed(() => summarizeListings(this.search.groupedResults(), currencyRates.rates()));
+  /** Divine value of a listing price, by the poe.ninja rates (null until they arrive). */
+  private readonly toDivine = computed(() => {
+    const rates = currencyRates.rates();
+    const db = currencyRates.prices();
+    return rates ? (amount: number, currency: string) => toDivine(amount, currency, rates, db) : null;
+  });
+
+  protected readonly summary = computed(() => summarizeListings(this.search.groupedResults(), this.toDivine()));
 
   /** "30 chaos" → { amount: "30", currency: "chaos" }, for the price with its icon. */
   protected splitPrice(price: string): { amount: string; currency: string } {
@@ -254,13 +266,19 @@ export class PriceCheckPanel {
   }
 
   /**
-   * The "≈ chaos" column only when some listing has an equivalent to show: none in other
-   * currencies, and none at all until poe.ninja rates for PoE2 (stage 4).
+   * The "≈ ex" and "≈ c" columns: what each listing is worth in the two small currencies (owner's
+   * decision: both). Each only when some listing has a value to show there: none in its own
+   * currency, none at all until the poe.ninja rates arrive.
    */
-  protected readonly mixedCurrencies = computed(() => {
-    currencyRates.rates();
-    return this.search.rows().some((row) => this.equivalent(row) !== '');
+  protected readonly equivalentColumns = computed(() => {
+    const rows = this.search.rows();
+    return SMALL_CURRENCIES.filter((currency) => rows.some((row) => this.equivalent(row, currency) !== ''));
   });
+
+  /** Listing grid columns: price, the "≈" columns, item level or stack, listed. */
+  protected readonly listingColumns = computed(() =>
+    ['minmax(0,1fr)', ...this.equivalentColumns().map(() => '62px'), '48px', '76px'].join(' '),
+  );
 
   protected readonly limits = computed(() => {
     RATE_LIMIT_RULES_REVISION();
@@ -309,9 +327,9 @@ export class PriceCheckPanel {
 
   // poe.ninja
 
-  /** poe.ninja entry for the item (null: it has no poe.ninja id). */
+  /** poe.ninja entry for the item (null: poe.ninja has no prices for this kind of item). */
   protected readonly ninja = computed(() =>
-    itemQuote(currencyRates.prices(), this.item(), settings().leagueId, currencyRates.divine()),
+    itemQuote(currencyRates.prices(), currencyRates.states(), currencyRates.rates(), this.item(), settings().leagueId),
   );
 
   protected updatedAgo(): string {
@@ -321,7 +339,9 @@ export class PriceCheckPanel {
     return minutes < 1 ? tr('updated just now') : tr('updated {0} min ago', minutes);
   }
 
-  protected readonly ninjaLoading = computed(() => currencyRates.updatedAt() == null && !currencyRates.error());
+  protected readonly ninjaLoading = computed(
+    () => (currencyRates.rates() == null && !currencyRates.error()) || (this.ninja()?.pending ?? false),
+  );
   protected readonly ninjaError = currencyRates.error;
   protected readonly ninjaBaseOnly = computed(() => this.ninja()?.baseOnly ?? false);
   protected readonly ninjaValue = computed(() => this.ninja()?.value ?? null);
@@ -340,9 +360,21 @@ export class PriceCheckPanel {
   /** poe.ninja value as a number and a currency id for its icon ("div" → "divine"). */
   protected readonly ninjaAmount = computed(() => {
     const value = this.ninjaValue();
-    if (!value) return null;
-    const text = formatValue(value, value.currency === 'div');
-    return { text: text.replace(/\s*(c|div)$/, ''), currency: value.currency === 'div' ? 'divine' : 'chaos' };
+    return value ? { text: formatAmount(value.min), currency: currencyTag(value.currency) } : null;
+  });
+
+  /** The same price in the other small currencies: "= 0.17 c" next to "12 ex". */
+  protected readonly ninjaAlso = computed(() =>
+    (this.ninja()?.also ?? []).map((entry) => ({ text: formatAmount(entry.amount), currency: entry.currency as string })),
+  );
+
+  /** "~12 traded per hour" or "from 140 listings" under the poe.ninja price. */
+  protected readonly ninjaTraded = computed(() => {
+    const traded = this.ninja()?.traded;
+    if (!traded) return '';
+    return 'listings' in traded
+      ? tr('from {0} listings', traded.listings.toLocaleString('en'))
+      : tr('~{0} traded per hour', formatAmount(traded.perHour));
   });
 
   protected readonly related = computed(() => {
@@ -350,8 +382,8 @@ export class PriceCheckPanel {
     return query ? relatedItems(queryId(query), currencyRates.prices()) : null;
   });
 
-  protected price(value: CurrencyValue | null | undefined, fraction = false): string {
-    return formatValue(value, fraction);
+  protected price(value: CurrencyValue | null | undefined): string {
+    return formatValue(value);
   }
 
   /** The set the item belongs to, shown next to the filters whenever there is one (as APT does). */
@@ -372,11 +404,12 @@ export class PriceCheckPanel {
     return group ? group.related.length + group.items.length : 0;
   });
 
-  /** A related item's price as an amount and a currency id for its icon. */
-  protected relatedPrice(chaos: number | undefined): { text: string; currency: string } | null {
-    if (chaos == null) return null;
-    const value = autoCurrency(chaos, currencyRates.divine());
-    return { text: formatValue(value, true).replace(/\s*(c|div)$/, ''), currency: value.currency === 'div' ? 'divine' : 'chaos' };
+  /** A related item's price (divines) as an amount and a currency id for its icon. */
+  protected relatedPrice(div: number | undefined): { text: string; currency: string } | null {
+    const rates = currencyRates.rates();
+    if (div == null || !rates) return null;
+    const value = autoCurrency(div, rates);
+    return { text: formatAmount(value.min), currency: currencyTag(value.currency) };
   }
 
   /** A translated sentence split around its `{0}`, for a value shown with its own style. */
@@ -391,11 +424,21 @@ export class PriceCheckPanel {
 
   // Bulk
 
-  /** poe.ninja chaos price of the item being priced (currency, fragment, essence, …). */
-  protected readonly ninjaChaos = computed(() => currencyRates.rates().get(this.item().info.refName));
+  // stage 5: bulk pays in divine or chaos (the PoE1 app's logic). poe.ninja's divine price is turned
+  // into chaos for it, so bait offers and the market ratio row work already.
+
+  /** poe.ninja price of the item being priced (currency, fragment, essence, …) in chaos. */
+  protected readonly ninjaChaos = computed(() => {
+    const div = this.ninja()?.price?.primaryValue;
+    const rates = currencyRates.rates();
+    return div != null && rates ? div * rates.chaos : undefined;
+  });
+
+  /** Chaos per divine (the bulk code's divine rate). */
+  private readonly divineChaos = computed(() => currencyRates.rates()?.chaos);
 
   private readonly bulkPriced = computed(() =>
-    priceOffers(this.bulk.current()?.listed ?? [], this.bulk.selected(), this.ninjaChaos(), currencyRates.divine()),
+    priceOffers(this.bulk.current()?.listed ?? [], this.bulk.selected(), this.ninjaChaos(), this.divineChaos()),
   );
 
   protected readonly bulkBest = computed(() => bestOffer(this.bulkPriced()));
@@ -406,7 +449,7 @@ export class PriceCheckPanel {
     const rows = this.bulkPriced().filter((row) => !(this.hideBait() && row.isBait));
     const lines: BulkLine[] = rows.map((row) => ({ kind: 'offer', row }));
     const ninja = this.ninjaChaos();
-    const ratio = ninja != null ? marketRatio(this.bulk.selected(), ninja, currencyRates.divine()) : undefined;
+    const ratio = ninja != null ? marketRatio(this.bulk.selected(), ninja, this.divineChaos()) : undefined;
     if (ratio) {
       const perItem = ratio.exchangeAmount / ratio.itemAmount;
       const at = rows.findIndex((row) => row.exchangeAmount / row.itemAmount >= perItem);
@@ -415,13 +458,13 @@ export class PriceCheckPanel {
     return lines;
   });
 
-  /** "You have × 12 → 4,111 chaos" from the stock filter or the copied stack (APT StackValue). */
+  /** "You have × 12 → 85 ex · 1.2 c" from the stock filter or the copied stack (EE2 StackValue). */
   protected readonly youHave = computed(() => {
-    const ninja = this.ninjaChaos();
+    const div = this.ninja()?.price?.primaryValue;
+    const rates = currencyRates.rates();
     const amount = this.active()?.filters.stackSize?.value ?? this.item().stackSize?.value;
-    if (ninja == null || !amount) return null;
-    const isDivine = this.item().info.refName === 'Divine Orb';
-    return { amount, worth: stackWorth(amount, ninja, currencyRates.divine(), isDivine) };
+    if (div == null || !rates || !amount) return null;
+    return { amount, worth: stackWorth(amount, div, rates, this.item().info.refName) };
   });
 
   protected selectHave(have: BulkHave): void {
@@ -456,6 +499,8 @@ export class PriceCheckPanel {
       const item = this.item();
       untracked(() => this.start(item));
     });
+    // poe.ninja: the overview types of the item and its related items, the first time one is checked.
+    effect(() => requestNinjaPrices(idsToPrice(this.item())));
     this.fitHeightToFilters();
   }
 
@@ -645,11 +690,12 @@ export class PriceCheckPanel {
     return CURRENCY_COLORS[row.priceCurrency] ?? CURRENCY_COLOR_OTHER;
   }
 
-  /** "≈ 3.8" for listings not priced in chaos. */
-  protected equivalent(row: GroupedResult): string {
-    if (row.priceCurrency === 'chaos') return '';
-    const chaos = toChaos(row.priceAmount, row.priceCurrency, currencyRates.rates());
-    return chaos != null ? `≈ ${formatChaos(chaos)}` : '';
+  /** "≈ 3.8": a listing's price in a small currency it is not listed in. */
+  protected equivalent(row: GroupedResult, currency: SmallCurrency): string {
+    if (row.priceCurrency === currency) return '';
+    const div = this.toDivine()?.(row.priceAmount, row.priceCurrency);
+    const rates = currencyRates.rates();
+    return div != null && rates ? `≈ ${formatAmount(div * rates[currency])}` : '';
   }
 
   protected isCheapest(row: GroupedResult): boolean {

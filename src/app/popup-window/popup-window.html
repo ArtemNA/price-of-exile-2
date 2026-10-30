@@ -15,12 +15,13 @@
     <button
       class="flex h-6 items-center gap-1.5 border px-2"
       [class]="menu() === 'divine' ? 'border-gold bg-[#2a2218]' : 'border-line bg-raised hover:border-line-strong'"
-      [disabled]="!divine()"
+      [disabled]="!rates()"
       (click)="toggleMenu('divine')"
     >
       <app-currency tag="divine" />
-      @if (divine(); as rate) {
-        = <b class="font-semibold tabular-nums">{{ formatChaos(rate) }}</b> <app-currency tag="chaos" />
+      @if (rates(); as r) {
+        = <b class="font-semibold tabular-nums">{{ amount(r.exalted) }}</b> <app-currency tag="exalted" />
+        <span class="text-muted">·</span> <b class="font-semibold tabular-nums">{{ amount(r.chaos) }}</b> <app-currency tag="chaos" />
       } @else {
         <span class="text-muted">Divine —</span>
       }
@@ -34,7 +35,7 @@
   </header>
 
   @if (menu() === 'league') {
-    <div class="absolute top-[33px] right-[150px] z-10 flex w-56 flex-col border border-bronze bg-[#12100d] shadow-[0_12px_30px_rgba(0,0,0,0.8)]">
+    <div class="absolute top-[33px] right-[200px] z-10 flex w-56 flex-col border border-bronze bg-[#12100d] shadow-[0_12px_30px_rgba(0,0,0,0.8)]">
       @for (league of leagues.list(); track league.id) {
         <button class="px-2.5 py-1.5 text-left hover:bg-raised" [class.text-gold-soft]="league.id === settings().leagueId" (click)="selectLeague(league.id)">
           {{ league.id }}
@@ -45,13 +46,14 @@
     </div>
   }
 
-  @if (menu() === 'divine' && divine(); as rate) {
-    <div class="absolute top-[33px] right-[36px] z-10 flex w-[200px] flex-col border border-bronze bg-[#12100d] shadow-[0_12px_30px_rgba(0,0,0,0.8)]">
-      <div class="flex justify-between border-b border-line px-2.5 py-1.5 text-[11px] text-muted"><span>Divine</span><span>Chaos</span></div>
-      @for (row of fractions(rate); track row.divine) {
-        <div class="flex justify-between border-b border-[#1f1c18] px-2.5 py-[3px] tabular-nums" [class.bg-gold/[0.08]]="row.divine === 1">
+  @if (menu() === 'divine' && rates(); as r) {
+    <div class="absolute top-[33px] right-[36px] z-10 flex w-[240px] flex-col border border-bronze bg-[#12100d] shadow-[0_12px_30px_rgba(0,0,0,0.8)]">
+      <div class="grid grid-cols-3 border-b border-line px-2.5 py-1.5 text-[11px] text-muted"><span>Divine</span><span class="text-right">Exalted</span><span class="text-right">Chaos</span></div>
+      @for (row of fractions(r); track row.divine) {
+        <div class="grid grid-cols-3 border-b border-[#1f1c18] px-2.5 py-[3px] tabular-nums" [class.bg-gold/[0.08]]="row.divine === 1">
           <span class="flex items-center gap-1 text-bright">{{ row.divine === 1 ? '1' : row.divine.toFixed(1) }} <app-currency tag="divine" [size]="14" /></span>
-          <span class="flex items-center gap-1" [class]="row.divine === 1 ? 'text-gold-soft' : 'text-bright'">{{ row.chaos }} <app-currency tag="chaos" [size]="14" /></span>
+          <span class="flex items-center justify-end gap-1" [class]="row.divine === 1 ? 'text-gold-soft' : 'text-bright'">{{ amount(row.exalted) }} <app-currency tag="exalted" [size]="14" /></span>
+          <span class="flex items-center justify-end gap-1" [class]="row.divine === 1 ? 'text-gold-soft' : 'text-bright'">{{ amount(row.chaos) }} <app-currency tag="chaos" [size]="14" /></span>
         </div>
       }
       <div class="px-2.5 py-1.5 text-[11px] text-muted">poe.ninja · {{ settings().leagueId }} · {{ minutesAgo(ratesUpdated()) }}</div>

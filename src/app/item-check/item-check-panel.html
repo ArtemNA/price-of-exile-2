@@ -52,7 +52,7 @@
         <b class="font-semibold tabular-nums" [class]="value.currency === 'div' ? 'text-gold-soft' : 'text-bright'">{{ price(value) }}</b>
       } @else {
         <span class="flex-1"></span>
-        <span class="text-muted">{{ 'no price' | tr }}</span>
+        <span class="text-muted">{{ (quote.pending ? 'loading…' : 'no price') | tr }}</span>
       }
     </button>
   }

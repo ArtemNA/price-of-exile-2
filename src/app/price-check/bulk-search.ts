@@ -1,6 +1,7 @@
 // Bulk exchange search. Port of `useBulkApi` and `useMarketRatioFinder` from APT TradeBulk.vue
 // (MIT © 2020 Alexander Drozdov) on Angular signals, plus bait detection (FINDINGS F-26).
-// stage 5: PoE2 currencies to pay with (exalted, divine, chaos) and EE2 `bulk-api.ts`.
+// stage 5: PoE2 currencies to pay with (exalted, divine, chaos) and EE2 `bulk-api.ts`; until then the
+// poe.ninja price comes in chaos (`ninjaChaos`, `divineChaos` = chaos per divine).
 
 import { computed, signal } from '@angular/core';
 import type { ParsedItem } from '@/parser';
@@ -13,6 +14,7 @@ import {
   type PricingResult,
 } from '../../lib/ee2/web/price-check/trade/pathofexile-bulk';
 import { BULK_BAIT_RATIO } from '../constants';
+import { formatValue, type NinjaRates, priceOf } from '../core/ninja-prices';
 import { settings } from '../core/settings';
 import { formatChaos } from './listing-summary';
 
@@ -148,13 +150,12 @@ export class BulkSearch {
 }
 
 /**
- * Worth of `amount` items at the poe.ninja price (APT StackValue): chaos, or divines once it
- * reaches a divine. Divine Orbs themselves are always shown in chaos.
+ * Worth of `amount` items of `refName` at the poe.ninja price `div` (EE2 StackValue): in exalted, or
+ * divines from about one up, with the other small currencies next to it ("85 ex · 1.2 c").
  */
-export function stackWorth(amount: number, ninjaChaos: number, divineChaos: number | undefined, isDivine: boolean): string {
-  const chaos = amount * ninjaChaos;
-  if (!isDivine && divineChaos && chaos >= divineChaos) return `${formatChaos(chaos / divineChaos)} div`;
-  return `${formatChaos(chaos)} chaos`;
+export function stackWorth(amount: number, div: number, rates: NinjaRates, refName: string): string {
+  const { value, also } = priceOf(amount * div, rates, refName);
+  return [formatValue(value), ...also.map((entry) => formatValue({ min: entry.amount, max: entry.amount, currency: entry.currency }))].join(' · ');
 }
 
 /** The same exchange on the trade site. */

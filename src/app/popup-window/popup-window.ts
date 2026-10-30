@@ -2,7 +2,8 @@ import { afterNextRender, Component, computed, DestroyRef, effect, ElementRef, i
 import { listen } from '@tauri-apps/api/event';
 import { parseClipboard, type ParsedItem } from '@/parser';
 import { Currency } from '../shared/currency';
-import { currencyRates, divineFractions, trackCurrencyRates } from '../core/currency-rates';
+import { currencyRates, trackCurrencyRates } from '../core/currency-rates';
+import { divineFractions, formatAmount, type NinjaRates } from '../core/ninja-prices';
 import { loadI18n, tr, TrPipe } from '../core/i18n';
 import { Leagues } from '../core/leagues';
 import { settings } from '../core/settings';
@@ -15,14 +16,13 @@ import { ItemCheckPanel } from '../item-check/item-check-panel';
 import { isMapLike } from '../map-check/map-check';
 import { MapCheckPanel } from '../map-check/map-check-panel';
 import { StashPanel } from '../stash-search/stash-panel';
-import { formatChaos } from '../price-check/listing-summary';
 import { PriceCheckPanel } from '../price-check/price-check-panel';
 import { identifiedVariants, identifyAs, needsIdentification } from '../price-check/unidentified';
 import { UnidentifiedPicker } from '../price-check/unidentified-picker';
 import type { BaseType } from '@/assets/data';
 import { ItemView, toItemView } from './item-view';
 
-/** The popup: price check (title bar with league and divine rate, filters, listings), item check or map check. */
+/** The popup: price check (title bar with league and divine rates, filters, listings), item check or map check. */
 @Component({
   selector: 'app-popup-window',
   imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel, UnidentifiedPicker, Currency, TrPipe],
@@ -43,7 +43,7 @@ export class PopupWindow {
   protected readonly menu = signal<'league' | 'divine' | null>(null);
   protected readonly settings = settings;
   protected readonly leagues = inject(Leagues);
-  protected readonly divine = currencyRates.divine;
+  protected readonly rates = currencyRates.rates;
   protected readonly ratesUpdated = currencyRates.updatedAt;
   protected readonly mapCheck = computed(() => {
     const item = this.parsed();
@@ -184,12 +184,12 @@ export class PopupWindow {
     this.menu.set(null);
   }
 
-  protected fractions(divine: number) {
-    return divineFractions(divine);
+  protected fractions(rates: NinjaRates) {
+    return divineFractions(rates);
   }
 
-  protected formatChaos(value: number): string {
-    return formatChaos(value);
+  protected amount(value: number): string {
+    return formatAmount(value);
   }
 
   protected minutesAgo(date: Date | null): string {

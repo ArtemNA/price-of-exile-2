@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { chaosRatesFromNinja, currencyName, divineFractions, toChaos } from '../src/app/core/currency-rates';
+import { currencyName } from '../src/app/core/currency-rates';
 import { formatChaos, limiterUsage, summarizeListings } from '../src/app/price-check/listing-summary';
 import type { GroupedResult } from '../src/app/price-check/trade-search';
 import { RateLimiter } from '../src/lib/ee2/web/price-check/trade/RateLimiter';
@@ -7,46 +7,15 @@ import { loadGameDataFromDisk } from './game-data';
 
 beforeAll(loadGameDataFromDisk);
 
-// Shape of poe.ninja /poe1/api/economy/current/dense/overviews (Allflame, 26.10.2026), PoE2 currency names.
-// stage 4: the PoE2 poe.ninja API instead.
-const NINJA = {
-  currencyOverviews: [
-    {
-      type: 'Currency',
-      lines: [
-        { name: 'Divine Orb', chaos: 342.6 },
-        { name: 'Exalted Orb', chaos: 3.82 },
-        { name: 'Vaal Orb', chaos: 0.2435 },
-      ],
-    },
-  ],
-};
-const rates = chaosRatesFromNinja(NINJA);
+/** Divines per unit, rounded from poe.ninja (Forbidden Rites, 28.10.2026). poe.ninja itself: ninja.test.ts. */
+const DIVINES: Record<string, number> = { divine: 1, exalted: 0.001486, chaos: 0.09809, vaal: 0.0004 };
+const toDivine = (amount: number, currency: string) => (currency in DIVINES ? amount * DIVINES[currency] : undefined);
 
-describe('currency rates', () => {
-  it('reads chaos values from poe.ninja and knows chaos itself', () => {
-    expect(rates.get('Divine Orb')).toBe(342.6);
-    expect(rates.get('Chaos Orb')).toBe(1);
-  });
-
-  it('builds the divine → chaos tooltip rows', () => {
-    const rows = divineFractions(342.6);
-    expect(rows).toHaveLength(10);
-    expect(rows[0]).toEqual({ divine: 0.1, chaos: 34 });
-    expect(rows[4]).toEqual({ divine: 0.5, chaos: 171 });
-    expect(rows[9]).toEqual({ divine: 1, chaos: 343 });
-  });
-
+describe('currency names', () => {
   it('maps trade currency ids to item names through game data', () => {
     expect(currencyName('exalted')).toBe('Exalted Orb');
     expect(currencyName('divine')).toBe('Divine Orb');
     expect(currencyName('no-such-currency')).toBeUndefined();
-  });
-
-  it('converts listing prices to chaos', () => {
-    expect(toChaos(2, 'chaos', rates)).toBe(2);
-    expect(toChaos(1, 'exalted', rates)).toBeCloseTo(3.82);
-    expect(toChaos(1, 'annul', rates)).toBeUndefined(); // not in this poe.ninja sample
   });
 });
 
@@ -54,22 +23,22 @@ describe('listing summary', () => {
   const row = (priceAmount: number, priceCurrency: string, listedTimes = 1) =>
     ({ id: `${priceAmount}${priceCurrency}${Math.random()}`, priceAmount, priceCurrency, listedTimes }) as GroupedResult;
 
-  it('finds the cheapest listing by chaos value and the most listed price', () => {
-    // From the real ring search: chaos listings plus one exalted and one vaal.
-    const rows = [row(1, 'chaos', 4), row(2, 'chaos', 10), row(1, 'exalted'), row(1, 'vaal'), row(3, 'chaos', 4)];
-    expect(summarizeListings(rows, rates)).toEqual({
-      cheapest: { price: '1 vaal', chaos: 0.2435 },
+  it('finds the cheapest listing by divine value and the most listed price', () => {
+    const rows = [row(1, 'chaos', 4), row(2, 'chaos', 10), row(1, 'exalted'), row(1, 'vaal'), row(3, 'chaos', 4), row(1, 'annul')];
+    expect(summarizeListings(rows, toDivine)).toEqual({
+      cheapest: { price: '1 vaal', div: 0.0004 },
       mostListed: '2 chaos',
     });
   });
 
   it('takes the trade site order for the cheapest listing while there are no rates', () => {
-    // PoE2 until poe.ninja (stage 4): the exalted listing first, as the site sorted it.
+    // Before poe.ninja answers: the exalted listing first, as the site sorted it.
     const rows = [row(2, 'exalted'), row(1, 'chaos', 3), row(3, 'exalted')];
-    expect(summarizeListings(rows, new Map())).toEqual({ cheapest: { price: '2 exalted' }, mostListed: '1 chaos' });
+    expect(summarizeListings(rows, null)).toEqual({ cheapest: { price: '2 exalted' }, mostListed: '1 chaos' });
   });
 
-  it('formats chaos amounts compactly', () => {
+  it('formats amounts compactly', () => {
+    expect(formatChaos(0.0152)).toBe('0.015');
     expect(formatChaos(0.2435)).toBe('0.24');
     expect(formatChaos(3.82)).toBe('3.8');
     expect(formatChaos(342.6)).toBe('343');

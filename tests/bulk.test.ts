@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { parseClipboard, type ParsedItem } from '@/parser';
-import { chaosRatesFromNinja } from '../src/app/core/currency-rates';
 import { setHttpFetch } from '../src/app/core/http';
 import {
   bestOffer,
@@ -90,24 +89,12 @@ describe('marketRatio (APT)', () => {
 });
 
 describe('stackWorth', () => {
-  it('shows divines once a stack is worth one', () => {
-    expect(stackWorth(12, 12.5, DIVINE, false)).toBe('150 chaos');
-    expect(stackWorth(40, 12.5, DIVINE, false)).toBe('1.5 div');
-    expect(stackWorth(12, DIVINE, DIVINE, true)).toBe('4111 chaos');
-  });
-});
-
-describe('poe.ninja bulk prices', () => {
-  it('includes stackable item overviews such as essences, not uniques', () => {
-    const rates = chaosRatesFromNinja({
-      currencyOverviews: [{ type: 'Currency', lines: [{ name: 'Divine Orb', chaos: DIVINE }] }],
-      itemOverviews: [
-        { type: 'Essence', lines: [{ name: 'Deafening Essence of Doubt', chaos: 6.06 }] },
-        { type: 'UniqueArmour', lines: [{ name: 'Tabula Rasa', chaos: 9 }] },
-      ],
-    });
-    expect(rates.get('Deafening Essence of Doubt')).toBe(6.06);
-    expect(rates.has('Tabula Rasa')).toBe(false);
+  const rates = { exalted: 672.9, chaos: 10.2 };
+  it('shows exalted with chaos next to it, divines once a stack is worth one', () => {
+    expect(stackWorth(12, 0.01, rates, 'Greater Iron Rune')).toBe('81 ex · 1.2 c');
+    expect(stackWorth(40, 0.05, rates, 'Greater Iron Rune')).toBe('2 div · 1346 ex · 20 c');
+    expect(stackWorth(3, 1, rates, 'Divine Orb')).toBe('2019 ex · 31 c'); // divines themselves in exalted
+    expect(stackWorth(7, 0.001486, rates, 'Exalted Orb')).toBe('0.11 c'); // no "7 ex" for exalted orbs
   });
 });
 

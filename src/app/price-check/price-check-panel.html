@@ -57,7 +57,18 @@
           [class]="value.currency === 'divine' ? 'text-gold-soft' : 'text-bright'">
           {{ value.text }} <app-currency [tag]="value.currency" [size]="24" />
         </div>
-        <div class="mt-1 text-[11px] text-muted">
+        @if (ninjaAlso().length) {
+          <div class="mt-0.5 flex items-center justify-end gap-1 text-[12px] text-text tabular-nums">
+            =
+            @for (also of ninjaAlso(); track also.currency; let last = $last) {
+              {{ also.text }} <app-currency [tag]="also.currency" [size]="14" />
+              @if (!last) {
+                <span class="text-muted">·</span>
+              }
+            }
+          </div>
+        }
+        <div class="mt-0.5 text-[11px] text-muted">
           poe.ninja{{ ninjaBaseOnly() ? ' ' + ('base' | tr) : '' }}
           @if (ninja()?.trend; as trend) {
             · <span class="tabular-nums" [class]="trend.change > 0 ? 'text-good' : trend.change < 0 ? 'text-bad' : ''">{{ percent(trend.change) }} {{ '7d' | tr }}</span>
@@ -153,7 +164,7 @@
           <button class="mt-1.5 flex items-center gap-2 border-b border-line pt-1 pb-0.5 text-left text-[11px] tracking-[.06em] text-muted uppercase hover:text-text"
             (click)="relatedOpen.set(true)">
             {{ 'Related · {0}' | tr: relatedCount() }}
-            @for (entry of relatedGroup()!.related.slice(0, 6); track entry.name) {
+            @for (entry of relatedGroup()!.related.slice(0, 6); track $index) {
               <img [src]="entry.icon" alt="" class="size-4 object-contain" loading="lazy" />
             }
             <span class="flex-1"></span>
@@ -293,11 +304,11 @@
     }
 
     @let rows = search.rows();
-    @let columns = mixedCurrencies() ? 'minmax(0,1fr) 70px 52px 84px' : 'minmax(0,1fr) 52px 84px';
-    <div class="grid gap-2 border-b border-line px-3 py-1 text-[11px] text-muted" [style.grid-template-columns]="columns">
+    @let columns = listingColumns();
+    <div class="grid items-center gap-2 border-b border-line px-3 py-1 text-[11px] text-muted" [style.grid-template-columns]="columns">
       <span>{{ 'Price' | tr }}</span>
-      @if (mixedCurrencies()) {
-        <span class="text-right">≈ chaos</span>
+      @for (currency of equivalentColumns(); track currency) {
+        <span class="flex items-center justify-end gap-1" [title]="'Worth in this currency at the poe.ninja rate' | tr">≈ <app-currency [tag]="currency" [size]="14" /></span>
       }
       <span class="text-right">{{ detailHeader(rows) }}</span><span class="text-right">{{ 'Listed' | tr }}</span>
     </div>
@@ -317,8 +328,8 @@
               <span class="text-muted">×{{ row.listedTimes }}</span>
             }
           </span>
-          @if (mixedCurrencies()) {
-            <span class="text-right" [class]="isCheapest(row) ? 'text-good' : 'text-muted'">{{ equivalent(row) }}</span>
+          @for (currency of equivalentColumns(); track currency) {
+            <span class="truncate text-right" [class]="isCheapest(row) ? 'text-good' : 'text-muted'">{{ equivalent(row, currency) }}</span>
           }
           <span class="text-right">{{ detail(row) }}</span>
           <span class="text-right text-muted">{{ row.relativeDate }}</span>
@@ -359,8 +370,12 @@
       <span class="text-muted">{{ 'Adjust filters, then Search' | tr }}</span>
     }
     <span class="flex-1"></span>
-    @if (ninjaChaos(); as ninja) {
-      <span class="flex items-center gap-1 text-muted">poe.ninja <b class="font-semibold text-bright tabular-nums">{{ amount(ninja) }}</b> <app-currency tag="chaos" /></span>
+    @if (ninjaAmount(); as value) {
+      <span class="flex items-center gap-1 text-muted">poe.ninja <b class="font-semibold text-bright tabular-nums">{{ value.text }}</b> <app-currency [tag]="value.currency" />
+        @for (also of ninjaAlso(); track also.currency) {
+          · <span class="tabular-nums">{{ also.text }}</span> <app-currency [tag]="also.currency" />
+        }
+      </span>
     }
   </div>
 
@@ -452,8 +467,19 @@
                 {{ value.text }} <app-currency [tag]="value.currency" [size]="26" />
               </div>
             }
-            @if (ninjaValue()?.currency === 'div') {
-              <div class="flex items-center gap-1 text-muted tabular-nums">= {{ amount(entry.price.chaos) }} <app-currency tag="chaos" /></div>
+            @if (ninjaAlso().length) {
+              <div class="flex items-center gap-1 text-muted tabular-nums">
+                =
+                @for (also of ninjaAlso(); track also.currency; let last = $last) {
+                  {{ also.text }} <app-currency [tag]="also.currency" />
+                  @if (!last) {
+                    ·
+                  }
+                }
+              </div>
+            }
+            @if (ninjaTraded(); as traded) {
+              <div class="mt-0.5 text-[11px] text-muted">{{ traded }}</div>
             }
           </div>
 
@@ -478,6 +504,10 @@
             <p class="flex-1 text-muted">{{ 'Not enough trades for a 7 day trend.' | tr }}</p>
           }
         </div>
+      } @else if (entry.pending) {
+        <p class="px-3 py-3 text-muted">{{ 'Loading poe.ninja prices…' | tr }}</p>
+      } @else if (ninjaError(); as message) {
+        <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">poe.ninja: {{ message }}</p>
       } @else {
         @let noPrice = around('poe.ninja has no price for {0}.' | tr);
         <p class="px-3 py-3 text-muted">{{ noPrice[0] }}<span class="text-text">{{ entry.label }}</span>{{ noPrice[1] }}</p>
@@ -504,11 +534,11 @@
     }
   </div>
   <div class="grid grid-cols-2 gap-x-2 py-1">
-    @for (entry of entries; track entry.name) {
+    @for (entry of entries; track $index) {
       <div class="flex min-w-0 items-center gap-1.5 px-1 py-[3px]" [class]="entry.highlight ? 'bg-[#2a2219] text-bright' : 'text-text'">
         <img [src]="entry.icon" alt="" class="size-6 flex-none object-contain" loading="lazy" />
         <span class="min-w-0 flex-1 truncate text-[12px]" [title]="entry.name">{{ entry.name }}</span>
-        @if (relatedPrice(entry.chaos); as p) {
+        @if (relatedPrice(entry.div); as p) {
           <span class="flex flex-none items-center gap-1 tabular-nums" [class.text-gold-soft]="p.currency === 'divine'">{{ p.text }} <app-currency [tag]="p.currency" [size]="14" /></span>
         } @else {
           <span class="flex-none text-muted">—</span>

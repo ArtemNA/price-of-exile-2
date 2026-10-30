@@ -1,0 +1,18 @@
+HTTP/1.1 200 OK
+Date: Fri, 30 Oct 2026 06:53:59 GMT
+Content-Type: application/json
+Transfer-Encoding: chunked
+Connection: keep-alive
+cache-control: no-cache
+content-security-policy: frame-ancestors 'self'
+etag: W/776d7b4e766e28cfaef1383fa5d295e5
+Server: cloudflare
+x-frame-options: SAMEORIGIN
+Report-To: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=YlvTtUZ6AQ%2Fu59HYTeX5eCRDi%2BiX6f9J%2Bzbk%2BVsUEQAhXmYnxwwnYbjI4E2KG76HoVm0vAdQ3J2%2FyuqLttivdFgm%2B05sqYxkjxJLNnpac9ZJkmCCcpY0CwpL7g%3D%3D"}]}
+cf-cache-status: REVALIDATED
+Nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+Vary: accept-encoding
+Content-Encoding: br
+CF-RAY: a528818bb9071591-WAW
+alt-svc: h3=":443"; ma=86400
+

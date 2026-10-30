@@ -14,3 +14,6 @@
 | `03-waystone.png`, `03-waystone-search.png` | Етап 3: вейстоун — «Any Waystone», чип «Waystone tier = 14», без тірів; пошук |
 | `03-gem.png` | Етап 3: мета-гем без рядка Item Class — Sockets ≥ 4, Gem level ≥ 14, пошук одразу, колонка Lvl / Q |
 | `03-unique.png` | Етап 3: унікальний фокус — пошук одразу, без чипа рідкості |
+| `04-exalted-orb.png` | Етап 4: Exalted Orb — курс «div = 711 ex · 10 c» у заголовку, ціна poe.ninja 0,014 c з трендом і графіком, пов'язані Greater і Perfect Exalted; вкладка Bulk ще не доведена (етап 5) |
+| `04-rune.png` | Етап 4: Greater Iron Rune — 5,2 ex = 0,075 c, «You have 1 → 5.2 ex · 0.075 c» |
+| `04-ring-equivalents.png` | Етап 4: пошук кільця — колонки «≈ ex» і «≈ c», найдешевші зелені (F-19) |

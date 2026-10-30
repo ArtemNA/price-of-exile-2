@@ -1,35 +1,35 @@
 import type { RateLimiter } from '../../lib/ee2/web/price-check/trade/RateLimiter';
-import { type ChaosRates, toChaos } from '../core/currency-rates';
+import { formatAmount } from '../core/ninja-prices';
 import type { GroupedResult } from './trade-search';
 
-/** Short chaos amount: 0.24, 3.8, 343. */
-export function formatChaos(value: number): string {
-  if (value < 1) return String(Math.round(value * 100) / 100);
-  if (value < 10) return String(Math.round(value * 10) / 10);
-  return String(Math.round(value));
-}
+/** Short amount: 0.24, 3.8, 343 (`formatAmount`; the name is the PoE1 app's). */
+export const formatChaos = formatAmount;
+
+/** Divine value of a listing price; undefined for a currency poe.ninja has no price for. */
+export type ToDivine = (amount: number, currency: string) => number | undefined;
 
 export interface ListingSummary {
   /**
-   * Cheapest listing by chaos value, as listed ("1 vaal"), plus its chaos value. Without currency
+   * Cheapest listing by its divine value, as listed ("1 vaal"), plus that value. Without currency
    * rates it is the first listing: the trade site sorts them by price already.
    */
-  cheapest?: { price: string; chaos?: number };
+  cheapest?: { price: string; div?: number };
   /** The price most listings ask ("2 chaos"). */
   mostListed?: string;
 }
 
-export function summarizeListings(rows: GroupedResult[], rates: ChaosRates): ListingSummary {
+/** `toDivine` null: no rates (yet). */
+export function summarizeListings(rows: GroupedResult[], toDivine: ToDivine | null): ListingSummary {
   let cheapest: ListingSummary['cheapest'];
   const counts = new Map<string, number>();
   for (const row of rows) {
     const price = `${row.priceAmount} ${row.priceCurrency}`;
     counts.set(price, (counts.get(price) ?? 0) + row.listedTimes);
-    const chaos = toChaos(row.priceAmount, row.priceCurrency, rates);
-    if (chaos != null && (!cheapest || chaos < cheapest.chaos!)) cheapest = { price, chaos };
+    const div = toDivine?.(row.priceAmount, row.priceCurrency);
+    if (div != null && (!cheapest || div < cheapest.div!)) cheapest = { price, div };
   }
-  // stage 4: no rates until poe.ninja for PoE2; comparing only the chaos listings would mislead.
-  if (!rates.size && rows.length) cheapest = { price: `${rows[0].priceAmount} ${rows[0].priceCurrency}` };
+  // Without rates, comparing only the listings in one currency would mislead.
+  if (!toDivine && rows.length) cheapest = { price: `${rows[0].priceAmount} ${rows[0].priceCurrency}` };
   let mostListed: string | undefined;
   let best = 0;
   for (const [price, count] of counts) {

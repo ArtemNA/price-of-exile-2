@@ -665,6 +665,10 @@
     "What's new ↗": "Что нового ↗",
     "White sockets": "Белые гнёзда",
     "Your own listings are marked in the price check.": "Ваши собственные предложения отмечаются в проверке цены.",
-    "Σ Mods behind totals": "Σ Моды в суммах"
+    "Σ Mods behind totals": "Σ Моды в суммах",
+    "loading…": "загрузка…",
+    "from {0} listings": "из {0} предложений",
+    "~{0} traded per hour": "~{0} продаж в час",
+    "Worth in this currency at the poe.ninja rate": "Стоимость в этой валюте по курсу poe.ninja"
   }
 }

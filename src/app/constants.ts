@@ -200,69 +200,122 @@ export const TRADE_LISTING = {
 };
 
 /**
- * stage 4: shown on the poe.ninja tab instead of loading prices, until the PoE2 poe.ninja adapter
- * replaces the PoE1 API below (it has no PoE2 leagues). null loads them.
+ * poe.ninja's official PoE2 economy API (docs/analysis/poe2-services.md §3): host + path without
+ * scheme, `?league=<id>&type=<type>` follows. League ids are the trade site's ("Forbidden Rites").
  */
-export const NINJA_PENDING_MESSAGE: string | null = 'prices for Path of Exile 2 are not connected yet';
-/** poe.ninja currency and item prices (APT `Prices.ts` endpoint), host + path without scheme. */
-export const POE_NINJA_OVERVIEWS = 'poe.ninja/poe1/api/economy/current/dense/overviews';
-/** Re-fetch poe.ninja prices this often while the app runs. */
-export const POE_NINJA_REFRESH_MS = 10 * 60 * 1000;
+export const POE_NINJA_API = {
+  exchange: 'poe.ninja/poe2/api/economy/exchange/current/overview',
+  stash: 'poe.ninja/poe2/api/economy/stash/current/item/overview',
+};
 /**
- * poe.ninja item overview types priced by name for bulk exchange (stackable, one price per name).
- * Uniques, gems, bases and maps are left out: one name has many variants there.
+ * Re-fetch poe.ninja prices this often (PoE2 prices update about hourly): the currency rates on a
+ * timer, every other type only when an item of it is checked again after this long. ETag keeps an
+ * unchanged answer to a "304 Not Modified".
  */
-export const POE_NINJA_BULK_TYPES = [
-  'Essence', 'Fossil', 'Resonator', 'Scarab', 'Oil', 'Vial', 'DeliriumOrb', 'Invitation', 'Fragment',
-  'DivinationCard', 'Omen', 'Tattoo', 'AllflameEmber', 'Runegraft', 'Wombgift', 'Artifact',
+export const POE_NINJA_REFRESH_MS = 60 * 60 * 1000;
+/** After a failed request, the type may be asked for again this much later. */
+export const POE_NINJA_RETRY_MS = 4 * 60 * 1000;
+/** The overview type with the currency rates (`core.rates`); loaded first, with the league. */
+export const POE_NINJA_RATES_TYPE = 'Currency';
+/**
+ * Stash overview lines (uniques) with fewer listings than this are skipped: a handful of listings
+ * makes outliers (The Gnashing Sash at 5,060 div from 6 listings, 28.10.2026).
+ */
+export const POE_NINJA_MIN_LISTINGS = 10;
+/**
+ * Exchange overview lines with fewer items traded per hour than this (volume / price) are skipped:
+ * the exchange has no listing count, and a price from a trade or two a day is noise.
+ */
+export const POE_NINJA_MIN_TRADED_PER_HOUR = 0.1;
+
+/**
+ * poe.ninja PoE2 overview types: API kind, game data namespace of their lines, and the site's URL
+ * segment for item pages (`${POE_NINJA_SITE}/${league slug}/${url}/${detailsId}`).
+ */
+export const POE_NINJA_TYPES: Readonly<Record<string, { api: 'exchange' | 'stash'; ns: string; url: string }>> = {
+  Currency: { api: 'exchange', ns: 'ITEM', url: 'currency' },
+  Fragments: { api: 'exchange', ns: 'ITEM', url: 'fragments' },
+  Abyss: { api: 'exchange', ns: 'ITEM', url: 'abyssal-bones' },
+  UncutGems: { api: 'exchange', ns: 'ITEM', url: 'uncut-gems' },
+  LineageSupportGems: { api: 'exchange', ns: 'GEM', url: 'lineage-support-gems' },
+  Essences: { api: 'exchange', ns: 'ITEM', url: 'essences' },
+  SoulCores: { api: 'exchange', ns: 'ITEM', url: 'soul-cores' },
+  Idols: { api: 'exchange', ns: 'ITEM', url: 'idols' },
+  Runes: { api: 'exchange', ns: 'ITEM', url: 'runes' },
+  Ritual: { api: 'exchange', ns: 'ITEM', url: 'omens' },
+  Expedition: { api: 'exchange', ns: 'ITEM', url: 'expedition' },
+  Delirium: { api: 'exchange', ns: 'ITEM', url: 'liquid-emotions' },
+  Breach: { api: 'exchange', ns: 'ITEM', url: 'breach-catalyst' },
+  Verisium: { api: 'exchange', ns: 'ITEM', url: 'verisium' },
+  UniqueWeapons: { api: 'stash', ns: 'UNIQUE', url: 'unique-weapons' },
+  UniqueArmours: { api: 'stash', ns: 'UNIQUE', url: 'unique-armours' },
+  UniqueAccessories: { api: 'stash', ns: 'UNIQUE', url: 'unique-accessories' },
+  UniqueFlasks: { api: 'stash', ns: 'UNIQUE', url: 'unique-flasks' },
+  UniqueCharms: { api: 'stash', ns: 'UNIQUE', url: 'unique-charms' },
+  UniqueJewels: { api: 'stash', ns: 'UNIQUE', url: 'unique-jewels' },
+  UniqueSanctumRelics: { api: 'stash', ns: 'UNIQUE', url: 'unique-relics' },
+  UniqueTablets: { api: 'stash', ns: 'UNIQUE', url: 'unique-tablets' },
+};
+
+/**
+ * Which overview types may list a stackable item (game data namespace ITEM with a trade tag), by
+ * its game data `craftable.category` and name. The first matching rule wins; its types are
+ * loaded one by one until the item is found, so a guess costs at most one request more.
+ */
+export const POE_NINJA_ITEM_ROUTES: ReadonlyArray<{ category?: string; name?: RegExp; types: string[] }> = [
+  { category: 'Omen', types: ['Ritual'] },
+  { category: 'UncutSkillGem', types: ['UncutGems'] },
+  { category: 'SoulCore', name: /Soul Core/, types: ['SoulCores'] },
+  { category: 'SoulCore', name: /Idol\b|^Carved /, types: ['Idols'] },
+  { category: 'SoulCore', types: ['Runes', 'SoulCores', 'Idols'] },
+  { category: 'Breachstone', types: ['Breach', 'Fragments'] },
+  { category: 'ExpeditionLogbook', types: ['Expedition'] },
+  { category: 'MapFragment', types: ['Fragments'] },
+  { category: 'QuestItem', types: ['Fragments'] },
+  { category: 'PinnacleKey', types: ['Fragments'] },
+  { category: 'VaultKey', types: ['Fragments'] },
+  { name: /Essence of /, types: ['Essences'] },
+  { name: /Catalyst$|^Breach Splinter$/, types: ['Breach'] },
+  { name: /Splinter$/, types: ['Fragments', 'Currency'] },
+  { name: /\bLiquid\b/, types: ['Delirium'] },
+  { name: /(Collarbone|Jawbone|Rib|Cranium|Vertebrae)$/, types: ['Abyss'] },
+  { name: /Verisium|Starlit Ore|Alloy$|Flux\b/, types: ['Verisium', 'Currency'] },
+  { types: ['Currency'] },
+];
+/** Lineage support gems: the only gems (namespace GEM) poe.ninja prices; they have a trade tag. */
+export const POE_NINJA_GEM_TYPES = ['LineageSupportGems'];
+/** Unique items by the game data `craftable.category` of their base. */
+export const POE_NINJA_UNIQUE_ROUTES: ReadonlyArray<{ categories: string[]; types: string[] }> = [
+  { categories: ['Amulet', 'Ring', 'Belt'], types: ['UniqueAccessories'] },
+  { categories: ['Quiver'], types: ['UniqueArmours', 'UniqueAccessories'] },
+  {
+    categories: ['Body Armour', 'Helmet', 'Gloves', 'Boots', 'Shield', 'Buckler', 'Focus'],
+    types: ['UniqueArmours'],
+  },
+  {
+    categories: [
+      'One Hand Sword', 'Two Hand Sword', 'One Hand Axe', 'Two Hand Axe', 'One Hand Mace', 'Two Hand Mace',
+      'Dagger', 'Claw', 'Spear', 'Flail', 'Bow', 'Crossbow', 'Wand', 'Sceptre', 'Staff', 'Warstaff', 'Talisman',
+    ],
+    types: ['UniqueWeapons'],
+  },
+  { categories: ['Flask'], types: ['UniqueFlasks'] },
+  { categories: ['Charm'], types: ['UniqueCharms'] },
+  { categories: ['Jewel'], types: ['UniqueJewels'] },
+  { categories: ['Relic'], types: ['UniqueSanctumRelics'] },
+  { categories: ['TowerAugment'], types: ['UniqueTablets'] },
 ];
 
-/** poe.ninja item pages: `${POE_NINJA_SITE}/${league slug}/${overview url}/${details id}`. */
-export const POE_NINJA_SITE = 'https://poe.ninja/poe1/economy';
+/** poe.ninja PoE2 item pages: `${POE_NINJA_SITE}/${league slug}/${type url}/${detailsId}`. */
+export const POE_NINJA_SITE = 'https://poe.ninja/poe2/economy';
 
 /**
- * poe.ninja overview types APT prices items from (`Prices.ts` NAMESPACE_MAP): game data
- * namespace, site URL segment, overview type. Earlier entries win for the same name.
+ * The two small trade currencies of PoE2, priced against divines (poe.ninja `core.rates`): prices
+ * are shown in the first, the second goes next to it. Owner's decision: both everywhere.
  */
-export const POE_NINJA_NAMESPACES: ReadonlyArray<{ ns: string; url: string; type: string }> = [
-  { ns: 'ITEM', url: 'currency', type: 'Currency' },
-  { ns: 'ITEM', url: 'fragments', type: 'Fragment' },
-  { ns: 'ITEM', url: 'delirium-orbs', type: 'DeliriumOrb' },
-  { ns: 'ITEM', url: 'scarabs', type: 'Scarab' },
-  { ns: 'ITEM', url: 'artifacts', type: 'Artifact' },
-  { ns: 'ITEM', url: 'base-types', type: 'BaseType' },
-  { ns: 'ITEM', url: 'fossils', type: 'Fossil' },
-  { ns: 'ITEM', url: 'resonators', type: 'Resonator' },
-  { ns: 'ITEM', url: 'incubators', type: 'Incubator' },
-  { ns: 'ITEM', url: 'oils', type: 'Oil' },
-  { ns: 'ITEM', url: 'vials', type: 'Vial' },
-  { ns: 'ITEM', url: 'invitations', type: 'Invitation' },
-  { ns: 'ITEM', url: 'blighted-maps', type: 'BlightedMap' },
-  { ns: 'ITEM', url: 'blight-ravaged-maps', type: 'BlightRavagedMap' },
-  { ns: 'ITEM', url: 'essences', type: 'Essence' },
-  { ns: 'ITEM', url: 'maps', type: 'Map' },
-  { ns: 'ITEM', url: 'tattoos', type: 'Tattoo' },
-  { ns: 'ITEM', url: 'omens', type: 'Omen' },
-  { ns: 'ITEM', url: 'coffins', type: 'Coffin' },
-  { ns: 'ITEM', url: 'allflame-embers', type: 'AllflameEmber' },
-  { ns: 'ITEM', url: 'djinn-coins', type: 'DjinnCoin' },
-  { ns: 'ITEM', url: 'astrolabes', type: 'Astrolabe' },
-  { ns: 'ITEM', url: 'runegrafts', type: 'Runegraft' },
-  { ns: 'ITEM', url: 'ducats', type: 'Ducat' },
-  { ns: 'ITEM', url: 'enshrouding-crystals', type: 'EnshroudingCrystal' },
-  { ns: 'ITEM', url: 'corpses', type: 'Corpse' },
-  { ns: 'DIVINATION_CARD', url: 'divination-cards', type: 'DivinationCard' },
-  { ns: 'CAPTURED_BEAST', url: 'beasts', type: 'Beast' },
-  { ns: 'UNIQUE', url: 'unique-jewels', type: 'UniqueJewel' },
-  { ns: 'UNIQUE', url: 'unique-flasks', type: 'UniqueFlask' },
-  { ns: 'UNIQUE', url: 'unique-weapons', type: 'UniqueWeapon' },
-  { ns: 'UNIQUE', url: 'unique-armours', type: 'UniqueArmour' },
-  { ns: 'UNIQUE', url: 'unique-accessories', type: 'UniqueAccessory' },
-  { ns: 'UNIQUE', url: 'unique-maps', type: 'UniqueMap' },
-  { ns: 'UNIQUE', url: 'unique-relics', type: 'UniqueRelic' },
-  { ns: 'UNIQUE', url: 'unique-tinctures', type: 'UniqueTincture' },
-  { ns: 'GEM', url: 'skill-gems', type: 'SkillGem' },
-];
+export const SMALL_CURRENCIES = ['exalted', 'chaos'] as const;
+/** Short names after amounts: "12 ex", "0.2 c", "1.5 div". */
+export const CURRENCY_ABBREVIATIONS: Record<string, string> = { exalted: 'ex', chaos: 'c', div: 'div', divine: 'div' };
 
 /** Item check links (EE2 `item-check/hotkeyable-actions.ts`). */
 export const POE_WIKI_SITE = 'https://www.poe2wiki.net/wiki';
@@ -271,13 +324,13 @@ export const POEDB_SITE = 'https://poe2db.tw';
 export const POEDB_LANGS: Record<Lang, string> = { en: 'us', ru: 'ru' };
 export const CRAFT_OF_EXILE_SITE = 'https://craftofexile.com';
 
-/** APT shows chaos prices from this share of the divine rate up as divines (≈ 1 div in ±6 %). */
+/** Prices from this share of a divine up are shown as divines (≈ 1 div in ±6 %; APT, EE2 `autoCurrency`). */
 export const NINJA_DIVINE_ROUNDING = 0.06;
 
 /** Bulk offers below this share of the poe.ninja price are treated as bait (FINDINGS F-26). */
 export const BULK_BAIT_RATIO = 0.5;
 
-/** Rows of the divine → chaos tooltip in the window title bar. */
+/** Rows of the divine → exalted · chaos tooltip in the window title bar. */
 export const DIVINE_FRACTIONS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
 /** Name plate colors per item rarity (PoE conventions). Keyed by ParsedItem rarity or category. */

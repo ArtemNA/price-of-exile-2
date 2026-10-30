@@ -1,11 +1,11 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, effect, input, signal } from '@angular/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import type { ParsedItem } from '@/parser';
 import { RARITY_COLORS } from '../constants';
-import { currencyRates } from '../core/currency-rates';
+import { currencyRates, requestNinjaPrices } from '../core/currency-rates';
 import { tr, TranslatePipe, TrPipe } from '../core/i18n';
 import { canCraftOfExile, craftOfExileUrl, poedbUrl, stashSearchText, weaponDps, wikiUrl } from '../core/item-links';
-import { formatPercent, formatValue, itemQuote } from '../core/ninja-prices';
+import { formatPercent, formatValue, itemQuote, queryId } from '../core/ninja-prices';
 import { settings } from '../core/settings';
 import { host } from '../host';
 import type { ItemView } from '../popup-window/item-view';
@@ -32,9 +32,17 @@ export class ItemCheckPanel {
   protected readonly showCoE = computed(() => canCraftOfExile(this.item()));
   protected readonly dps = computed(() => weaponDps(this.item()));
   protected readonly ninja = computed(() =>
-    itemQuote(currencyRates.prices(), this.item(), settings().leagueId, currencyRates.divine()),
+    itemQuote(currencyRates.prices(), currencyRates.states(), currencyRates.rates(), this.item(), settings().leagueId),
   );
   protected readonly stashError = signal<string | null>(null);
+
+  constructor() {
+    // The poe.ninja row: load the overview type the item is in, the first time one is checked.
+    effect(() => {
+      const quote = this.ninja();
+      if (!this.compact() && quote) requestNinjaPrices([queryId(quote.query)]);
+    });
+  }
 
   protected openWiki(): void {
     void openUrl(wikiUrl(this.item()));
