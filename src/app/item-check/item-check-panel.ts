@@ -49,7 +49,7 @@ export class ItemCheckPanel {
   }
 
   protected openPoedb(): void {
-    void openUrl(poedbUrl(this.item()));
+    void openUrl(poedbUrl(this.item(), settings().language));
   }
 
   protected openCoE(): void {

@@ -20,3 +20,8 @@
 | `05-bulk-rune.png` | Етап 5: Greater Iron Rune — Pay with ex / div / c з кількістю пропозицій, рядок Market ratio, одну приманку сховано |
 | `05-bulk-exalted.png` | Етап 5: Exalted Orb — оплата лише divine і chaos, «1 div → 100», «Best real offer 0.01 div» |
 | `05-bulk-divine.png` | Етап 5: Divine Orb (текст `tests/fixtures/items/divine-orb.txt`, зібраний вручну) — єдина пропозиція виявилась приманкою |
+| `06-item-check-crossbow.png` | Етап 6: item check арбалета — Physical / Elemental / Total DPS, Reload time; зіпсований, тож без Craft of Exile |
+| `06-item-check-bow-q20.png` | Етап 6: лук з рунами (зіпсований, тож без значень при Q20) |
+| `06-item-check-ring.png` | Етап 6: рідкісне кільце — Wiki, PoEDB, Craft of Exile |
+| `06-item-check-rune.png` | Етап 6: руна — без Craft of Exile, ціна poe.ninja з трендом |
+| `06-find-in-stash-fake-game.png` | Етап 6: Find in Stash ввів `"Greater Iron Rune"` у пошук сховища фейкової гри |

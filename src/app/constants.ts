@@ -323,6 +323,15 @@ export const POEDB_SITE = 'https://poe2db.tw';
 /** PoEDB language segment per game language. */
 export const POEDB_LANGS: Record<Lang, string> = { en: 'us', ru: 'ru' };
 export const CRAFT_OF_EXILE_SITE = 'https://craftofexile.com';
+/** PoE2DB page of waystone modifiers; EE2 links a missing page per tier ("Waystone_(Tier_14)", 404). */
+export const POEDB_WAYSTONES_PAGE = 'Waystones';
+/** Uncut gems have a base per level ("Uncut Skill Gem (Level 19)"), the wiki and PoE2DB one page for all. */
+export const UNCUT_GEM_LEVEL = /(?<=^Uncut .+) \(Level \d+\)$/;
+/**
+ * Weapon property EE2 does not read, per game language (EE2 client strings have no key for it).
+ * The Russian text follows "Урон от огня: " and is not checked in the game yet.
+ */
+export const CHAOS_DAMAGE_PROPERTY: Record<Lang, string> = { en: 'Chaos Damage: ', ru: 'Урон хаосом: ' };
 
 /** Prices from this share of a divine up are shown as divines (≈ 1 div in ±6 %; APT, EE2 `autoCurrency`). */
 export const NINJA_DIVINE_ROUNDING = 0.06;

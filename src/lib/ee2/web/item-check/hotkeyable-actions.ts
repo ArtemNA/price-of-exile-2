@@ -154,7 +154,7 @@ function encodePoe2dbUri(text: string) {
   return text.replaceAll(/ /g, "_").replaceAll(/'/g, "");
 }
 
-function getPoe2dbPath(item: ParsedItem) {
+export function getPoe2dbPath(item: ParsedItem) { // [port] exported for the app's PoE2DB links
   const category = item.category;
   const refName = item.info.refName;
   if (!category) return;

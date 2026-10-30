@@ -54,8 +54,8 @@ const SECTIONS: Array<{ id: Section; label: string }> = [
 const HOTKEYS: Array<{ action: HotkeyAction; label: string; hint: string }> = [
   { action: 'price-check', label: 'Price check', hint: 'Trade listings and poe.ninja price of the hovered item' },
   { action: 'item-check', label: 'Item check', hint: 'Links and details; on maps, contracts and logbooks the map check' },
-  { action: 'wiki', label: 'Open on wiki', hint: 'poewiki.net page of the item, without the popup' },
-  { action: 'poedb', label: 'Open on PoEDB', hint: 'poedb.tw page of the item, without the popup' },
+  { action: 'wiki', label: 'Open on wiki', hint: 'poe2wiki.net page of the item, without the popup' },
+  { action: 'poedb', label: 'Open on PoEDB', hint: 'poe2db.tw page of the item, without the popup' },
   { action: 'craft-of-exile', label: 'Open in Craft of Exile', hint: 'The item in the crafting simulator' },
   { action: 'stash-search', label: 'Find in stash', hint: 'Types the item name into the stash search' },
   { action: 'stash-panel', label: 'Stash search presets', hint: 'Buttons with your stash searches, between the stash and the inventory' },

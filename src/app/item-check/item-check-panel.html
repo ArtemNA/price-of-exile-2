@@ -18,8 +18,8 @@
 }
 
 <div class="flex gap-1.5 px-2.5" [class.pt-2]="compact() || (!view().itemLevel && !flags().length)">
-  <button class="h-7 flex-1 border border-line-strong bg-raised hover:border-gold" [title]="'Open on poewiki.net' | tr" (click)="openWiki()">Wiki ↗</button>
-  <button class="h-7 flex-1 border border-line-strong bg-raised hover:border-gold" [title]="'Open on poedb.tw' | tr" (click)="openPoedb()">PoEDB ↗</button>
+  <button class="h-7 flex-1 border border-line-strong bg-raised hover:border-gold" [title]="'Open on poe2wiki.net' | tr" (click)="openWiki()">Wiki ↗</button>
+  <button class="h-7 flex-1 border border-line-strong bg-raised hover:border-gold" [title]="'Open on poe2db.tw' | tr" (click)="openPoedb()">PoEDB ↗</button>
   @if (showCoE()) {
     <button class="h-7 flex-1 border border-line-strong bg-raised whitespace-nowrap hover:border-gold" [title]="'Open in Craft of Exile' | tr" (click)="openCoE()">Craft of Exile ↗</button>
   }
@@ -62,8 +62,14 @@
       <span class="text-muted">{{ 'Physical DPS' | tr }}</span>
       <span class="text-right text-bright">{{ weapon.phys }}@if (weapon.q20; as q20) {<span class="ml-1 text-muted">{{ '({0} at Q20)' | tr: q20.phys }}</span>}</span>
       <span class="text-muted">{{ 'Elemental DPS' | tr }}</span><span class="text-right text-bright">{{ weapon.elem }}</span>
+      @if (weapon.chaos) {
+        <span class="text-muted">{{ 'Chaos DPS' | tr }}</span><span class="text-right text-bright">{{ weapon.chaos }}</span>
+      }
       <span class="text-muted">{{ 'Total DPS' | tr }}</span>
       <span class="text-right"><b class="font-semibold text-gold-soft">{{ weapon.total }}</b>@if (weapon.q20; as q20) {<span class="ml-1 text-muted">{{ '({0} at Q20)' | tr: q20.total }}</span>}</span>
+      @if (weapon.reload) {
+        <span class="text-muted">{{ 'Reload time' | tr }}</span><span class="text-right text-bright">{{ '{0} s' | tr: weapon.reload }}</span>
+      }
     </div>
   }
   @if ((compact() || !ninja()) && !dps()) {

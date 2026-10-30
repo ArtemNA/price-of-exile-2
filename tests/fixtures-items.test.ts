@@ -18,8 +18,8 @@ const TABLET_OLD_BASE = 'Delirium Precursor Tablet';
 describe('PoE2 item fixtures', () => {
   const files = readdirSync(FIXTURES).filter((file) => file.endsWith('.txt'));
 
-  it('has all 22 item texts', () => {
-    expect(files).toHaveLength(22);
+  it('has all 23 item texts', () => {
+    expect(files).toHaveLength(23);
   });
 
   it.each(files.filter((file) => file !== 'tablet.txt'))('parses %s', (file) => {

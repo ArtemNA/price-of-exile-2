@@ -10,7 +10,7 @@ import { settings } from '../core/settings';
 import { loadGameData } from '../game-data';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { CheckTarget, host, ItemActionEvent, ItemTextEvent } from '../host';
-import { craftOfExileUrl, poedbUrl, stashSearchText, wikiUrl } from '../core/item-links';
+import { itemAction } from '../core/item-links';
 import { GAME_LANGS, ITEM_CHECK_WIDTH, type Lang, MAP_CHECK_WIDTH, STASH_PANEL_WIDTH } from '../constants';
 import { ItemCheckPanel } from '../item-check/item-check-panel';
 import { isMapLike } from '../map-check/map-check';
@@ -134,17 +134,9 @@ export class PopupWindow {
       }
       const result = parseClipboard(payload.text);
       if (result.isErr()) return;
-      const item = result.value;
-      switch (payload.action) {
-        case 'wiki':
-          return openUrl(wikiUrl(item));
-        case 'poedb':
-          return openUrl(poedbUrl(item));
-        case 'craft-of-exile':
-          return openUrl(craftOfExileUrl(item));
-        case 'stash-search':
-          return host.stashSearch(stashSearchText(item)).catch(() => undefined);
-      }
+      const effect = itemAction(payload.action, result.value, settings().language);
+      if (effect && 'open' in effect) return openUrl(effect.open);
+      if (effect) return host.stashSearch(effect.stashSearch).catch(() => undefined);
     });
     // Later changes of the content (marks, the stash error) resize the window too.
     const resizes = new ResizeObserver(() => this.fit());

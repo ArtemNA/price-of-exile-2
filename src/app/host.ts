@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import type { HotkeyAction, PopupPosition } from './constants';
 import type { ChatCommand } from './core/settings';
+import type { ItemAction } from './core/item-links';
 
 /** A stash search preset with a hotkey, for the host. */
 export interface StashHotkey {
@@ -39,7 +40,7 @@ export interface ItemTextEvent {
 
 /** Payload of the `item-action` event: a link or stash search hotkey, handled without showing the popup. */
 export interface ItemActionEvent {
-  action: 'wiki' | 'poedb' | 'craft-of-exile' | 'stash-search';
+  action: ItemAction;
   text: string;
 }
 
