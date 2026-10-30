@@ -17,3 +17,6 @@
 | `04-exalted-orb.png` | Етап 4: Exalted Orb — курс «div = 711 ex · 10 c» у заголовку, ціна poe.ninja 0,014 c з трендом і графіком, пов'язані Greater і Perfect Exalted; вкладка Bulk ще не доведена (етап 5) |
 | `04-rune.png` | Етап 4: Greater Iron Rune — 5,2 ex = 0,075 c, «You have 1 → 5.2 ex · 0.075 c» |
 | `04-ring-equivalents.png` | Етап 4: пошук кільця — колонки «≈ ex» і «≈ c», найдешевші зелені (F-19) |
+| `05-bulk-rune.png` | Етап 5: Greater Iron Rune — Pay with ex / div / c з кількістю пропозицій, рядок Market ratio, одну приманку сховано |
+| `05-bulk-exalted.png` | Етап 5: Exalted Orb — оплата лише divine і chaos, «1 div → 100», «Best real offer 0.01 div» |
+| `05-bulk-divine.png` | Етап 5: Divine Orb (текст `tests/fixtures/items/divine-orb.txt`, зібраний вручну) — єдина пропозиція виявилась приманкою |

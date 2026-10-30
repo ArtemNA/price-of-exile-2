@@ -355,7 +355,8 @@
         @for (have of bulk.haves(); track have) {
           <button class="flex h-6 items-center px-2 not-last:border-r not-last:border-line"
             [class]="have === bulk.selected() ? 'bg-[#2a2219]' : 'opacity-50 hover:opacity-100'"
-            [attr.aria-pressed]="have === bulk.selected()" (click)="selectHave(have)"><app-currency [tag]="have" /></button>
+            [attr.aria-pressed]="have === bulk.selected()" (click)="selectHave(have)"><app-currency [tag]="have" />
+            <span class="ml-1 tabular-nums">{{ bulk.results()[have]?.total ?? '?' }}</span></button>
         }
       </div>
     }
@@ -411,7 +412,7 @@
             {{ amount(line.ratio.exchangeAmount) }} <app-currency [tag]="bulk.selected()" /> → {{ amount(line.ratio.itemAmount) }}
             <ng-container *ngTemplateOutlet="bulkItem" />
           </span>
-          <span class="col-span-3 text-right text-[11px] text-muted">{{ 'trade_result.market_ratio' | t }} · poe.ninja</span>
+          <span class="col-span-3 text-right text-[11px] text-muted">{{ 'Market ratio' | tr }} · poe.ninja</span>
         </div>
       } @else {
         <div class="grid grid-cols-[minmax(0,1fr)_70px_64px_70px] items-center gap-2 border-b border-[#1f1c18] px-3 py-1 tabular-nums"

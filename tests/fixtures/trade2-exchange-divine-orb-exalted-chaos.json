@@ -1,0 +1,73 @@
+{
+ "id": "H4sIAAAAAAAAAxXJwQnAMAgF0F3-ORNkldKDNEKEoAVtWgjZvXh9b6HTZNQD_NEIbii4OpnjLHhJI6vJFOUUD4rHURfsDjFFhenI3PsHmxfMuUsAAAA",
+ "complexity": null,
+ "result": {
+  "02fa4afa1d41aa4ca93e4740f5f2c47bc8f73fded729606fc65a9a": {
+   "id": "d41c85146802fa4afa1d41aa4ca93e4740f5f2c47bc8f73fded729606fc65a9a",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T13:37:48+00:00",
+    "account": {
+     "name": "seller1#1001",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller1_char",
+     "language": "ko_KR",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "exalted",
+       "amount": 1,
+       "whisper": "{0} 엑잘티드 오브"
+      },
+      "item": {
+       "currency": "divine",
+       "amount": 1,
+       "stock": 1,
+       "id": "d41c85146802fa4afa1d41aa4ca93e4740f5f2c47bc8f73fded729606fc65a9a",
+       "whisper": "{0} 신성한 오브"
+      }
+     }
+    ],
+    "whisper": "@seller1_char 안녕하세요, Forbidden Rites 리그의 {0}(을)를 {1}(으)로 구매하고 싶습니다"
+   }
+  },
+  "1742321ca0f9b924333c9eafd1a367cb5c83c3e44ccf56a3ea4ecf": {
+   "id": "12b3977be41742321ca0f9b924333c9eafd1a367cb5c83c3e44ccf56a3ea4ecf",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T12:01:55+00:00",
+    "account": {
+     "name": "seller2#1002",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller2_char",
+     "language": "en_US",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "chaos",
+       "amount": 11,
+       "whisper": "{0} Chaos Orb"
+      },
+      "item": {
+       "currency": "divine",
+       "amount": 1,
+       "stock": 529,
+       "id": "12b3977be41742321ca0f9b924333c9eafd1a367cb5c83c3e44ccf56a3ea4ecf",
+       "whisper": "{0} Divine Orb"
+      }
+     }
+    ],
+    "whisper": "@seller2_char Hi, I'd like to buy your {0} for my {1} in Forbidden Rites"
+   }
+  }
+ },
+ "total": 2
+}

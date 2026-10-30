@@ -46,6 +46,7 @@ import type { ItemView } from '../popup-window/item-view';
 import {
   bestOffer,
   BulkHave,
+  BulkPrices,
   BulkRow,
   BulkSearch,
   bulkSiteUrl,
@@ -115,7 +116,7 @@ export class PriceCheckPanel {
   /** Filters changed since the last search: the user starts the next one. */
   protected readonly stale = signal(true);
   protected readonly search = new TradeSearch();
-  protected readonly bulk = new BulkSearch();
+  protected readonly bulk = new BulkSearch(() => this.bulkPrices());
   protected readonly tabs = TABS;
   /** Bait offers (far below poe.ninja) are hidden unless the user asks to see them. */
   protected readonly hideBait = signal(true);
@@ -424,21 +425,14 @@ export class PriceCheckPanel {
 
   // Bulk
 
-  // stage 5: bulk pays in divine or chaos (the PoE1 app's logic). poe.ninja's divine price is turned
-  // into chaos for it, so bait offers and the market ratio row work already.
-
-  /** poe.ninja price of the item being priced (currency, fragment, essence, …) in chaos. */
-  protected readonly ninjaChaos = computed(() => {
-    const div = this.ninja()?.price?.primaryValue;
-    const rates = currencyRates.rates();
-    return div != null && rates ? div * rates.chaos : undefined;
-  });
-
-  /** Chaos per divine (the bulk code's divine rate). */
-  private readonly divineChaos = computed(() => currencyRates.rates()?.chaos);
+  /** poe.ninja price of the item being priced (currency, fragment, rune, …) and the currency rates. */
+  private readonly bulkPrices = computed<BulkPrices>(() => ({
+    div: this.ninja()?.price?.primaryValue,
+    rates: currencyRates.rates(),
+  }));
 
   private readonly bulkPriced = computed(() =>
-    priceOffers(this.bulk.current()?.listed ?? [], this.bulk.selected(), this.ninjaChaos(), this.divineChaos()),
+    priceOffers(this.bulk.current()?.listed ?? [], this.bulk.selected(), this.bulkPrices()),
   );
 
   protected readonly bulkBest = computed(() => bestOffer(this.bulkPriced()));
@@ -448,8 +442,7 @@ export class PriceCheckPanel {
   protected readonly bulkLines = computed<BulkLine[]>(() => {
     const rows = this.bulkPriced().filter((row) => !(this.hideBait() && row.isBait));
     const lines: BulkLine[] = rows.map((row) => ({ kind: 'offer', row }));
-    const ninja = this.ninjaChaos();
-    const ratio = ninja != null ? marketRatio(this.bulk.selected(), ninja, this.divineChaos()) : undefined;
+    const ratio = marketRatio(this.bulk.selected(), this.bulkPrices());
     if (ratio) {
       const perItem = ratio.exchangeAmount / ratio.itemAmount;
       const at = rows.findIndex((row) => row.exchangeAmount / row.itemAmount >= perItem);

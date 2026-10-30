@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+Content-Type: application/json
+Transfer-Encoding: chunked
+Connection: keep-alive
+Server: cloudflare
+vary: accept-encoding
+Access-Control-Expose-Headers: X-Rate-Limit-Policy, X-Rate-Limit-Rules, X-Rate-Limit-Ip, X-Rate-Limit-Ip-State
+X-Rate-Limit-Policy: trade-exchange-request-limit
+X-Rate-Limit-Rules: Ip
+X-Rate-Limit-Ip: 5:15:60,10:90:300,30:300:1800
+X-Rate-Limit-Ip-State: 1:15:0,3:90:0,3:300:0
+X-Frame-Options: SAMEORIGIN
+Strict-Transport-Security: max-age=63115200; includeSubDomains; preload
+cf-cache-status: DYNAMIC

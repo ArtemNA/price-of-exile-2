@@ -310,8 +310,7 @@
       "getting_price_from": "с poe.ninja …",
       "you_have": "У вас есть",
       "stack": "Стопка",
-      "legacy_bulk_xchg_msg": "Этот предмет доступен на рынке обмена валюты",
-      "market_ratio": "Рыночный курс"
+      "legacy_bulk_xchg_msg": "Этот предмет доступен на рынке обмена валюты"
     },
     "settings": {
       "title": "Настройки - Awakened PoE Trade",
@@ -430,6 +429,7 @@
     "base": "база",
     "Base": "База",
     "Base item price": "Цена базового предмета",
+    "Market ratio": "Рыночный курс",
     "Best real offer": "Лучшее предложение",
     "Built-in browser": "Встроенный браузер",
     "Bulk": "Оптом",

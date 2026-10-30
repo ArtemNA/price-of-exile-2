@@ -1,0 +1,305 @@
+{
+ "id": "H4sIAAAAAAAAAxXJwQmAMAwF0F3-2S6QVcRDwKCFkkiaqlC6u_b6XsfJt4BWyMslZMe24GGNSYcLh3jKbpq8qcyswdEqqMOuyKYgmJb85xgfcBKAZk4AAAA",
+ "complexity": null,
+ "result": {
+  "5ca87f418a62bb42a7b56bec98c7b0609513961c755e587ff07a97": {
+   "id": "48406629e75ca87f418a62bb42a7b56bec98c7b0609513961c755e587ff07a97",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T13:39:53+00:00",
+    "account": {
+     "name": "seller1#1001",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller1_char",
+     "language": "ko_KR",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "exalted",
+       "amount": 1,
+       "whisper": "{0} 엑잘티드 오브"
+      },
+      "item": {
+       "currency": "greater-iron-rune",
+       "amount": 1,
+       "stock": 1,
+       "id": "48406629e75ca87f418a62bb42a7b56bec98c7b0609513961c755e587ff07a97",
+       "whisper": "{0} 상위 철 룬"
+      }
+     }
+    ],
+    "whisper": "@seller1_char 안녕하세요, Forbidden Rites 리그의 {0}(을)를 {1}(으)로 구매하고 싶습니다"
+   }
+  },
+  "7e094b6c03dbca634c97169e3ebdc243ef4ae006dc60d595afc706": {
+   "id": "a409ff6bb57e094b6c03dbca634c97169e3ebdc243ef4ae006dc60d595afc706",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-26T07:09:45+00:00",
+    "account": {
+     "name": "seller2#1002",
+     "online": {
+      "league": "Forbidden Rites",
+      "status": "afk"
+     },
+     "lastCharacterName": "seller2_char",
+     "language": "zh_TW",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "exalted",
+       "amount": 2,
+       "whisper": "{0} 崇高石"
+      },
+      "item": {
+       "currency": "greater-iron-rune",
+       "amount": 1,
+       "stock": 13,
+       "id": "a409ff6bb57e094b6c03dbca634c97169e3ebdc243ef4ae006dc60d595afc706",
+       "whisper": "{0} 高階鍛鐵符文"
+      }
+     }
+    ],
+    "whisper": "@seller2_char 嗨，我想在Forbidden Rites用{1}購買你的{0}"
+   }
+  },
+  "94bd2693b325c531923fe11a784c9d185b207bb48a50c915ccef9b": {
+   "id": "7aade7a26b94bd2693b325c531923fe11a784c9d185b207bb48a50c915ccef9b",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T11:40:34+00:00",
+    "account": {
+     "name": "seller3#1003",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller3_char",
+     "language": "en_US",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "exalted",
+       "amount": 10,
+       "whisper": "{0} Exalted Orb"
+      },
+      "item": {
+       "currency": "greater-iron-rune",
+       "amount": 1,
+       "stock": 12,
+       "id": "7aade7a26b94bd2693b325c531923fe11a784c9d185b207bb48a50c915ccef9b",
+       "whisper": "{0} Greater Iron Rune"
+      }
+     }
+    ],
+    "whisper": "@seller3_char Hi, I'd like to buy your {0} for my {1} in Forbidden Rites"
+   }
+  },
+  "fdcf0b75fe5c516ade9c8698713a2cfbfeedc5497c79392465134f": {
+   "id": "1f32f6812efdcf0b75fe5c516ade9c8698713a2cfbfeedc5497c79392465134f",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T10:47:39+00:00",
+    "account": {
+     "name": "seller4#1004",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller4_char",
+     "language": "en_US",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "exalted",
+       "amount": 15,
+       "whisper": "{0} Exalted Orb"
+      },
+      "item": {
+       "currency": "greater-iron-rune",
+       "amount": 1,
+       "stock": 44,
+       "id": "1f32f6812efdcf0b75fe5c516ade9c8698713a2cfbfeedc5497c79392465134f",
+       "whisper": "{0} Greater Iron Rune"
+      }
+     }
+    ],
+    "whisper": "@seller4_char Hi, I'd like to buy your {0} for my {1} in Forbidden Rites"
+   }
+  },
+  "4bed9248b1f7b3a8134f19f6f87ba3d35e643b780b7cb19e5c1751": {
+   "id": "57ee13e7154bed9248b1f7b3a8134f19f6f87ba3d35e643b780b7cb19e5c1751",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T13:47:40+00:00",
+    "account": {
+     "name": "seller5#1005",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller5_char",
+     "language": "en_US",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "exalted",
+       "amount": 30,
+       "whisper": "{0} Exalted Orb"
+      },
+      "item": {
+       "currency": "greater-iron-rune",
+       "amount": 1,
+       "stock": 20,
+       "id": "57ee13e7154bed9248b1f7b3a8134f19f6f87ba3d35e643b780b7cb19e5c1751",
+       "whisper": "{0} Greater Iron Rune"
+      }
+     }
+    ],
+    "whisper": "@seller5_char Hi, I'd like to buy your {0} for my {1} in Forbidden Rites"
+   }
+  },
+  "90675cea439db6a8a03ad36777711fd69f2a48f9ece3a4cd92f683": {
+   "id": "61f8aa2dfe90675cea439db6a8a03ad36777711fd69f2a48f9ece3a4cd92f683",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T13:49:55+00:00",
+    "account": {
+     "name": "seller6#1006",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller6_char",
+     "language": "en_US",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "exalted",
+       "amount": 60,
+       "whisper": "{0} Exalted Orb"
+      },
+      "item": {
+       "currency": "greater-iron-rune",
+       "amount": 1,
+       "stock": 8,
+       "id": "61f8aa2dfe90675cea439db6a8a03ad36777711fd69f2a48f9ece3a4cd92f683",
+       "whisper": "{0} Greater Iron Rune"
+      }
+     }
+    ],
+    "whisper": "@seller6_char Hi, I'd like to buy your {0} for my {1} in Forbidden Rites"
+   }
+  },
+  "580bd424622be89293b797ff6e651f3fad793a494f3e18845b23e3": {
+   "id": "b06db49d25580bd424622be89293b797ff6e651f3fad793a494f3e18845b23e3",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T13:44:17+00:00",
+    "account": {
+     "name": "seller7#1007",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller7_char",
+     "language": "fr_FR",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "exalted",
+       "amount": 100,
+       "whisper": "{0} Orbe exalté"
+      },
+      "item": {
+       "currency": "greater-iron-rune",
+       "amount": 1,
+       "stock": 7,
+       "id": "b06db49d25580bd424622be89293b797ff6e651f3fad793a494f3e18845b23e3",
+       "whisper": "{0} Rune du Fer majeure"
+      }
+     }
+    ],
+    "whisper": "@seller7_char Salut, je voudrais t'acheter {0} contre {1} (ligue Forbidden Rites)"
+   }
+  },
+  "5714fe6ea5af699ac854a35ef256dc8a2be3a3d37cdeed4f94acb0": {
+   "id": "320b0346b15714fe6ea5af699ac854a35ef256dc8a2be3a3d37cdeed4f94acb0",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T13:33:31+00:00",
+    "account": {
+     "name": "seller8#1008",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller8_char",
+     "language": "en_US",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "exalted",
+       "amount": 111,
+       "whisper": "{0} Exalted Orb"
+      },
+      "item": {
+       "currency": "greater-iron-rune",
+       "amount": 1,
+       "stock": 7,
+       "id": "320b0346b15714fe6ea5af699ac854a35ef256dc8a2be3a3d37cdeed4f94acb0",
+       "whisper": "{0} Greater Iron Rune"
+      }
+     }
+    ],
+    "whisper": "@seller8_char Hi, I'd like to buy your {0} for my {1} in Forbidden Rites"
+   }
+  },
+  "4df91ada4946c5e723b0b979c56f099615774ac22919f2bbafacf0": {
+   "id": "dbf56d5f8d4df91ada4946c5e723b0b979c56f099615774ac22919f2bbafacf0",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T09:02:43+00:00",
+    "account": {
+     "name": "seller9#1009",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller9_char",
+     "language": "ko_KR",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "exalted",
+       "amount": 400,
+       "whisper": "{0} 엑잘티드 오브"
+      },
+      "item": {
+       "currency": "greater-iron-rune",
+       "amount": 1,
+       "stock": 15,
+       "id": "dbf56d5f8d4df91ada4946c5e723b0b979c56f099615774ac22919f2bbafacf0",
+       "whisper": "{0} 상위 철 룬"
+      }
+     }
+    ],
+    "whisper": "@seller9_char 안녕하세요, Forbidden Rites 리그의 {0}(을)를 {1}(으)로 구매하고 싶습니다"
+   }
+  }
+ },
+ "total": 9
+}

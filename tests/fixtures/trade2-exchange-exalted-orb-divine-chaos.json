@@ -1,0 +1,173 @@
+{
+ "id": "H4sIAAAAAAAAAxXLQQrAIAwF0bv8tSfwKqWLUAMGJCkktQXx7iXbecxCp8moB5pMUUbB1ckcZ8FLGin80QhumTwoHkddsDvEFBWmI7-9f1HFPxpLAAAA",
+ "complexity": null,
+ "result": {
+  "845088dce0a8372112d69a3938df014a4c2ffb666b3b06e7307715": {
+   "id": "358aae7b10845088dce0a8372112d69a3938df014a4c2ffb666b3b06e7307715",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T13:57:08+00:00",
+    "account": {
+     "name": "seller1#1001",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller1_char",
+     "language": "ko_KR",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "divine",
+       "amount": 1,
+       "whisper": "{0} 신성한 오브"
+      },
+      "item": {
+       "currency": "exalted",
+       "amount": 100,
+       "stock": 3640,
+       "id": "358aae7b10845088dce0a8372112d69a3938df014a4c2ffb666b3b06e7307715",
+       "whisper": "{0} 엑잘티드 오브"
+      }
+     }
+    ],
+    "whisper": "@seller1_char 안녕하세요, Forbidden Rites 리그의 {0}(을)를 {1}(으)로 구매하고 싶습니다"
+   }
+  },
+  "f08e0cf10122ab71c3775a0ee5eff0151d290ff5b89a751e4c06e3": {
+   "id": "a7f371979df08e0cf10122ab71c3775a0ee5eff0151d290ff5b89a751e4c06e3",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T11:31:10+00:00",
+    "account": {
+     "name": "seller2#1002",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller2_char",
+     "language": "zh_TW",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "divine",
+       "amount": 1,
+       "whisper": "{0} 神聖石"
+      },
+      "item": {
+       "currency": "exalted",
+       "amount": 1,
+       "stock": 1317,
+       "id": "a7f371979df08e0cf10122ab71c3775a0ee5eff0151d290ff5b89a751e4c06e3",
+       "whisper": "{0} 崇高石"
+      }
+     }
+    ],
+    "whisper": "@seller2_char 嗨，我想在Forbidden Rites用{1}購買你的{0}"
+   }
+  },
+  "50d70211ebc16c04dfd07f0a6bcd9d6b468931af1d32dc1ebb4f78": {
+   "id": "5e0ba8cdec50d70211ebc16c04dfd07f0a6bcd9d6b468931af1d32dc1ebb4f78",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T13:56:07+00:00",
+    "account": {
+     "name": "seller3#1003",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller3_char",
+     "language": "en_US",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "chaos",
+       "amount": 1,
+       "whisper": "{0} Chaos Orb"
+      },
+      "item": {
+       "currency": "exalted",
+       "amount": 1,
+       "stock": 4,
+       "id": "5e0ba8cdec50d70211ebc16c04dfd07f0a6bcd9d6b468931af1d32dc1ebb4f78",
+       "whisper": "{0} Exalted Orb"
+      }
+     }
+    ],
+    "whisper": "@seller3_char Hi, I'd like to buy your {0} for my {1} in Forbidden Rites"
+   }
+  },
+  "2dda688c26f4772092d30058ee7e4672704488bd135f07db22874f": {
+   "id": "fe16410f5e2dda688c26f4772092d30058ee7e4672704488bd135f07db22874f",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T07:09:59+00:00",
+    "account": {
+     "name": "seller4#1004",
+     "online": {
+      "league": "Forbidden Rites",
+      "status": "afk"
+     },
+     "lastCharacterName": "seller4_char",
+     "language": "ru_RU",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "divine",
+       "amount": 5,
+       "whisper": "{0} Божественная сфера"
+      },
+      "item": {
+       "currency": "exalted",
+       "amount": 1,
+       "stock": 450,
+       "id": "fe16410f5e2dda688c26f4772092d30058ee7e4672704488bd135f07db22874f",
+       "whisper": "{0} Сфера возвышения"
+      }
+     }
+    ],
+    "whisper": "@seller4_char Здравствуйте, хочу купить у вас {0} за {1} в лиге Forbidden Rites"
+   }
+  },
+  "c01fa08a3d9a72a6bd3af57abfe8f85c077b856b1ab1f6559ba4ab": {
+   "id": "0c040657a6c01fa08a3d9a72a6bd3af57abfe8f85c077b856b1ab1f6559ba4ab",
+   "item": null,
+   "listing": {
+    "indexed": "2026-10-30T13:54:23+00:00",
+    "account": {
+     "name": "seller5#1005",
+     "online": {
+      "league": "Forbidden Rites"
+     },
+     "lastCharacterName": "seller5_char",
+     "language": "en_US",
+     "realm": "poe2"
+    },
+    "offers": [
+     {
+      "exchange": {
+       "currency": "divine",
+       "amount": 999,
+       "whisper": "{0} Divine Orb"
+      },
+      "item": {
+       "currency": "exalted",
+       "amount": 1,
+       "stock": 1304,
+       "id": "0c040657a6c01fa08a3d9a72a6bd3af57abfe8f85c077b856b1ab1f6559ba4ab",
+       "whisper": "{0} Exalted Orb"
+      }
+     }
+    ],
+    "whisper": "@seller5_char Hi, I'd like to buy your {0} for my {1} in Forbidden Rites"
+   }
+  }
+ },
+ "total": 5
+}
