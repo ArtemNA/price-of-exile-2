@@ -30,3 +30,4 @@
 | `08-settings-copy-keys.png` | Етап 8: Settings → Hotkeys, блок «Item copy keys» — Ctrl + Alt + C з конфігу гри і перемикач From the game / Alt / Shift / Ctrl |
 | `09-stash-panel.png` | Етап 9: Alt+F — панель пресетів сховища PoE2 (Map rolling, Dump sorting) |
 | `09-chat-and-stash-fake-game.png` | Етап 9: фейкова гра після F5 (`/hideout`) і кліку по пресету «Waystone Tier» |
+| `10-search-through-browser.png` | Етап 10: пошук кільця з «Use the built-in browser» — усі запити trade2 пішли через сторінку pathofexile.com у вбудованому браузері |

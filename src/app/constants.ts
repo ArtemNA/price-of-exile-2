@@ -188,7 +188,7 @@ export const DEFAULT_CURRENCY_OPTIONS: Array<{ value: string | null; label: stri
 export const TRADE_LISTING = {
   /** Rows shown in the popup. */
   showResults: 20,
-  /** Ids per /api/trade/fetch request (API maximum is 10). */
+  /** Ids per /api/trade2/fetch request (API maximum is 10). */
   fetchChunk: 10,
   /** Never fetch beyond this many results of one search. */
   apiFetchLimit: 100,

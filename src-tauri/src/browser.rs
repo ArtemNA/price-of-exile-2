@@ -222,7 +222,7 @@ mod tests {
         let script = fetch_script(
             7,
             &BrowserRequest {
-                url: "https://www.pathofexile.com/api/trade/search/Standard".into(),
+                url: "https://www.pathofexile.com/api/trade2/search/Standard".into(),
                 method: "POST".into(),
                 headers: vec![("Content-Type".into(), "application/json".into())],
                 body: Some(r#"{"query":"it's \"quoted\""}"#.into()),
@@ -231,7 +231,7 @@ mod tests {
         );
         assert!(script.contains("replies[7] = reply"));
         assert!(
-            script.contains(r#"fetch("https://www.pathofexile.com/api/trade/search/Standard""#)
+            script.contains(r#"fetch("https://www.pathofexile.com/api/trade2/search/Standard""#)
         );
         assert!(script.contains(r#"headers: [["Content-Type","application/json"]]"#));
         assert!(script.contains(r#"body: "{\"query\":\"it's \\\"quoted\\\"\"}""#));
