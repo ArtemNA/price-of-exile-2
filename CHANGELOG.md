@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.0.2
+
+- Self-update: the installed overlay checks for a new version when it starts and installs it right away (Settings → About → "Install new versions automatically", on by default), so the restart never comes in the middle of a game. A version found later while you play is only announced in the corner of the screen. The portable exe only announces new versions.
+- v0.0.1 had no updater: install this version by hand over it once; later versions come by themselves.
+
 ## v0.0.1
 
 The first release: a Path of Exile 2 price check overlay built on Exiled Exchange 2's parser and trade logic.

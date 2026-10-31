@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Price of Exile 2",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "identifier": "com.artemna.price-of-exile-2",
   "build": {
     "frontendDist": "../dist/price-of-exile-2/browser",
