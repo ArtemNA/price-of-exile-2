@@ -43,3 +43,9 @@
 | `13-second-start-settings.png` | Етап 13: другий запуск встановленої збірки відкрив налаштування (один екземпляр) |
 | `14-copied-without-mod-details.png` | Етап 14: рідкісне кільце, скопійоване Ctrl+C (клавіша копіювання «Ctrl» у налаштуваннях) — попередження про клавіші копіювання |
 | `14-ring-search.png` | Етап 14: те саме кільце з Ctrl+Alt+C після правок — звичайний пошук |
+| `16-update-toast-found.png` | Оновлення: знайдено нову версію — повідомлення в куті «Version 0.0.2 is out · Click to see what is new and install it» (тестова версія, показана в dev тимчасовим викликом) |
+| `16-update-toast-updating.png` | Оновлення: «Install new versions automatically» увімкнено, знайдено при старті — «Updating to 0.0.2… · The overlay restarts by itself in a few seconds» |
+| `16-update-toast-found-ee2.png` | Те саме повідомлення про нову версію в темі Exiled Exchange 2 |
+| `16-update-toast-updating-ee2.png` | «Updating to 0.0.2…» у темі Exiled Exchange 2 |
+| `16-update-settings-installed.png` | Налаштування, About: «Install new versions automatically» з підказкою (встановлена збірка; у dev показано тимчасовим перемиканням) |
+| `16-update-settings-portable.png` | Те саме в портативній збірці (dev теж рахується портативною): вимкнено, з приміткою, що портабл сам не оновлюється |

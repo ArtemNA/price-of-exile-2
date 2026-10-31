@@ -95,6 +95,9 @@ export interface CopyKeysStatus {
   changed: boolean;
 }
 
+/** The corner message: the start message, or a new version found (being installed or not). */
+export type ToastMessage = { kind: 'start' } | { kind: 'update'; version: string; installing: boolean };
+
 export const host = {
   getStatus: () => invoke<Status>('get_status'),
   /** Game window title, hotkeys and copy key from the settings; returns a message per unusable hotkey. */
@@ -117,8 +120,10 @@ export const host = {
    * check height of PRICE_CHECK_FULL_HEIGHT or more takes the whole game height. Returns the side.
    */
   fitPopup: (width: number, height: number) => invoke<PopupSide>('fit_popup', { width, height }),
-  /** The start message in the screen corner, for a few seconds. */
-  showToast: () => invoke<void>('show_toast'),
+  /** The corner message (the start message unless given another), for a few seconds. */
+  showToast: (message?: ToastMessage) => invoke<void>('show_toast', { message: message ?? null }),
+  /** What the toast should show now (its page may load after it was asked). */
+  toastMessage: () => invoke<ToastMessage>('toast_message'),
   openSettings: () => invoke<void>('open_settings'),
   /** The trade site of the game language: the built-in browser opens and makes requests there. */
   setTradeHost: (host: string) => invoke<void>('set_trade_host', { host }),

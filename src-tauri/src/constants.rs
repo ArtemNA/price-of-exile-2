@@ -73,6 +73,10 @@ pub const INSTALLER_UNINSTALLER: &str = "uninstall.exe";
 pub const TOAST_WINDOW: &str = "toast";
 pub const TOAST_MARGIN_LOGICAL: f64 = 16.0;
 pub const TOAST_DURATION: Duration = Duration::from_millis(4500);
+/// A found update stays longer: it asks for a click.
+pub const TOAST_UPDATE_DURATION: Duration = Duration::from_secs(12);
+/// Event to the toast page: what to show (the start message or an update).
+pub const TOAST_MESSAGE_EVENT: &str = "toast-message";
 /// The settings page asks for the start message while the toast window may not exist yet (a
 /// release build loads the page faster than the windows are created): wait for it this long.
 pub const TOAST_WAIT: Duration = Duration::from_secs(5);

@@ -1,10 +1,17 @@
-# Builds the Windows installer and the portable exe.
+# Builds the Windows installer (signed for the updater) and the portable exe.
 # - Run by hand (Actions → Release → Run workflow): the files are the run's artifacts, nothing is published.
-# - Push a tag (git tag v0.1.0 && git push origin v0.1.0): the same files plus checksums and notes
-#   (.github/RELEASE_NOTES.md + this tag's CHANGELOG.md section) go to a GitHub release.
+# - Push a tag (git tag v0.1.0 && git push origin v0.1.0): the same files plus checksums, the updater's
+#   latest.json and notes (.github/RELEASE_NOTES.md + this tag's CHANGELOG.md section) go to a GitHub release.
 # The tag must match "version" in src-tauri/tauri.conf.json.
 #
-# No self-update yet (PLAN "Пізніше"): no signing key, no latest.json; the installer replaces the old version.
+# Self-update: installed copies read releases/latest/download/latest.json (plugins.updater in
+# tauri.conf.json) and take the installer it names if its .sig matches the public key there.
+# Repository secret: TAURI_SIGNING_PRIVATE_KEY (contents of the key file, which has no password).
+#
+# A local `npx tauri build` signs too (createUpdaterArtifacts) and fails at the end without the key
+# (the installer is already built by then). Point the shell, never a repo file, at the key file:
+#   $env:TAURI_SIGNING_PRIVATE_KEY = "$env:USERPROFILE\.tauri\price-of-exile-2.key"; $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = ""
+# or build without the signature: npx tauri build --config '{"bundle":{"createUpdaterArtifacts":false}}'
 
 name: Release
 
@@ -46,9 +53,13 @@ jobs:
           $version = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
           if ("v$version" -ne "${{ github.ref_name }}") { throw "Tag ${{ github.ref_name }} does not match version $version" }
 
+      # createUpdaterArtifacts: the installer's .sig next to it, made with the secret key.
       - run: npx tauri build
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
 
-      - name: Installer, portable exe, checksums and release notes
+      - name: Installer, portable exe, checksums, latest.json and release notes
         shell: pwsh
         run: |
           $conf = Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
@@ -58,7 +69,12 @@ jobs:
 
           New-Item -ItemType Directory -Force dist-release | Out-Null
           $setup = "${base}_${version}_x64-setup.exe"
-          Copy-Item (Get-ChildItem "src-tauri/target/release/bundle/nsis/*_x64-setup.exe" | Select-Object -First 1) "dist-release/$setup"
+          $setupFile = Get-ChildItem "src-tauri/target/release/bundle/nsis/*_${version}_x64-setup.exe" | Select-Object -First 1
+          Copy-Item $setupFile "dist-release/$setup"
+          # The updater's signature of the installer; without it no installed copy would take the update.
+          $sigFile = "$($setupFile.FullName).sig"
+          if (-not (Test-Path $sigFile)) { throw "No updater signature ${sigFile}: is TAURI_SIGNING_PRIVATE_KEY set?" }
+          Copy-Item $sigFile "dist-release/$setup.sig"
           # Portable: the bare exe, settings and log in the same place as the installed app's.
           $portable = "${base}_${version}_x64-portable.exe"
           Copy-Item src-tauri/target/release/price-of-exile-2.exe "dist-release/$portable"
@@ -78,6 +94,19 @@ jobs:
             $m = [regex]::Match((Get-Content CHANGELOG.md -Raw), "(?ms)^## $([regex]::Escape($tag))\s*\r?\n(.*?)(?=^## |\z)")
             if ($m.Success) { $changes = $m.Groups[1].Value.Trim() }
           }
+
+          # The updater's feed (what tauri-action's includeUpdaterJson writes): the version, the
+          # installer's address in this tag's release and its signature. Read from
+          # releases/latest/download/latest.json, so the release is published only with every file up.
+          $url = "https://github.com/${{ github.repository }}/releases/download/$tag/$setup"
+          $platform = @{ signature = (Get-Content $sigFile -Raw).Trim(); url = $url }
+          [ordered]@{
+            version = $version
+            notes = $changes
+            pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            platforms = [ordered]@{ "windows-x86_64" = $platform; "windows-x86_64-nsis" = $platform }
+          } | ConvertTo-Json -Depth 4 | Out-File -Encoding utf8NoBOM dist-release/latest.json
+
           (Get-Content .github/RELEASE_NOTES.md -Raw).
             Replace("{{TAG}}", $tag).
             Replace("{{SETUP}}", $setup).
@@ -101,4 +130,7 @@ jobs:
         run: |
           $tag = "${{ github.ref_name }}"
           $product = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).productName
-          gh release create $tag (Get-ChildItem dist-release/*).FullName --title "$product $tag" --notes-file release-notes.md
+          # A draft until every file is up: a published release is "latest" at once, and the updater's
+          # releases/latest/download/latest.json would answer 404 until latest.json is uploaded.
+          gh release create $tag (Get-ChildItem dist-release/*).FullName --title "$product $tag" --notes-file release-notes.md --draft
+          gh release edit $tag --draft=false

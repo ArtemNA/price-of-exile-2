@@ -64,7 +64,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "createUpdaterArtifacts": false,
+    "createUpdaterArtifacts": true,
     "publisher": "ArtemNA",
     "shortDescription": "Path of Exile 2 price check overlay",
     "windows": {
@@ -75,5 +75,16 @@
     },
     "license": "MIT",
     "licenseFile": "../LICENSE"
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU1OUJBNTJBNTU4M0U2MEYKUldRUDVvTlZLcVdiNWFwQzlIQm1KeTQ5elpRNHBOSzB1MjNXUEU1cUVuMjZ0bjdsN2puZCtCR2YK",
+      "endpoints": [
+        "https://github.com/ArtemNA/price-of-exile-2/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

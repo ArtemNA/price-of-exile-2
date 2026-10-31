@@ -218,6 +218,10 @@ export class SettingsWindow {
     updateSettings({ useIntlSite });
   }
 
+  protected setAutoUpdate(autoUpdate: boolean): void {
+    updateSettings({ autoUpdate });
+  }
+
   protected setStartMessage(startMessage: boolean): void {
     updateSettings({ startMessage });
   }

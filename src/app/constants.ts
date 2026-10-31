@@ -205,6 +205,11 @@ export const LEAGUES_REFRESH_AFTER = 3 * 60 * 60 * 1000;
 /** After the league list failed to load, a check asks for it again this much later. */
 export const LEAGUES_RETRY_AFTER = 60 * 1000;
 
+/** While the overlay runs, look for a new version this often (found then: only a message in the corner). */
+export const UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+/** Event from the host to the corner message page (src-tauri/src/constants.rs). */
+export const TOAST_MESSAGE_EVENT = 'toast-message';
+
 /** Upper limit of the stat filter range setting, % (APT `settings-price-check.vue`). */
 export const SEARCH_STAT_RANGE_MAX = 50;
 /**

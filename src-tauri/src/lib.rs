@@ -233,10 +233,16 @@ fn is_portable() -> bool {
         .is_none_or(|uninstaller| !uninstaller.exists())
 }
 
-/// The start message in the screen corner.
+/// The corner message: the start message, or a new version found (`{ "kind": "update", ... }`).
 #[tauri::command]
-fn show_toast(app: AppHandle) {
-    toast::show_when_ready(&app);
+fn show_toast(app: AppHandle, message: Option<serde_json::Value>) {
+    toast::show_when_ready(&app, message.unwrap_or_else(toast::start_message));
+}
+
+/// What the toast page shows (it may load after `show_toast` asked for it).
+#[tauri::command]
+fn toast_message() -> serde_json::Value {
+    toast::message()
 }
 
 /// The trade site of the game language (www. or ru.pathofexile.com) for the built-in browser.
@@ -293,7 +299,7 @@ pub fn run() {
             tray::show_settings(app);
         }))
         .plugin(tauri_plugin_opener::init());
-    // The updater fails to start without its config: updates come later (PLAN.md).
+    // The updater fails to start without its config (`plugins.updater` in tauri.conf.json).
     if context.config().plugins.0.contains_key("updater") {
         builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
     }
@@ -315,6 +321,7 @@ pub fn run() {
             get_copy_keys,
             set_host_config,
             show_toast,
+            toast_message,
             set_tray_labels,
             set_trade_host,
             is_portable,

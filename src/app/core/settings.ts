@@ -73,6 +73,8 @@ export interface Settings {
   gameTitle: string;
   /** A short message in the corner when the overlay starts (APT `showAttachNotification`). */
   startMessage: boolean;
+  /** Install a new version when the overlay starts (never in the middle of a session). */
+  autoUpdate: boolean;
   popupPosition: PopupPosition;
   /** The app's look: ours or an addon theme built in (src/app/themes.ts); '' = the build's default. */
   theme: string;
@@ -107,6 +109,7 @@ export function defaultSettings(): Settings {
     accountName: '',
     gameTitle: DEFAULT_GAME_TITLE,
     startMessage: true,
+    autoUpdate: true,
     popupPosition: DEFAULT_POPUP_POSITION,
     theme: '',
     hotkeys: { ...DEFAULT_HOTKEYS },
@@ -161,6 +164,7 @@ export function upgradeSettings(raw: unknown): Settings {
     copyKey: COPY_KEYS.includes(stored.copyKey as CopyKey) ? (stored.copyKey as CopyKey) : null,
     // A theme id this build does not have stays (another build may have it); themeById falls back.
     theme: typeof stored.theme === 'string' ? stored.theme : defaults.theme,
+    autoUpdate: typeof stored.autoUpdate === 'boolean' ? stored.autoUpdate : defaults.autoUpdate,
     commands: Array.isArray(stored.commands) ? stored.commands.filter(isChatCommand) : defaults.commands,
     stashSearch: poe1 ? upgradeStashSearch(withValidEntries(stashSearch)) : withValidEntries(stashSearch),
     priceCheck: { ...defaults.priceCheck, ...priceCheck },

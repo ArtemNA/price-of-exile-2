@@ -176,6 +176,14 @@
                   @case ('error') { <span class="text-bad" [title]="updates.error() ?? ''">{{ 'Could not check for updates' | tr }}</span> }
                 }
               </div>
+              <label class="mt-1 flex items-start gap-2.5" [class.opacity-60]="updates.portable()">
+                <input type="checkbox" class="mt-0.5 accent-gold" [disabled]="updates.portable()"
+                  [checked]="settings().autoUpdate && !updates.portable()" (change)="setAutoUpdate($any($event.target).checked)" />
+                <span class="flex flex-col"><span class="text-bright">{{ 'Install new versions automatically' | tr }}</span>
+                  <span class="text-[12px] text-muted">{{ (updates.portable()
+                    ? 'The portable version does not update itself: a new version is announced in the corner, with a link to download it.'
+                    : 'When the overlay starts, so the restart never comes in the middle of a game. Found later: only a message in the corner.') | tr }}</span></span>
+              </label>
             </div>
 
             <div class="flex flex-col gap-1.5">

@@ -154,6 +154,14 @@ describe('settings', () => {
     expect(THEMES[0]).toBe(BASE_THEME);
   });
 
+  it('installs new versions automatically by default and keeps only a yes or no', () => {
+    expect(defaultSettings().autoUpdate).toBe(true);
+    // Files from before the field get the default.
+    expect(upgradeSettings({ configVersion: 4, gameTitle: 'Path of Exile 2' }).autoUpdate).toBe(true);
+    expect(upgradeSettings({ configVersion: 4, autoUpdate: false }).autoUpdate).toBe(false);
+    for (const autoUpdate of [null, 0, 'false', {}]) expect(upgradeSettings({ configVersion: 4, autoUpdate }).autoUpdate).toBe(true);
+  });
+
   it('sends the host its part of the settings, with the copy key', async () => {
     const settings = {
       ...defaultSettings(),
