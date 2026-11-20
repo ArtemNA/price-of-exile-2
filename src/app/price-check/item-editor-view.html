@@ -1,0 +1,115 @@
+<!-- The item editor: sockets (weapons, armour) or catalyst quality (rings, amulets, jewels) -->
+<div class="mt-1.5 flex items-center gap-2 border-b border-line pt-1 pb-0.5 text-[11px] tracking-[.06em] text-muted uppercase">
+  <button class="flex items-center gap-2 uppercase hover:text-text" data-test="editor-toggle" [attr.aria-expanded]="open()" (click)="toggle()">
+    {{ (kind() === 'augment' ? 'Sockets' : 'Quality') | tr }}
+    @if (kind() === 'catalyst' && catalyst(); as now) {
+      <span class="flex items-center gap-1 normal-case tracking-normal text-text">
+        @if (catalystIcon(now.refName); as icon) {
+          <img [src]="icon" alt="" class="size-4 object-contain" />
+        }
+        {{ now.refName }} · {{ now.quality }}%
+      </span>
+    }
+  </button>
+  @if (edited()) {
+    <span class="normal-case tracking-normal text-gold-soft">{{ 'Edited' | tr }}</span>
+    <button class="normal-case tracking-normal hover:text-text" [title]="'Back to the item as copied' | tr" data-test="editor-reset" (click)="reset()">{{ 'Reset' | tr }}</button>
+  }
+  <span class="flex-1"></span>
+  @let total = kind() === 'augment' ? money(socketsPrice()) : money(qualityPrice());
+  @if (total) {
+    <span class="flex items-center gap-1 normal-case tracking-normal" [title]="(kind() === 'augment' ? 'What the sockets hold, at poe.ninja prices' : 'The catalysts this quality takes, at poe.ninja prices') | tr">
+      ≈ <b class="font-semibold text-bright tabular-nums">{{ total.text }}</b> <app-currency [tag]="total.currency" [size]="14" />
+    </span>
+  }
+  <button class="normal-case tracking-normal hover:text-text" (click)="toggle()">{{ open() ? '▴' : '▾' }}</button>
+</div>
+
+@if (kind() === 'augment') {
+  <div class="flex items-center gap-1.5 px-1 py-1.5">
+    @for (augment of sockets(); track $index) {
+      @let bound = !canReplace($index);
+      <button
+        class="flex size-8 items-center justify-center rounded-full border bg-raised"
+        [class]="bound ? 'cursor-not-allowed border-bad/60' : $index === socket() && open() ? 'border-gold' : 'border-line-strong hover:border-gold'"
+        [title]="(augment?.name ?? ('Empty socket' | tr)) + (bound ? ' · ' + ('bound to the item' | tr) : '')"
+        [disabled]="bound"
+        [attr.data-test]="'socket-' + $index"
+        (click)="selectSocket($index)"
+      >
+        @if (augment) {
+          <img [src]="augment.icon" alt="" class="size-6 object-contain" />
+        } @else {
+          <span class="size-3 rounded-full border border-line-strong"></span>
+        }
+      </button>
+    }
+    @if (open() && socket() != null) {
+      <span class="pl-1 text-[11px] text-muted">{{ 'Pick what goes into socket {0}' | tr: socket()! + 1 }}</span>
+    }
+  </div>
+
+  @if (open()) {
+    <div class="flex flex-wrap gap-0.5 px-1">
+      @for (tab of tabs(); track tab.id) {
+        <button class="h-6 border px-2" [class]="tab.id === activeTab()?.id ? 'border-bronze bg-toggle-on text-gold-soft' : 'border-line text-muted hover:text-text'"
+          [attr.data-test]="'editor-tab-' + tab.id" (click)="selectTab(tab.id)">{{ tab.label | tr }}</button>
+      }
+    </div>
+    @if (activeTab(); as tab) {
+      @if (tab.sub.length > 1) {
+        <div class="flex flex-wrap gap-0.5 px-1 pt-1">
+          @for (sub of tab.sub; track sub.id) {
+            <button class="h-5 px-1.5 text-[11px]" [class]="sub.id === activeSub()?.id ? 'text-gold-soft underline underline-offset-4' : 'text-muted hover:text-text'"
+              [attr.data-test]="'editor-sub-' + sub.id" (click)="selectSub(sub.id)">{{ sub.label | tr }}</button>
+          }
+        </div>
+      }
+    }
+    <div class="mt-1 max-h-[220px] overflow-y-auto border border-line">
+      @for (augment of activeSub()?.items ?? []; track augment.refName) {
+        @let cost = money(priceOf(augment.refName));
+        <button class="flex w-full items-center gap-2 px-1.5 py-1 text-left not-last:border-b not-last:border-line"
+          [class]="isIn(augment) ? 'bg-toggle-on' : 'hover:bg-raised'" [attr.data-test]="'augment-' + augment.refName" (click)="put(augment)">
+          <img [src]="augment.icon" alt="" class="size-6 flex-none object-contain" loading="lazy" />
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-[11px] text-muted">{{ augment.name }}</span>
+            <span class="block whitespace-pre-line text-mod">{{ augment.displayString }}</span>
+          </span>
+          @if (cost) {
+            <span class="flex flex-none items-center gap-1 tabular-nums">{{ cost.text }} <app-currency [tag]="cost.currency" [size]="14" /></span>
+          }
+        </button>
+      } @empty {
+        <p class="px-1.5 py-1 text-muted">{{ 'Nothing of this kind fits the item' | tr }}</p>
+      }
+    </div>
+  }
+} @else if (open()) {
+  <div class="flex items-center gap-2 px-1 py-1.5">
+    <span class="w-[60px] flex-none text-muted">{{ 'Quality' | tr }}</span>
+    <div class="flex h-6 border border-line-strong" role="group" [attr.aria-label]="'Quality' | tr">
+      @for (step of steps(); track step) {
+        <button class="px-2 tabular-nums not-last:border-r not-last:border-line-strong"
+          [class]="step === quality() ? 'bg-toggle-on text-gold-soft' : 'text-muted hover:text-text'"
+          [attr.aria-pressed]="step === quality()" [attr.data-test]="'quality-' + step" (click)="setQuality(step)">{{ step }}%</button>
+      }
+    </div>
+  </div>
+  <div class="max-h-[220px] overflow-y-auto border border-line">
+    @for (entry of catalysts(); track entry.refName) {
+      @let cost = money(priceOf(entry.refName));
+      <button class="flex w-full items-center gap-2 px-1.5 py-1 text-left not-last:border-b not-last:border-line"
+        [class]="entry.refName === catalyst()?.refName ? 'bg-toggle-on' : 'hover:bg-raised'" [attr.data-test]="'catalyst-' + entry.refName" (click)="pickCatalyst(entry)">
+        <img [src]="entry.icon" alt="" class="size-6 flex-none object-contain" loading="lazy" />
+        <span class="min-w-0 flex-1">
+          <span class="block truncate text-[11px] text-muted">{{ entry.name }}</span>
+          <span class="block text-mod">{{ tags(entry) }}</span>
+        </span>
+        @if (cost) {
+          <span class="flex flex-none items-center gap-1 tabular-nums" [title]="'One catalyst, 1% quality' | tr">{{ cost.text }} <app-currency [tag]="cost.currency" [size]="14" /></span>
+        }
+      </button>
+    }
+  </div>
+}

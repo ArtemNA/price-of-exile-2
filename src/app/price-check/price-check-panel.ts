@@ -26,6 +26,8 @@ import {
   SMALL_CURRENCIES,
 } from '../constants';
 import { currencyRates, requestNinjaPrices, toDivine } from '../core/currency-rates';
+import { applyEdits, editorKind, editorPriceIds, extractionValue, type ItemEdits, NO_EDITS } from './item-editor';
+import { ItemEditorView } from './item-editor-view';
 import {
   autoCurrency,
   currencyTag,
@@ -104,7 +106,7 @@ const TABS = [
  */
 @Component({
   selector: 'app-price-check',
-  imports: [NgTemplateOutlet, TranslatePipe, TrPipe, TrErrorPipe, NumInput, ItemCheckPanel, Currency],
+  imports: [NgTemplateOutlet, TranslatePipe, TrPipe, TrErrorPipe, NumInput, ItemCheckPanel, Currency, ItemEditorView],
   templateUrl: './price-check-panel.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
@@ -132,6 +134,29 @@ export class PriceCheckPanel {
   protected readonly open = signal({ stats: true, item: true, trade: false });
   private readonly revision = signal(0);
   private previous?: { item: ParsedItem; presets: Presets };
+
+  /** Other runes in the sockets or a catalyst's quality (`item-editor.ts`); none for a new item. */
+  protected readonly edits = signal<ItemEdits>(NO_EDITS);
+  /** The item the filters and the search are made from: the copied one with the edits. */
+  protected readonly checkedItem = computed(() => applyEdits(this.item(), this.edits()));
+  protected readonly editorKind = computed(() => editorKind(this.item()));
+
+  /** The editor changed the item: the filters are made again from it, the user searches. */
+  protected setEdits(edits: ItemEdits): void {
+    this.edits.set(edits);
+    this.start(this.checkedItem(), false);
+  }
+
+  /**
+   * EE2 `ExtractionValue`: what the socketed runes, cores and idols would bring minus the Orb of
+   * Extraction, and whether the cheapest listing costs less than that.
+   */
+  protected readonly extraction = computed(() => {
+    const value = extractionValue(this.checkedItem(), currencyRates.prices());
+    if (!value) return null;
+    const cheapest = this.summary().cheapest?.div;
+    return { ...value, worth: cheapest != null && cheapest < value.net };
+  });
 
   /**
    * The same preset object after an edit, so it never counts as equal: everything read from it
@@ -216,7 +241,7 @@ export class PriceCheckPanel {
 
   protected readonly statView = computed(() => {
     const active = this.active();
-    return active ? groupStats(active.stats, unrevealedRow(this.item(), active.filters)) : { groups: [], hidden: [] };
+    return active ? groupStats(active.stats, unrevealedRow(this.checkedItem(), active.filters)) : { groups: [], hidden: [] };
   });
 
   protected readonly counts = computed(() => {
@@ -225,7 +250,7 @@ export class PriceCheckPanel {
   });
 
   protected tier(filter: StatFilter): number | null {
-    return statTier(filter, this.item());
+    return statTier(filter, this.checkedItem());
   }
 
   protected sources(filter: StatFilter) {
@@ -309,7 +334,7 @@ export class PriceCheckPanel {
     const choice = this.tabChoice();
     if (choice) return choice;
     const active = this.active();
-    return active ? apiToSatisfySearch(this.item(), active.stats, active.filters) : 'trade';
+    return active ? apiToSatisfySearch(this.checkedItem(), active.stats, active.filters) : 'trade';
   });
 
   protected tabReady(id: string): boolean {
@@ -500,7 +525,10 @@ export class PriceCheckPanel {
   constructor() {
     effect(() => {
       const item = this.item();
-      untracked(() => this.start(item));
+      untracked(() => {
+        this.edits.set(NO_EDITS);
+        this.start(item);
+      });
     });
     effect(() => {
       const leagueId = settings().leagueId;
@@ -508,6 +536,10 @@ export class PriceCheckPanel {
     });
     // poe.ninja: the overview types of the item and its related items, the first time one is checked.
     effect(() => requestNinjaPrices(idsToPrice(this.item())));
+    // The editor's prices: socketables, catalysts, the Orb of Extraction.
+    effect(() => {
+      if (this.editorKind()) requestNinjaPrices(editorPriceIds(this.item(), this.edits()));
+    });
     this.fitHeightToFilters();
   }
 
@@ -582,10 +614,11 @@ export class PriceCheckPanel {
     });
   }
 
-  private start(item: ParsedItem): void {
+  /** Filters for the item; `fresh`: a newly copied item (another tab may suit it, a unique searches at once). */
+  private start(item: ParsedItem, fresh = true): void {
     this.search.reset();
     this.bulk.reset();
-    this.tabChoice.set(null);
+    if (fresh) this.tabChoice.set(null);
     this.error.set(null);
     this.relatedOpen.set(true);
     const leagueId = settings().leagueId;
@@ -599,7 +632,7 @@ export class PriceCheckPanel {
     this.presets.set(presets);
     this.fitListing();
     this.stale.set(true);
-    if (shouldSearchImmediately(item, presets)) this.runSearch();
+    if (fresh && shouldSearchImmediately(item, presets)) this.runSearch();
   }
 
   /**
@@ -610,7 +643,7 @@ export class PriceCheckPanel {
     const presets = this.presets();
     if (!leagueId) return;
     if (!presets) {
-      if (this.error()) this.start(this.item());
+      if (this.error()) this.start(this.checkedItem());
       return;
     }
     if (!setPresetsLeague(presets, leagueId)) return;
@@ -619,7 +652,7 @@ export class PriceCheckPanel {
     this.bulk.reset();
     this.revision.update((n) => n + 1);
     this.stale.set(true);
-    if (searched || shouldSearchImmediately(this.item(), presets)) this.runSearch();
+    if (searched || shouldSearchImmediately(this.checkedItem(), presets)) this.runSearch();
   }
 
   protected runSearch(): void {
@@ -628,8 +661,8 @@ export class PriceCheckPanel {
     if (INFO_TABS.includes(this.activeTab())) this.tabChoice.set(null); // Search goes to trade or bulk
     this.fitListing(); // the tab can follow the filters, from bulk to trade and back
     this.stale.set(false);
-    if (this.activeTab() === 'bulk') void this.bulk.search(this.item(), active.filters);
-    else void this.search.search(active.filters, active.stats, this.item());
+    if (this.activeTab() === 'bulk') void this.bulk.search(this.checkedItem(), active.filters);
+    else void this.search.search(active.filters, active.stats, this.checkedItem());
   }
 
   protected selectPreset(id: string): void {
@@ -782,8 +815,8 @@ export class PriceCheckPanel {
     if (!active) return;
     const url =
       this.activeTab() === 'bulk'
-        ? bulkSiteUrl(this.item(), active.filters, this.bulk.selected())
-        : tradeSiteUrl(active.filters, active.stats, this.item(), this.stale() ? undefined : this.search.searchResult()?.id);
+        ? bulkSiteUrl(this.checkedItem(), active.filters, this.bulk.selected())
+        : tradeSiteUrl(active.filters, active.stats, this.checkedItem(), this.stale() ? undefined : this.search.searchResult()?.id);
     // With the built-in browser on, the trade site opens there, logged in (APT `TradeLinks.vue`).
     if (settings().priceCheck.builtinBrowser) void host.browserOpen(url);
     else void openUrl(url);

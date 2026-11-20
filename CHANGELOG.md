@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.0.4
+
+- Item editor, as in Exiled Exchange 2: put other runes, soul cores or idols into a weapon's or armour's sockets, or a catalyst's quality on a ring, amulet or jewel, and price the item as it would be (Sockets / Quality under the stats; Reset brings the copied item back).
+- Extraction value: what is socketed in the item minus the Orb of Extraction, marked when the cheapest listing costs less.
+
 ## v0.0.3
 
 - The price check hotkey no longer stays dead until the next alt-tab: the overlay checks the window in front four times a second and registers again a hotkey another app held (e.g. Exiled Exchange 2 with the same key).

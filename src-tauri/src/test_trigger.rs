@@ -7,12 +7,14 @@
 //!   item <path>                 the item text the next check takes instead of copying it
 //!   hotkey <shortcut>           the hotkey was pressed (`Ctrl+Alt+Shift+F20`, `Shift+Space`), past
 //!                               RegisterHotKey: the same handler as a real press
+//!   click <window> <selector>   the page of that window (`popup`, `main`) clicks the element
+//!   text <window> <selector>    the page writes the elements' text into the log ("[test] text …")
 //! Each command is logged as "[test] <command>".
 
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::Shortcut;
 
 use crate::constants::TEST_TRIGGER_PERIOD;
@@ -58,6 +60,11 @@ fn run(app: &AppHandle, line: &str) -> Result<(), String> {
         "hotkey" => {
             let shortcut = Shortcut::from_str(arg).map_err(|e| e.to_string())?;
             hotkeys::on_hotkey(app, &shortcut);
+        }
+        "click" | "text" => {
+            let (window, selector) = arg.split_once(' ').ok_or("expected: <window> <selector>")?;
+            let event = if command == "click" { "test-click" } else { "test-text" };
+            app.emit_to(window, event, selector).map_err(|e| e.to_string())?;
         }
         _ => return Err("unknown command".into()),
     }

@@ -113,7 +113,7 @@
     }
 
     @if (active(); as preset) {
-      <div #filtersScroll class="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5">
+      <div #filtersScroll class="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5" data-test="filters">
         @for (group of statView().groups; track group.name) {
           <div class="mt-1.5 flex items-center gap-2 border-b border-line pt-1 pb-0.5 text-[11px] tracking-[.06em] text-muted uppercase">
             {{ group.name | tr }}
@@ -158,6 +158,10 @@
               <div class="pb-1 pl-[54px] text-[11px] text-muted italic">{{ hiddenReason(entry) }}</div>
             }
           }
+        }
+
+        @if (editorKind(); as kind) {
+          <app-item-editor [item]="item()" [checked]="checkedItem()" [kind]="kind" [edits]="edits()" (change)="setEdits($event)" />
         }
 
         @if (relatedGroup() && relatedFolded()) {
@@ -284,6 +288,15 @@
         @if (summary().mostListed; as most) {
           @let p = splitPrice(most);
           <span class="flex items-center gap-1">{{ 'Most listed' | tr }} <b class="font-semibold text-bright tabular-nums">{{ p.amount }}</b> <app-currency [tag]="p.currency" /></span>
+        }
+        @if (extraction(); as value) {
+          @let net = relatedPrice(value.net);
+          @if (net) {
+            <span class="flex items-center gap-1 px-1.5" [class]="value.worth ? 'border border-gold text-gold-soft' : 'text-muted'"
+              [title]="(value.worth ? 'The cheapest listing costs less than what is socketed in it, minus the Orb of Extraction' : 'What is socketed in it, minus the Orb of Extraction, at poe.ninja prices') | tr">
+              {{ 'Extraction' | tr }} <b class="font-semibold tabular-nums">{{ net.text }}</b> <app-currency [tag]="net.currency" [size]="14" />
+            </span>
+          }
         }
       } @else if (search.isSearching()) {
         <span class="text-muted">{{ 'Searching…' | tr }}</span>

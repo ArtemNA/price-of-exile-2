@@ -8,12 +8,16 @@
 # keys reaching the game) is a separate check with the user's permission (CLAUDE.md).
 #
 #   npx tauri build --debug --no-bundle --config src-tauri/tauri.dev.conf.json
-#   powershell -NoProfile -ExecutionPolicy Bypass -File tools/bg-check.ps1 [-Out <folder for screenshots>]
+#   powershell -NoProfile -ExecutionPolicy Bypass -File tools/bg-check.ps1 [-Out <folder for screenshots>] [-Theme ee2]
 #
 # Uses the dev settings (%APPDATA%\com.artemna.price-of-exile-2.dev\settings.json): backs them up,
 # puts test hotkeys there and restores them at the end.
 
-param([string]$Out = (Join-Path $env:TEMP 'poe2-bg-check'))
+param(
+  [string]$Out = (Join-Path $env:TEMP 'poe2-bg-check'),
+  # 'ee2': the Exiled Exchange 2 theme (the item editor in its popover; screenshots only for it).
+  [string]$Theme = ''
+)
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
@@ -22,6 +26,7 @@ $root = Split-Path $PSScriptRoot -Parent
 Add-Type -AssemblyName System.Drawing
 Add-Type -Name Win -Namespace BgCheck -MemberDefinition @'
 [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+[DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out int pid);
 [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
 [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint msg, IntPtr w, IntPtr l);
 [DllImport("user32.dll")] public static extern bool RegisterHotKey(IntPtr h, int id, uint mods, uint vk);
@@ -96,7 +101,6 @@ function Shot([IntPtr]$Hwnd, [string]$Name) {
   $path = Join-Path $Out "$Name.png"; $bmp.Save($path); $bmp.Dispose(); $path
 }
 
-$userFront = [BgCheck.Win]::GetForegroundWindow()
 $backup = if (Test-Path $settingsFile) { [IO.File]::ReadAllText($settingsFile) } else { $null }
 $procs = @()
 try {
@@ -106,6 +110,7 @@ try {
   $hk = [ordered]@{ 'price-check' = $keys.price; 'item-check' = $keys.item; wiki = $null; poedb = $null; 'craft-of-exile' = $null
     'stash-search' = $null; 'stash-panel' = $null; browser = $null; settings = $keys.settings }
   $json.settings | Add-Member -Force -NotePropertyName hotkeys -NotePropertyValue ([pscustomobject]$hk)
+  if ($Theme) { $json.settings | Add-Member -Force -NotePropertyName theme -NotePropertyValue $Theme }
   New-Item -ItemType Directory -Force (Split-Path $settingsFile) | Out-Null
   [IO.File]::WriteAllText($settingsFile, ($json | ConvertTo-Json -Depth 32))
 
@@ -176,7 +181,63 @@ if ([X.H]::RegisterHotKey([IntPtr]::Zero, 1, $MODS, $F20)) { Start-Sleep -Second
     Start-Sleep -Milliseconds 800
     Check 'settings hotkey shows the closed settings window' ($hidden -and [BgCheck.Win]::IsWindowVisible($main.Hwnd)) "hidden after close: $hidden"
   }
-  Check "user's foreground window untouched" ([BgCheck.Win]::GetForegroundWindow() -eq $userFront)
+  # 5. Item editor: another rune in a socket, Reset, a catalyst on a ring (the page clicks for the test;
+  # a click that opens something waits for the page to draw it before the next one).
+  $bow = Join-Path $root 'tests\fixtures\items\bow-runes-crafted.txt'
+  function Filters([int]$From) {
+    Send @('text popup [data-test=filters]')
+    # Only the stat filters: the editor below them lists runes with their mods too.
+    $line = (WaitLog '\[test\] text \[data-test=filters\]: ' 3000 $From).Line
+    if ($line) { ($line -split 'SOCKETS|QUALITY')[0] }
+  }
+  function Popup([string]$Item) {
+    $n = LogCount
+    Send @("front $game", "item $Item", "hotkey $($keys.price)")
+    [void](WaitLog 'Item text read' 3000 $n)
+    Start-Sleep -Milliseconds 1500
+  }
+  function PopupShot([string]$Name) {
+    $w = Windows | Where-Object { $_.Title -like 'Price of Exile 2*popup' } | Select-Object -First 1
+    if ($w) { $p = Shot $w.Hwnd $Name; Write-Host "  $p" }
+  }
+  Popup $bow
+  if ($Theme -eq 'ee2') {
+    Send @('click popup [data-test=editor-button]'); Start-Sleep -Milliseconds 800
+    PopupShot 'ee2-editor-bow'
+    Send @('click popup [data-test=socket-0]'); Start-Sleep -Milliseconds 400; Send @('click popup [data-test="augment-Greater Adept Rune"]'); Start-Sleep -Milliseconds 1200
+    Send @('click popup [data-test=editor-button]'); Start-Sleep -Milliseconds 800
+    PopupShot 'ee2-editor-bow-edited'
+    Popup $itemFile
+    Send @('click popup [data-test=editor-button]'); Start-Sleep -Milliseconds 300
+    Send @('click popup [data-test="catalyst-Adaptive Catalyst"]'); Start-Sleep -Milliseconds 1200
+    PopupShot 'ee2-editor-ring-catalyst'
+  } else {
+    $n = LogCount
+    $before = Filters $n
+    Check 'bow: no Dexterity before the edit' ($before -match 'Physical Damage' -and $before -notmatch 'Dexterity') "$before"
+    PopupShot 'editor-bow'
+    $n = LogCount
+    Send @('click popup [data-test=socket-0]'); Start-Sleep -Milliseconds 400; Send @('click popup [data-test="augment-Greater Adept Rune"]'); Start-Sleep -Milliseconds 1200
+    $after = Filters $n
+    Check 'bow: Greater Adept Rune in socket 1 gives a Dexterity filter' ($after -match 'Dexterity') "$after"
+    PopupShot 'editor-bow-edited'
+    $n = LogCount
+    Send @('click popup [data-test=editor-reset]'); Start-Sleep -Milliseconds 1000
+    $reset = Filters $n
+    Check 'bow: Reset brings the copied item back' ($reset -match 'Physical Damage' -and $reset -notmatch 'Dexterity') "$reset"
+    Popup $itemFile
+    $n = LogCount
+    $ring = Filters $n
+    Send @('click popup [data-test=editor-toggle]'); Start-Sleep -Milliseconds 400; Send @('click popup [data-test="catalyst-Adaptive Catalyst"]'); Start-Sleep -Milliseconds 1200
+    $n = LogCount
+    $quality = Filters $n
+    Check 'ring: 20% Adaptive Catalyst raises Strength from 12 to 14' ($ring -match '12 total to Strength' -and $quality -match '14 total to Strength') "$quality"
+    PopupShot 'editor-ring-catalyst'
+  }
+
+  # The user may switch windows meanwhile: what matters is that none of ours came to the front.
+  $front = [BgCheck.Win]::GetForegroundWindow(); $frontPid = 0; [void][BgCheck.Win]::GetWindowThreadProcessId($front, [ref]$frontPid)
+  Check 'no window of the test came to the front of the user' (-not ($procs | Where-Object { $_.Id -eq $frontPid })) "front pid $frontPid"
 }
 finally {
   foreach ($p in $procs) { if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } }

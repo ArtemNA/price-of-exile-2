@@ -17,11 +17,15 @@ Files: `theme.ts` (registration), `theme.css` (palette over our tokens, fonts, g
 EE2 uses, drawn as SVG), `images/` and `fonts/`.
 
 Not reproduced (yet): the poe.ninja volume block ("N /hr", "Highest volume"), the listing tooltip on
-Shift + hover, ExtractionValue, the item editor (runes / soul cores / catalysts), the Tip and
+Shift + hover, the Tip and
 support boxes, the "Reload fallback data" button (our trade data is built in), leagues in the
 online filter (the league menu is in the title bar).
 
-Credits: the look, `images/404.png` and the font files (Fontin SmallCaps, Exo 2 SemiBold) come from Exiled Exchange 2,
+The item editor (runes, soul cores, idols, catalysts) is our `app-item-editor` in EE2's popover: its button
+next to the stats chip, the popover beside the column (the window widens for it), level with the button; ExtractionValue shows under the listings when the cheapest one costs less than what is
+socketed in it minus the Orb of Extraction, as in EE2.
+
+Credits: the look, `images/404.png`, `images/rune.png`, `images/empty-socket.png`, `images/extractor.png` and the font files (Fontin SmallCaps, Exo 2 SemiBold) come from Exiled Exchange 2,
 MIT © 2020 Alexander Drozdov and the Exiled Exchange 2 contributors (fork by Kvan7,
 https://github.com/Kvan7/Exiled-Exchange-2; `LICENSE-exiled-exchange-2.txt`). Fonts: Fontin
 SmallCaps by Jos Buivenga (exljbris, free font licence), Exo 2 by Natanael Gama (SIL OFL).

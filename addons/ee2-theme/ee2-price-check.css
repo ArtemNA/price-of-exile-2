@@ -485,3 +485,40 @@
   height: 100%;
   background: url('./images/404.png') center / contain no-repeat;
 }
+
+/* Item editor button (FiltersBlock.vue): runes on the item, an empty socket, the Orb of Extraction. */
+.ee2-price-check .ee2-img-rune,
+.ee2-price-check .ee2-img-empty-socket,
+.ee2-price-check .ee2-img-extractor {
+  display: inline-block;
+  aspect-ratio: 1;
+  height: 100%;
+  background: center / contain no-repeat;
+}
+.ee2-price-check .ee2-img-rune {
+  background-image: url('./images/rune.png');
+}
+.ee2-price-check .ee2-img-empty-socket {
+  background-image: url('./images/empty-socket.png');
+}
+.ee2-price-check .ee2-img-extractor {
+  background-image: url('./images/extractor.png');
+}
+
+/* The editor's popover stands beside the column: its arrow points sideways at the button (level with its middle). */
+.ee2-tippy-arrow-side {
+  position: absolute;
+  top: 16px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+}
+.ee2-tippy-arrow-left {
+  left: -7px;
+  border-right: 8px solid #fff;
+}
+.ee2-tippy-arrow-right {
+  right: -7px;
+  border-left: 8px solid #fff;
+}

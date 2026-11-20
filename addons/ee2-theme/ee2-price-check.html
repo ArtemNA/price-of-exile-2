@@ -94,6 +94,23 @@
             </button>
           }
         }
+        @if (editorKind(); as kind) {
+          <!-- Item editor (FiltersBlock.vue → ItemEditorV2.vue in a popover) -->
+          <span class="ee2-editor relative">
+            <button class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded border border-[#718096] bg-[#1a202c]"
+              [title]="(kind === 'augment' ? 'Sockets' : 'Quality') | tr" data-test="editor-button" (click)="toggleEditor($event)">
+              @if (editorButtonIcon(); as icon) {
+                <img [src]="icon" alt="" class="max-h-full max-w-full" />
+              } @else if (kind === 'catalyst') {
+                <ee2-icon name="question" class="text-xl text-[#a0aec0]" />
+              } @else if (hasSocketed()) {
+                <span class="ee2-img-rune"></span>
+              } @else {
+                <span class="ee2-img-empty-socket"></span>
+              }
+            </button>
+          </span>
+        }
       </div>
 
       <!-- Stat filters -->
@@ -215,6 +232,15 @@
      edge next to the column. `towards`: the side the column is on. -->
 <ng-template #side let-related="related" let-tab="tab" let-towards="towards">
   <div class="pointer-events-none relative flex min-w-0 flex-1" [class.flex-row-reverse]="towards === 'left'">
+    @if (related && editorOpen() && editorKind(); as kind) {
+      <!-- The item editor's popover (EE2: tippy placement "right"): beside the column at the button's height, over the related items -->
+      <div class="ee2-editor ee2-tippy pointer-events-auto absolute z-30 p-0!" [style.top.px]="editorTop()" [class]="towards === 'left' ? 'right-2' : 'left-2'">
+        <div class="ee2-tippy-arrow-side" [class]="towards === 'left' ? 'ee2-tippy-arrow-right' : 'ee2-tippy-arrow-left'"></div>
+        <div class="w-96 rounded bg-[#2d3748] p-2 text-[#e2e8f0]">
+          <app-item-editor [item]="item()" [checked]="checkedItem()" [kind]="kind" [edits]="edits()" [startOpen]="true" (change)="setEdits($event)" />
+        </div>
+      </div>
+    }
     @if (related) {
       <ng-container *ngTemplateOutlet="relatedPanel; context: { towards }" />
     }
@@ -604,6 +630,23 @@
             }
           </tbody>
         </table>
+        @if (extraction(); as value) {
+          @if (value.worth) {
+            <!-- ExtractionValue.vue: shown when the cheapest listing costs less than what is socketed, minus the orb -->
+            @let socketed = ee2Money(value.socketed);
+            @let orb = ee2Money(value.extraction);
+            @let net = ee2Money(value.net);
+            <div class="mt-2 flex items-center gap-1 rounded border-2 border-[#f56565] p-2 text-[#cbd5e0]"
+              [title]="'The cheapest listing costs less than what is socketed in it, minus the Orb of Extraction' | tr">
+              <div class="text-2xl">Σ</div>
+              <span class="ee2-img-rune h-6"></span> {{ socketed }}
+              <span class="mx-1">−</span>
+              <span class="ee2-img-extractor h-6"></span> {{ orb }}
+              <span class="mx-1">=</span>
+              {{ net }}
+            </div>
+          }
+        }
         @if (likelyPriceFixed()) {
           <div class="mt-2 rounded border-2 border-[#718096] p-2">
             <div class="flex leading-none text-[#cbd5e0]">

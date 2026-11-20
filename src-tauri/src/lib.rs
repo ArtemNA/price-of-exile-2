@@ -279,6 +279,20 @@ async fn browser_fetch(
 
 /// The portable build is the bare exe, without the installer's uninstaller next to it:
 /// it cannot update itself, so the page only links to the new release.
+/// Test instance only (`test_trigger`): the page listens for the test's clicks.
+#[tauri::command]
+fn is_test_instance() -> bool {
+    platform::is_test_instance()
+}
+
+/// Test instance only: what the page reports for the test (`test-text`).
+#[tauri::command]
+fn test_log(app: AppHandle, text: String) {
+    if platform::is_test_instance() {
+        log_to_ui(&app, text);
+    }
+}
+
 #[tauri::command]
 fn is_portable() -> bool {
     std::env::current_exe()
@@ -385,6 +399,8 @@ pub fn run() {
             set_tray_labels,
             set_trade_host,
             is_portable,
+            is_test_instance,
+            test_log,
             open_settings,
             browser_fetch,
             browser_open,

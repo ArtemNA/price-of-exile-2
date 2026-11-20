@@ -24,6 +24,8 @@ import { displayRounding, usePoeninja } from '../../src/app/ee2-shims/prices';
 import { t, tr, TranslatePipe, TrErrorPipe, TrPipe } from '../../src/app/core/i18n';
 import { NumInput } from '../../src/app/price-check/num-input';
 import { PriceCheckPanel } from '../../src/app/price-check/price-check-panel';
+import { currentCatalyst } from '../../src/app/price-check/item-editor';
+import { ItemEditorView } from '../../src/app/price-check/item-editor-view';
 import type { BulkHave } from '../../src/app/price-check/bulk-search';
 import { Currency } from '../../src/app/shared/currency';
 import { Ee2Icon } from './ee2-icon';
@@ -33,6 +35,8 @@ import { Ee2TitleBar } from './ee2-title-bar';
 const EE2_RELATED_WIDTH = 384;
 /** Without related items the window still reaches beside the column for the "Rate limiting" tab (mx-6 px-4). */
 const EE2_RATE_TAB_WIDTH = 192;
+/** The item editor's popover beside the column: w-96 and its gap to the column. */
+const EE2_EDITOR_WIDTH = 400;
 
 /** One part of a mod text: the rolled number is drawn in Exo 2 white (EE2 `ItemModifierText`). */
 export interface TextPart {
@@ -96,7 +100,7 @@ export function isLikelyPriceFixed(rows: ReadonlyArray<{ priceCurrency: string; 
  */
 @Component({
   selector: 'app-ee2-price-check',
-  imports: [NgTemplateOutlet, TranslatePipe, TrPipe, TrErrorPipe, NumInput, Currency, Ee2Icon, Ee2TitleBar],
+  imports: [NgTemplateOutlet, TranslatePipe, TrPipe, TrErrorPipe, NumInput, Currency, Ee2Icon, Ee2TitleBar, ItemEditorView],
   templateUrl: './ee2-price-check.html',
   host: { class: 'ee2-price-check relative flex min-h-0 flex-1 flex-row', '(mousedown)': 'backdropDown($event)', '(document:mousedown)': 'closeOnline($event)' },
 })
@@ -114,7 +118,10 @@ export class Ee2PriceCheck extends PriceCheckPanel {
    */
   protected override themeWindowWidth(width: number): number {
     // The rate limiting panel, once opened, needs about as much room as the related items.
-    const beside = this.relatedBeside() || this.showRateLimits() ? EE2_RELATED_WIDTH : EE2_RATE_TAB_WIDTH;
+    const beside = Math.max(
+      this.relatedBeside() || this.showRateLimits() ? EE2_RELATED_WIDTH : EE2_RATE_TAB_WIDTH,
+      this.editorOpen() ? EE2_EDITOR_WIDTH : 0,
+    );
     return this.popupSide() === 'center' ? width + 2 * beside : width + beside;
   }
 
@@ -123,6 +130,27 @@ export class Ee2PriceCheck extends PriceCheckPanel {
   protected readonly statsFolded = signal(false);
   protected readonly showRateLimits = signal(false);
   protected readonly onlineOpen = signal(false);
+  protected readonly editorOpen = signal(false);
+  /** Where the editor's popover starts: level with its button, measured from the window's top. */
+  protected readonly editorTop = signal(0);
+
+  protected toggleEditor(event: MouseEvent): void {
+    const button = event.currentTarget as HTMLElement;
+    this.editorTop.set(Math.max(0, button.getBoundingClientRect().top - 8));
+    this.editorOpen.set(!this.editorOpen());
+  }
+
+  /** The editor button shows the catalyst on the item (EE2 `currentCatalyst`), else a rune or an empty socket. */
+  protected readonly editorButtonIcon = computed(() =>
+    this.editorKind() === 'catalyst' ? currentCatalyst(this.checkedItem())?.icon : undefined,
+  );
+  protected readonly hasSocketed = computed(() => this.checkedItem().augmentSockets?.augments.some((augment) => augment) ?? false);
+
+  /** A price in divines as EE2's `ItemQuickPrice` writes it with the currency as text. */
+  protected ee2Money(div: number): string {
+    const value = usePoeninja().autoCurrency(div);
+    return `${displayRounding(value.min)} ${value.currency === 'div' ? 'div' : value.currency === 'exalted' ? 'ex' : value.currency}`;
+  }
 
   constructor() {
     super();
@@ -138,6 +166,7 @@ export class Ee2PriceCheck extends PriceCheckPanel {
         this.statsFolded.set(false);
         this.showHidden.set(false);
         this.onlineOpen.set(false);
+        this.editorOpen.set(false);
       });
     });
   }
@@ -690,7 +719,9 @@ export class Ee2PriceCheck extends PriceCheckPanel {
 
   /** A click anywhere but the online filter closes its popover, as tippy does. */
   protected closeOnline(event: MouseEvent): void {
-    if (this.onlineOpen() && !(event.target as Element | null)?.closest?.('.ee2-online')) this.onlineOpen.set(false);
+    const target = event.target as Element | null;
+    if (this.onlineOpen() && !target?.closest?.('.ee2-online')) this.onlineOpen.set(false);
+    if (this.editorOpen() && !target?.closest?.('.ee2-editor')) this.editorOpen.set(false);
   }
 
   protected setListed(value: string | undefined): void {

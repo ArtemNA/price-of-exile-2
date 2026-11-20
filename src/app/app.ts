@@ -8,6 +8,7 @@ import { host } from './host';
 import { poeWebApi } from '@/web/Config';
 import { settings } from './core/settings';
 import { themeById } from './themes';
+import { installTestHooks } from './test-hooks';
 
 /** Both Tauri windows load the same app; the window label picks the view. */
 @Component({
@@ -27,6 +28,7 @@ export class App {
   protected readonly label = getCurrentWindow().label;
 
   constructor() {
+    void installTestHooks();
     if (this.label === 'popup' || this.label === 'toast') {
       document.documentElement.classList.add('popup');
     }

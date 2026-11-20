@@ -49,3 +49,7 @@
 | `16-update-toast-updating-ee2.png` | «Updating to 0.0.2…» у темі Exiled Exchange 2 |
 | `16-update-settings-installed.png` | Налаштування, About: «Install new versions automatically» з підказкою (встановлена збірка; у dev показано тимчасовим перемиканням) |
 | `16-update-settings-portable.png` | Те саме в портативній збірці (dev теж рахується портативною): вимкнено, з приміткою, що портабл сам не оновлюється |
+| `17-editor-bow-rune.png` | Редактор предмета (наша тема, фонова збірка): у гніздо 1 лука вставлено Greater Adept Rune замість Perfect Iron Rune — фільтри й DPS з відредагованої копії, «Edited · Reset» |
+| `17-editor-ring-catalyst.png` | Якість каблучки: 20 % Adaptive Catalyst, Strength 12 → 14, ціни каталізаторів з poe.ninja |
+| `17-ee2-editor-bow.png` | Те саме в темі Exiled Exchange 2: кнопка біля чипа статів, поповер збоку від колонки на висоті кнопки, як в EE2 |
+| `17-ee2-editor-ring-catalyst.png` | Каталізатор у темі Exiled Exchange 2 |

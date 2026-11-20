@@ -759,6 +759,27 @@
     "Offline": "Офлайн",
     "Instant or Online": "Миттєво або онлайн",
     "Open settings": "Відкрити налаштування",
-    "This window, from the game": "Це вікно, просто з гри"
+    "This window, from the game": "Це вікно, просто з гри",
+    "Quality": "Якість",
+    "Edited": "Змінено",
+    "Back to the item as copied": "Повернути предмет, як його скопійовано",
+    "Reset": "Скинути",
+    "What the sockets hold, at poe.ninja prices": "Що вставлено в гнізда, за цінами poe.ninja",
+    "The catalysts this quality takes, at poe.ninja prices": "Каталізатори на цю якість, за цінами poe.ninja",
+    "Empty socket": "Порожнє гніздо",
+    "bound to the item": "прив'язано до предмета",
+    "Pick what goes into socket {0}": "Виберіть, що вставити в гніздо {0}",
+    "Nothing of this kind fits the item": "Нічого з цього не підходить предмету",
+    "One catalyst, 1% quality": "Один каталізатор — 1% якості",
+    "Lesser": "Менші",
+    "Greater": "Більші",
+    "Perfect": "Досконалі",
+    "Soul Core": "Ядро душі",
+    "Special": "Особливі",
+    "Idol": "Ідол",
+    "Legacy": "Застарілі",
+    "The cheapest listing costs less than what is socketed in it, minus the Orb of Extraction": "Найдешевша пропозиція коштує менше, ніж вставлене в неї, мінус сфера вилучення",
+    "What is socketed in it, minus the Orb of Extraction, at poe.ninja prices": "Вставлене в предмет мінус сфера вилучення, за цінами poe.ninja",
+    "Extraction": "Вилучення"
   }
 }
