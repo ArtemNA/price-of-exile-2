@@ -8,8 +8,7 @@ related items and the "Rate limiting" tab beside it) over our own price check lo
 
 Built into every build (`src/app/addons.ts`, `angular.json` styles) and offered in Settings → Overlay →
 Theme. `npm run build:ee2-default` builds the front end with it as the default theme for a fresh
-install. How themes work and how to make one: [THEMING.md](../../THEMING.md). EE2 screenshots and
-style notes this theme was matched against: `docs/screenshots/ee2/`.
+install. How themes work and how to make one: [THEMING.md](../../THEMING.md).
 
 Files: `theme.ts` (registration), `theme.css` (palette over our tokens, fonts, global styles),
 `ee2-price-check.*` (the price check), `ee2-title-bar.ts`, `ee2-unidentified-picker.ts`,

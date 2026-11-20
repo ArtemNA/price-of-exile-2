@@ -49,3 +49,13 @@ Thumbs.db
 # Upstream clones (EE2, APT) for porting and diffs
 /_upstream/
 /CLAUDE.md
+
+# Local only: agent prompts, plans, notes, analysis and screenshot evidence
+/*_PROMPT.md
+/PLAN.md
+/docs/FINDINGS.md
+/docs/ANALYSIS.md
+/docs/analysis/
+/docs/EE2_THEME_PLAN.md
+/docs/GAME_SCENARIOS.md
+/docs/screenshots/

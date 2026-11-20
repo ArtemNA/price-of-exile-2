@@ -98,8 +98,6 @@ existing install keeps the theme its settings name (`theme: ''` means the build'
 `npm run dev`, pick the theme in Settings → Overlay, and check every window: price check (a rare item,
 a unique, currency with related items and bulk offers, a waystone, an unidentified unique), item check,
 map check, stash search, settings, the start message, in both popup positions. Without the game:
-`scripts/fake-game.ps1` and `POE_GAME_TITLE="PoE Fake Game"` (see `scripts/` and
-`docs/screenshots/README.md`). The EE2 theme was matched against EE2 itself shot by shot:
-`docs/screenshots/ee2/README.md` (`ee2-*.png` next to `ours-*.png`) and `STYLE_NOTES.md`. Check that
-our own theme did not change: the same states in our theme against `docs/screenshots/*.png`, pixel
-for pixel where the data is the same.
+`scripts/fake-game.ps1` and `POE_GAME_TITLE="PoE Fake Game"` (see `scripts/`). Check that our own
+theme did not change: the same states in our theme shot before and after, pixel for pixel where the
+data is the same.
