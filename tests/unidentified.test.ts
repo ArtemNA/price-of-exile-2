@@ -47,8 +47,15 @@ describe('unidentified uniques', () => {
   it('skips the data placeholders: unnamed and "INCOMPLETE" uniques', () => {
     const spear = parse(items.UNIQUE_UNIDENTIFIED.replace('Helmets', 'Spears').replace('Felt Cap', 'Hunting Spear'));
     expect(identifiedVariants(spear).map((u) => u.refName)).toEqual(['Chainsting']);
+    // EE2 shipped the three Sekhema rings without a name (placeholders); since 2026-11-20 the data
+    // has them named from the generator (tests/data-additions.test.ts), so they are real candidates.
     const ring = parse(items.UNIQUE_UNIDENTIFIED_SEVERAL.replace('Sapphire Ring', 'Ring'));
-    expect(identifiedVariants(ring).map((u) => u.refName)).toEqual(["Kalandra's Touch"]);
+    expect(identifiedVariants(ring).map((u) => u.refName)).toEqual([
+      "Kalandra's Touch",
+      "Eshtera's Path",
+      "Safrin's Resolve",
+      "Zaida's Longevity",
+    ]);
   });
 
   it('identifies as the picked unique, keeping the base and the unidentified state', () => {
