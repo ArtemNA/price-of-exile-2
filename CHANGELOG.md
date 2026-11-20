@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.0.3
 
 - The price check hotkey no longer stays dead until the next alt-tab: the overlay checks the window in front four times a second and registers again a hotkey another app held (e.g. Exiled Exchange 2 with the same key).
 - Shift+Space opens the settings from the game (Settings → Hotkeys → Open settings).
