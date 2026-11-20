@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.0.5
+
+- Item data from the current game build, ahead of Exiled Exchange 2: Soul Core of Vizoma, seven new stats (rune skill gem levels, Spirit per corrupted item, Expedition chance), rune and fractured trade filters for two more stats, updated Russian wording.
+- Five uniques that had no name now price check: Safrin's Resolve, Eshtera's Path, Zaida's Longevity and two Reverie variants (an unidentified Ring now offers all four of its uniques).
+
 ## v0.0.4
 
 - Item editor, as in Exiled Exchange 2: put other runes, soul cores or idols into a weapon's or armour's sockets, or a catalyst's quality on a ring, amulet or jewel, and price the item as it would be (Sockets / Quality under the stats; Reset brings the copied item back).
