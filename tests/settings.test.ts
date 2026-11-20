@@ -50,6 +50,13 @@ describe('settings', () => {
     expect(upgradeSettings({ configVersion: 1, stashSearch: groups }).stashSearch).toEqual(groups);
   });
 
+  it('gives old settings Shift+Space to open the settings from the game, as in APT and EE2', () => {
+    const settings = upgradeSettings({ configVersion: 1, hotkeys: { 'price-check': 'Ctrl+KeyD' } });
+    expect(settings.hotkeys.settings).toBe('Shift+Space');
+    // Someone who cleared it keeps it cleared.
+    expect(upgradeSettings({ configVersion: 1, hotkeys: { settings: null } }).hotkeys.settings).toBeNull();
+  });
+
   it('turns the "instant buyout only" switch of version 1 into a listing type', () => {
     expect(defaultSettings().priceCheck.listingType).toBe('securable');
     const on = upgradeSettings({ configVersion: 1, priceCheck: { merchantOnly: true, searchStatRange: 5 } });

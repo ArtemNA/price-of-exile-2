@@ -14,7 +14,7 @@ use crate::chat::{self, ChatCommand};
 use crate::constants::{COPY_RELEASE_DELAY, ITEM_FIRST_LINES, MAIN_WINDOW, POPUP_WINDOW};
 use crate::platform::{self, KeyAction, Point, Rect, vk};
 use crate::state::AppState;
-use crate::{browser, clipboard, log_to_ui, popup, stash};
+use crate::{browser, clipboard, log_to_ui, popup, stash, tray};
 
 /// What a hotkey does with the hovered item.
 /// Declaration order is the priority when two actions share a hotkey.
@@ -35,6 +35,8 @@ pub enum HotkeyAction {
     StashPanel,
     /// Show the built-in browser, or hide it and go back to the game; copies nothing.
     Browser,
+    /// Open the settings window (APT and EE2 open their overlay with Shift+Space); copies nothing.
+    Settings,
 }
 
 impl HotkeyAction {
@@ -187,68 +189,123 @@ struct ItemActionPayload {
 pub fn plugin() -> TauriPlugin<Wry> {
     tauri_plugin_global_shortcut::Builder::new()
         .with_handler(|app, shortcut, event| {
-            if event.state() != ShortcutState::Pressed {
-                return;
-            }
-            let found = app
-                .state::<AppState>()
-                .hotkeys()
-                .into_iter()
-                .find(|(s, _)| s == shortcut);
-            if let Some((shortcut, binding)) = found {
-                warn_if_exclusive_fullscreen(app);
-                // While the built-in browser is in front only its own hotkey acts: the others
-                // would copy from or type into the page.
-                let state = app.state::<AppState>();
-                let game_in_front = state
-                    .game_hwnd()
-                    .is_some_and(|game| platform::current_foreground().hwnd == game);
-                if !game_in_front && !matches!(binding, Binding::Item(HotkeyAction::Browser)) {
-                    return;
-                }
-                let app = app.clone();
-                // Clipboard polling and typing sleep, keep them off the event loop.
-                std::thread::spawn(move || match binding {
-                    Binding::Item(HotkeyAction::StashPanel) => open_stash_panel(&app),
-                    Binding::Item(HotkeyAction::Browser) => {
-                        let game = app.state::<AppState>().game_hwnd();
-                        if let Err(e) = browser::toggle(&app, game) {
-                            log_to_ui(&app, format!("Built-in browser: {e}"));
-                        }
-                    }
-                    Binding::Item(action) => check_item(&app, &shortcut, action),
-                    Binding::Chat(command) => chat_command(&app, &shortcut, &command),
-                    Binding::Stash(text) => preset_search(&app, &shortcut, &text),
-                });
+            if event.state() == ShortcutState::Pressed {
+                on_hotkey(app, shortcut);
             }
         })
         .build()
 }
 
+/// A hotkey from the settings was pressed (or a test instance says so, `test_trigger`).
+pub fn on_hotkey(app: &AppHandle, shortcut: &Shortcut) {
+    let found = app
+        .state::<AppState>()
+        .hotkeys()
+        .into_iter()
+        .find(|(s, _)| s == shortcut);
+    let Some((shortcut, binding)) = found else {
+        return;
+    };
+    warn_if_exclusive_fullscreen(app);
+    // While the built-in browser is in front only its own hotkey acts: the others
+    // would copy from or type into the page.
+    let state = app.state::<AppState>();
+    let game_in_front = state
+        .game_hwnd()
+        .is_some_and(|game| platform::current_foreground().hwnd == game);
+    if !game_in_front && !matches!(binding, Binding::Item(HotkeyAction::Browser)) {
+        return;
+    }
+    let app = app.clone();
+    // Clipboard polling and typing sleep, keep them off the event loop.
+    std::thread::spawn(move || match binding {
+        Binding::Item(HotkeyAction::StashPanel) => open_stash_panel(&app),
+        Binding::Item(HotkeyAction::Settings) => tray::show_settings(&app),
+        Binding::Item(HotkeyAction::Browser) => {
+            let game = app.state::<AppState>().game_hwnd();
+            if let Err(e) = browser::toggle(&app, game) {
+                log_to_ui(&app, format!("Built-in browser: {e}"));
+            }
+        }
+        Binding::Item(action) => check_item(&app, &shortcut, action),
+        Binding::Chat(command) => chat_command(&app, &shortcut, &command),
+        Binding::Stash(text) => preset_search(&app, &shortcut, &text),
+    });
+}
+
+/// A test instance registers only F13–F24 (with any modifiers): RegisterHotKey is shared by
+/// every desktop of the session, so its Ctrl+D would take the key from the user's game (F-37).
+pub fn is_test_safe(shortcut: &Shortcut) -> bool {
+    matches!(
+        shortcut.key,
+        Code::F13
+            | Code::F14
+            | Code::F15
+            | Code::F16
+            | Code::F17
+            | Code::F18
+            | Code::F19
+            | Code::F20
+            | Code::F21
+            | Code::F22
+            | Code::F23
+            | Code::F24
+    )
+}
+
 /// RegisterHotKey binds to a window owned by the main thread, so (un)register there.
-fn set_registered(app: &AppHandle, shortcut: Shortcut, enabled: bool) {
+/// A failure (another app holds the keys, e.g. EE2 with the same price check key) is logged
+/// once; the next sync retries it.
+fn set_registered(app: &AppHandle, shortcuts: Vec<Shortcut>, enabled: bool) {
     let handle = app.clone();
     let _ = app.run_on_main_thread(move || {
         let gs = handle.global_shortcut();
-        if enabled {
-            if !gs.is_registered(shortcut) {
-                if let Err(e) = gs.register(shortcut) {
-                    log_to_ui(
-                        &handle,
-                        format!("Failed to register hotkey {shortcut}: {e}"),
-                    );
+        let state = handle.state::<AppState>();
+        for shortcut in shortcuts {
+            if enabled {
+                if gs.is_registered(shortcut)
+                    || (platform::is_test_instance() && !is_test_safe(&shortcut))
+                {
+                    continue;
                 }
+                match gs.register(shortcut) {
+                    Ok(()) => {
+                        if state.set_hotkey_failed(shortcut, false) {
+                            log_to_ui(&handle, format!("Hotkey {shortcut} registered now"));
+                        }
+                    }
+                    Err(e) => {
+                        if state.set_hotkey_failed(shortcut, true) {
+                            log_to_ui(
+                                &handle,
+                                format!("Failed to register hotkey {shortcut}: {e} (retrying while the game is in front)"),
+                            );
+                        }
+                    }
+                }
+            } else if gs.is_registered(shortcut) {
+                let _ = gs.unregister(shortcut);
             }
-        } else if gs.is_registered(shortcut) {
-            let _ = gs.unregister(shortcut);
         }
     });
 }
 
-pub fn set_game_hotkeys(app: &AppHandle, enabled: bool) {
-    for (shortcut, _) in app.state::<AppState>().hotkeys() {
-        set_registered(app, shortcut, enabled);
-    }
+/// Registers every hotkey while the game is the active window and none otherwise. Level-based,
+/// not on a change only: a registration that failed or was lost is put right by the next call.
+pub fn sync_game_hotkeys(app: &AppHandle) {
+    let state = app.state::<AppState>();
+    let enabled = state.game_hwnd().is_some();
+    let shortcuts = state.hotkeys().into_iter().map(|(s, _)| s).collect();
+    set_registered(app, shortcuts, enabled);
+}
+
+/// Shortcuts of `old` that `new` no longer has: only these are unregistered when the settings
+/// change, so saving any setting during play does not drop and re-add the game's hotkeys.
+fn removed_shortcuts(old: &[(Shortcut, Binding)], new: &[(Shortcut, Binding)]) -> Vec<Shortcut> {
+    old.iter()
+        .map(|(s, _)| *s)
+        .filter(|s| !new.iter().any(|(n, _)| n == s))
+        .collect()
 }
 
 /// Parses the hotkeys from the settings. Returns the usable ones and a message for each
@@ -295,7 +352,7 @@ pub fn parse_hotkeys(
     (list, errors)
 }
 
-/// New hotkeys from the settings: unregister the old ones, register the new ones if the game is active.
+/// New hotkeys from the settings: unregister the ones that are gone, register the rest if the game is active.
 pub fn set_hotkeys(
     app: &AppHandle,
     config: &HashMap<HotkeyAction, Option<String>>,
@@ -305,13 +362,29 @@ pub fn set_hotkeys(
     let state = app.state::<AppState>();
     let reserved = copy_shortcut(&state.copy_keys());
     let (list, errors) = parse_hotkeys(config, commands, stash_presets, reserved);
-    let game_active = state.game_hwnd().is_some();
-    for (shortcut, _) in state.replace_hotkeys(list.clone()) {
-        set_registered(app, shortcut, false);
+    if platform::is_test_instance() {
+        let skipped: Vec<String> = list
+            .iter()
+            .filter(|(s, _)| !is_test_safe(s))
+            .map(|(s, _)| s.to_string())
+            .collect();
+        if !skipped.is_empty() {
+            log_to_ui(
+                app,
+                format!(
+                    "[test] not registered, only F13–F24 are: {}",
+                    skipped.join(", ")
+                ),
+            );
+        }
     }
-    for (shortcut, _) in list {
-        set_registered(app, shortcut, game_active);
+    let old = state.replace_hotkeys(list.clone());
+    let removed = removed_shortcuts(&old, &list);
+    for shortcut in &removed {
+        state.set_hotkey_failed(*shortcut, false);
     }
+    set_registered(app, removed, false);
+    sync_game_hotkeys(app);
     errors
 }
 
@@ -377,7 +450,15 @@ fn check_item(app: &AppHandle, shortcut: &Shortcut, action: HotkeyAction) {
 
     let cursor = platform::cursor_pos();
     let started = Instant::now();
-    let result = clipboard::read_item_text(ITEM_FIRST_LINES, || press_copy_keys(app, shortcut));
+    // A test instance takes the text the test gave (`test_trigger`): the copy keys would go to
+    // the user's game and the clipboard is the user's.
+    let result = if platform::is_test_instance() {
+        state
+            .take_test_item_text()
+            .ok_or_else(|| "[test] no item text given".to_string())
+    } else {
+        clipboard::read_item_text(ITEM_FIRST_LINES, || press_copy_keys(app, shortcut))
+    };
     let elapsed_ms = started.elapsed().as_millis();
     state.end_check();
 
@@ -463,6 +544,49 @@ mod tests {
         );
         assert!(matches!(&list[2],
             (s, Binding::Chat(c)) if *s == Shortcut::new(None, Code::F5) && c.text == "/hideout"));
+    }
+
+    #[test]
+    fn a_test_instance_registers_only_f13_to_f24() {
+        assert!(is_test_safe(
+            &Shortcut::from_str("Ctrl+Alt+Shift+F20").unwrap()
+        ));
+        assert!(is_test_safe(&Shortcut::from_str("F13").unwrap()));
+        assert!(!is_test_safe(&Shortcut::from_str("Ctrl+KeyD").unwrap()));
+        assert!(!is_test_safe(&Shortcut::from_str("F12").unwrap()));
+        assert!(!is_test_safe(&Shortcut::from_str("Shift+Space").unwrap()));
+    }
+
+    #[test]
+    fn keeps_unchanged_hotkeys_registered_when_settings_change() {
+        let old = config(&[
+            (HotkeyAction::PriceCheck, Some("Ctrl+KeyD")),
+            (HotkeyAction::ItemCheck, Some("Alt+KeyD")),
+        ]);
+        let new = config(&[
+            (HotkeyAction::PriceCheck, Some("Ctrl+KeyD")),
+            (HotkeyAction::ItemCheck, Some("Alt+KeyE")),
+        ]);
+        let (old, _) = parse_hotkeys(&old, &[], &[], None);
+        let (new, _) = parse_hotkeys(&new, &[], &[], None);
+        let removed = removed_shortcuts(&old, &new);
+        assert_eq!(removed, vec![Shortcut::from_str("Alt+KeyD").unwrap()]);
+    }
+
+    #[test]
+    fn parses_the_settings_hotkey() {
+        let (list, errors) = parse_hotkeys(
+            &config(&[(HotkeyAction::Settings, Some("Shift+Space"))]),
+            &[],
+            &[],
+            None,
+        );
+        assert!(errors.is_empty());
+        assert_eq!(
+            list[0].0,
+            Shortcut::new(Some(Modifiers::SHIFT), Code::Space)
+        );
+        assert!(matches!(list[0].1, Binding::Item(HotkeyAction::Settings)));
     }
 
     #[test]

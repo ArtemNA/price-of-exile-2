@@ -1,8 +1,8 @@
 //! All WinAPI calls live here, so other modules stay platform-agnostic.
 
 use std::path::PathBuf;
-use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, AtomicIsize, AtomicU32, Ordering};
+use std::sync::{Mutex, OnceLock};
 
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Gdi::{ClientToScreen, MONITOR_DEFAULTTONEAREST, MonitorFromWindow};
@@ -20,8 +20,8 @@ use windows::Win32::UI::Shell::{
     SHQueryUserNotificationState,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    BringWindowToTop, CallNextHookEx, DispatchMessageW, EVENT_SYSTEM_FOREGROUND, GWL_EXSTYLE,
-    GetClientRect, GetCursorPos, GetForegroundWindow, GetMessageW, GetWindowLongPtrW,
+    BringWindowToTop, CallNextHookEx, DispatchMessageW, EVENT_SYSTEM_FOREGROUND, FindWindowW,
+    GWL_EXSTYLE, GetClientRect, GetCursorPos, GetForegroundWindow, GetMessageW, GetWindowLongPtrW,
     GetWindowRect, GetWindowTextW, GetWindowThreadProcessId, HC_ACTION, HWND_TOPMOST,
     KBDLLHOOKSTRUCT, MSG, MSLLHOOKSTRUCT, SW_HIDE, SWP_NOACTIVATE, SWP_SHOWWINDOW,
     SetForegroundWindow, SetWindowLongPtrW, SetWindowPos, SetWindowsHookExW, ShowWindow,
@@ -84,7 +84,36 @@ fn foreground_info(raw: RawHwnd) -> ForegroundInfo {
 }
 
 pub fn current_foreground() -> ForegroundInfo {
+    if is_test_instance() {
+        return foreground_info(*TEST_FOREGROUND.lock().unwrap());
+    }
     foreground_info(unsafe { GetForegroundWindow() }.0 as RawHwnd)
+}
+
+/// A test instance (`ENV_TEST_INSTANCE`) runs on a hidden desktop next to a user who may be
+/// playing: it sends no input, takes no focus and installs no keyboard or mouse hooks, and the
+/// window "in front" is whatever the test says (`set_test_foreground`), since on a hidden
+/// desktop GetForegroundWindow is always 0 (FINDINGS F-37).
+static TEST_INSTANCE: AtomicBool = AtomicBool::new(false);
+static TEST_FOREGROUND: Mutex<RawHwnd> = Mutex::new(0);
+
+pub fn set_test_instance() {
+    TEST_INSTANCE.store(true, Ordering::SeqCst);
+}
+pub fn is_test_instance() -> bool {
+    TEST_INSTANCE.load(Ordering::SeqCst)
+}
+/// Test instance only: the window `current_foreground` reports.
+pub fn set_test_foreground(raw: RawHwnd) {
+    *TEST_FOREGROUND.lock().unwrap() = raw;
+}
+
+/// The top-level window with exactly this title on our desktop, if any.
+pub fn find_window(title: &str) -> Option<RawHwnd> {
+    let wide: Vec<u16> = title.encode_utf16().chain([0]).collect();
+    unsafe { FindWindowW(None, windows::core::PCWSTR(wide.as_ptr())) }
+        .ok()
+        .map(|h| h.0 as RawHwnd)
 }
 
 static FOREGROUND_CB: OnceLock<Box<dyn Fn(ForegroundInfo) + Send + Sync>> = OnceLock::new();
@@ -106,6 +135,10 @@ unsafe extern "system" fn on_win_event(
 /// Calls `cb` every time the foreground window changes.
 /// The hook needs a message loop, so it runs on its own thread.
 pub fn watch_foreground(cb: impl Fn(ForegroundInfo) + Send + Sync + 'static) {
+    // A test instance would see the user's desktop switching windows: the test drives it instead.
+    if is_test_instance() {
+        return;
+    }
     if FOREGROUND_CB.set(Box::new(cb)).is_err() {
         return;
     }
@@ -200,6 +233,10 @@ unsafe extern "system" fn on_keyboard(code: i32, wparam: WPARAM, lparam: LPARAM)
 /// Esc via a low-level keyboard hook rather than RegisterHotKey: such a common key
 /// is often already taken by other software. `cb` must return quickly.
 pub fn watch_escape(cb: impl Fn() + Send + Sync + 'static) {
+    // A low-level hook sees the user's keys and clicks on every desktop.
+    if is_test_instance() {
+        return;
+    }
     if ESCAPE_CB.set(Box::new(cb)).is_err() {
         return;
     }
@@ -257,6 +294,10 @@ unsafe extern "system" fn on_mouse(code: i32, wparam: WPARAM, lparam: LPARAM) ->
 /// Mouse button presses while enabled (`set_click_watch_enabled`): `cb` gets the screen point and
 /// returns true to swallow the click (press and release). `cb` must return quickly.
 pub fn watch_clicks(cb: impl Fn(Point) -> bool + Send + Sync + 'static) {
+    // A low-level hook sees the user's keys and clicks on every desktop.
+    if is_test_instance() {
+        return;
+    }
     if CLICK_CB.set(Box::new(cb)).is_err() {
         return;
     }
@@ -359,6 +400,11 @@ pub enum KeyAction {
 const EXTENDED_KEYS: [u16; 10] = [0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x2D, 0x2E];
 
 pub fn send_keys(actions: &[KeyAction]) {
+    // SendInput types into the user's active window, whatever desktop we are on.
+    if is_test_instance() {
+        log::info!("[test] {} key events not sent", actions.len());
+        return;
+    }
     let inputs: Vec<INPUT> = actions
         .iter()
         .map(|action| {
@@ -421,6 +467,9 @@ pub fn set_no_activate(raw: RawHwnd, enabled: bool) {
 /// window does not count), so our thread briefly shares input with the current foreground
 /// window's thread, which lifts that restriction.
 pub fn focus(raw: RawHwnd) -> bool {
+    if is_test_instance() {
+        return current_foreground().hwnd == raw;
+    }
     unsafe {
         let target = hwnd(raw);
         let foreground = GetForegroundWindow();

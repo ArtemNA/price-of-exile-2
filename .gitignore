@@ -48,3 +48,4 @@ Thumbs.db
 
 # Upstream clones (EE2, APT) for porting and diffs
 /_upstream/
+/CLAUDE.md

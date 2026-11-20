@@ -15,6 +15,10 @@ pub struct AppState {
     game_title_fixed: bool,
     /// Hotkeys from the settings and what they do.
     hotkeys: Mutex<Vec<(Shortcut, Binding)>>,
+    /// Hotkeys whose registration failed (another app holds them); logged once, retried by the watchdog.
+    failed_hotkeys: Mutex<Vec<Shortcut>>,
+    /// Test instance: the item text the next check takes instead of copying it.
+    test_item_text: Mutex<Option<String>>,
     /// Foreground game window, 0 when the game is not active.
     game_hwnd: AtomicIsize,
     popup_hwnd: AtomicIsize,
@@ -43,6 +47,8 @@ impl AppState {
             game_title_fixed: env_title.is_some(),
             game_title: Mutex::new(env_title.unwrap_or_else(|| DEFAULT_GAME_TITLE.into())),
             hotkeys: Mutex::new(Vec::new()),
+            failed_hotkeys: Mutex::new(Vec::new()),
+            test_item_text: Mutex::new(None),
             game_hwnd: AtomicIsize::new(0),
             popup_hwnd: AtomicIsize::new(0),
             popup_visible: AtomicBool::new(false),
@@ -98,6 +104,23 @@ impl AppState {
     /// Returns the previous list.
     pub fn replace_hotkeys(&self, list: Vec<(Shortcut, Binding)>) -> Vec<(Shortcut, Binding)> {
         std::mem::replace(&mut *self.hotkeys.lock().unwrap(), list)
+    }
+    pub fn set_test_item_text(&self, text: String) {
+        *self.test_item_text.lock().unwrap() = Some(text);
+    }
+    pub fn take_test_item_text(&self) -> Option<String> {
+        self.test_item_text.lock().unwrap().take()
+    }
+    /// Records whether registering `shortcut` failed; returns true when that changed (log it then).
+    pub fn set_hotkey_failed(&self, shortcut: Shortcut, failed: bool) -> bool {
+        let mut list = self.failed_hotkeys.lock().unwrap();
+        let known = list.contains(&shortcut);
+        if failed && !known {
+            list.push(shortcut);
+        } else if !failed && known {
+            list.retain(|s| *s != shortcut);
+        }
+        failed != known
     }
     pub fn is_game_window(&self, title: &str) -> bool {
         *self.game_title.lock().unwrap() == title

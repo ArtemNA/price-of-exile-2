@@ -44,6 +44,13 @@ pub const POE_PANEL_WIDTH_RATIO: f64 = 986.0 / 1600.0;
 pub const ENV_GAME_TITLE: &str = "POE_GAME_TITLE";
 /// Dev: `=1` keeps the popup open when the game loses focus (needed for screenshots).
 pub const ENV_KEEP_POPUP: &str = "POE_KEEP_POPUP";
+/// Dev, debug builds only: `=1` makes a test instance for a hidden desktop (`platform::is_test_instance`):
+/// no input sent, no focus taken, no keyboard or mouse hooks, no tray icon, hotkeys F13–F24 only.
+pub const ENV_TEST_INSTANCE: &str = "POE_TEST_INSTANCE";
+/// Dev, test instance: a file of commands the app reads and deletes (`test_trigger`).
+pub const ENV_TEST_TRIGGER: &str = "POE_TEST_TRIGGER";
+/// How often a test instance looks for the command file.
+pub const TEST_TRIGGER_PERIOD: Duration = Duration::from_millis(50);
 
 /// Debug builds must run under the dev identifier (`npm run dev`, `tauri.dev.conf.json`), so their
 /// settings file, WebView data and log never touch those of an installed release.
@@ -118,6 +125,11 @@ pub const STASH_SEARCH_FOCUS_DELAY: Duration = Duration::from_millis(60);
 /// Clipboard polling after Ctrl+C (APT `HostClipboard`: 48 ms × up to 500 ms).
 pub const CLIPBOARD_POLL_DELAY: Duration = Duration::from_millis(48);
 pub const CLIPBOARD_POLL_LIMIT: Duration = Duration::from_millis(500);
+
+/// How often (4× a second: one GetForegroundWindow and one GetWindowText) the foreground watchdog
+/// compares the window in front with what the app believes (a missed foreground event or a hotkey
+/// another app held left the price check dead until the next alt-tab).
+pub const FOREGROUND_WATCHDOG_PERIOD: Duration = Duration::from_millis(250);
 
 /// Second attempt to give the keyboard back to the game if the first one was intercepted.
 pub const FOCUS_RETRY_DELAY: Duration = Duration::from_millis(150);

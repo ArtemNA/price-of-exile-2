@@ -63,6 +63,7 @@ const HOTKEYS: Array<{ action: HotkeyAction; label: string; hint: string }> = [
   { action: 'stash-search', label: 'Find in stash', hint: 'Types the item name into the stash search' },
   { action: 'stash-panel', label: 'Stash search presets', hint: 'Buttons with your stash searches, between the stash and the inventory' },
   { action: 'browser', label: 'Built-in browser', hint: 'Shows pathofexile.com; pressed again in the browser, back to the game' },
+  { action: 'settings', label: 'Open settings', hint: 'This window, from the game' },
 ];
 
 /** How the copy keys' source reads after the keys ("Ctrl + Alt + C — from the game's settings"). */

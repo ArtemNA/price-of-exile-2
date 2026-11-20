@@ -455,7 +455,7 @@ export const DEV_IDENTIFIER_SUFFIX = '.dev';
 export const DEFAULT_GAME_TITLE = 'Path of Exile 2';
 
 /** What a hotkey does: open a check of the hovered item, or act on it without the popup. */
-export const HOTKEY_ACTIONS = ['price-check', 'item-check', 'wiki', 'poedb', 'craft-of-exile', 'stash-search', 'stash-panel', 'browser'] as const;
+export const HOTKEY_ACTIONS = ['price-check', 'item-check', 'wiki', 'poedb', 'craft-of-exile', 'stash-search', 'stash-panel', 'browser', 'settings'] as const;
 export type HotkeyAction = (typeof HOTKEY_ACTIONS)[number];
 
 /** Hotkeys in `tauri-plugin-global-shortcut` format (modifiers + `KeyboardEvent.code`); null = none. */
@@ -473,6 +473,8 @@ export const DEFAULT_HOTKEYS: Record<HotkeyAction, string | null> = {
   'stash-panel': 'Alt+KeyF',
   /** The built-in browser ↔ the game; none by default. */
   browser: null,
+  /** Opens the settings window from the game: APT and EE2 open their overlay with Shift+Space. */
+  settings: 'Shift+Space',
 };
 
 /** Stash search presets (EE2 `WidgetStashSearch.vue defaultInstances`). */

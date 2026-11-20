@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- The price check hotkey no longer stays dead until the next alt-tab: the overlay checks the window in front four times a second and registers again a hotkey another app held (e.g. Exiled Exchange 2 with the same key).
+- Shift+Space opens the settings from the game (Settings → Hotkeys → Open settings).
+
 ## v0.0.2
 
 - Self-update: the installed overlay checks for a new version when it starts and installs it right away (Settings → About → "Install new versions automatically", on by default), so the restart never comes in the middle of a game. A version found later while you play is only announced in the corner of the screen. The portable exe only announces new versions.
