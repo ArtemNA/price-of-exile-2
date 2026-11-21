@@ -5,6 +5,7 @@
 - Number fields keep their number when you click into them, and Backspace erases it digit by digit; clear a stat's minimum or maximum to search without that bound.
 - A price check opened right after a map check no longer comes up squeezed, and the map check no longer flashes a scrollbar as it opens.
 - Thin scrollbars in the theme's colour.
+- The Graphite and EE2 price check could stay at the default size instead of the game's height, cutting off the listings.
 
 ## v0.0.6
 

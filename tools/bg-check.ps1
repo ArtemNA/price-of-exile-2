@@ -468,6 +468,23 @@ if ([X.H]::RegisterHotKey([IntPtr]::Zero, 1, $MODS, $F20)) { Start-Sleep -Second
     $p = Shot $main.Hwnd "$shotPrefix-settings-map-check"; Write-Host "  $p"
   }
 
+  # 10. A full-height theme's price check is as tall as the game whether the popup was hidden before
+  # it or still shown (PoE1 0.1.24: the text went to the page before the popup was shown, and the
+  # page's one size request per item was lost or overwritten by the default size).
+  if ($ee2Layout) {
+    $gr = New-Object BgCheck.Win+RECT; [void][BgCheck.Win]::GetClientRect($gameWin.Hwnd, [ref]$gr); $gameHeight = $gr.B - $gr.T
+    $n10 = LogCount
+    $tall = foreach ($i in 1..8) {
+      if ($i % 2) { Send @('click popup .ee2-titlebar-close'); Start-Sleep -Milliseconds 500 }
+      $vis = [BgCheck.Win]::IsWindowVisible((Windows | Where-Object { $_.Title -like 'Price of Exile 2*popup' } | Select-Object -First 1).Hwnd)
+      Send @("front $game", "item $(if ($i % 3) { $itemFile } else { $bow })", "hotkey $($keys.price)"); Start-Sleep -Milliseconds 1500
+      "$(if ($vis) { 'shown' } else { 'hidden' }):$(PopupHeight)"
+    }
+    $short = @($tall | Where-Object { [int]($_ -split ':')[1] -lt 0.9 * $gameHeight })
+    $lost = @(NewLog | Select-Object -Skip $n10 | Where-Object { $_ -match '\[fit\] ignored a size while the popup is hidden' }).Count
+    Check 'full-height price check: as tall as the game, popup hidden or shown before it' ($short.Count -eq 0 -and $lost -eq 0 -and @($tall -match '^hidden').Count -gt 0 -and @($tall -match '^shown').Count -gt 0) "game $gameHeight; before:height $($tall -join ','); sizes ignored while hidden: $lost"
+  }
+
   # The user may switch windows meanwhile: what matters is that none of ours came to the front.
   $front = [BgCheck.Win]::GetForegroundWindow(); $frontPid = 0; [void][BgCheck.Win]::GetWindowThreadProcessId($front, [ref]$frontPid)
   Check 'no window of the test came to the front of the user' (-not ($procs | Where-Object { $_.Id -eq $frontPid })) "front pid $frontPid"

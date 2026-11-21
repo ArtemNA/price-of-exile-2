@@ -435,8 +435,9 @@ fn open_stash_panel(app: &AppHandle) {
         game_rect,
         elapsed_ms: 0,
     };
-    let _ = app.emit_to(POPUP_WINDOW, "item-text", payload);
+    // Show first, then send the text: see `check_item`.
     popup::show(app, game_rect, cursor, CheckTarget::StashSearch);
+    let _ = app.emit_to(POPUP_WINDOW, "item-text", payload);
 }
 
 fn check_item(app: &AppHandle, shortcut: &Shortcut, action: HotkeyAction) {
@@ -490,8 +491,11 @@ fn check_item(app: &AppHandle, shortcut: &Shortcut, action: HotkeyAction) {
         game_rect,
         elapsed_ms,
     };
-    let _ = app.emit_to(POPUP_WINDOW, "item-text", payload);
+    // Show first, then send the text. A full-height theme asks for its size once per item, as soon
+    // as the text arrives; a size that reached the host before `show` was dropped (popup hidden) or
+    // overwritten by `show`'s default size (popup shown), and the window stayed at that size.
     popup::show(app, game_rect, cursor, target);
+    let _ = app.emit_to(POPUP_WINDOW, "item-text", payload);
 }
 
 #[cfg(test)]

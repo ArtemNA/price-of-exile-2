@@ -500,6 +500,7 @@ pub fn fit(app: &AppHandle, asked: CheckTarget, width: f64, height: f64) -> &'st
         return "center";
     };
     if !state.popup_visible() {
+        log::info!("[fit] ignored a size while the popup is hidden");
         return "center";
     }
     let centred = state.popup_centred();
