@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.0.6
 
 - A new look, Graphite, is the default: Exiled Exchange 2's price check layout on a neutral dark gray with an ice-blue accent, so red, orange and green (map check rows, price drops, warnings) stand out. After this update every install starts once on it; the theme you pick afterwards stays, and all other settings are kept. Exiled Exchange 2's look and the earlier two-column look stay in Settings → Overlay → Theme.
 - A new app icon: a gold eye with a crimson "2", also in the settings, the price check and the start message.
