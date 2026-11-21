@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Number fields keep their number when you click into them, and Backspace erases it digit by digit; clear a stat's minimum or maximum to search without that bound.
+- A price check opened right after a map check no longer comes up squeezed, and the map check no longer flashes a scrollbar as it opens.
+- Thin scrollbars in the theme's colour.
+
 ## v0.0.6
 
 - A new look, Graphite, is the default: Exiled Exchange 2's price check layout on a neutral dark gray with an ice-blue accent, so red, orange and green (map check rows, price drops, warnings) stand out. After this update every install starts once on it; the theme you pick afterwards stays, and all other settings are kept. Exiled Exchange 2's look and the earlier two-column look stay in Settings → Overlay → Theme.

@@ -102,6 +102,14 @@ body {
   height: 100%;
 }
 
+/* Thin scrollbars in the theme's line colour everywhere (Windows' wide gray one looked out of place).
+   A list with its own ::-webkit-scrollbar style sets these back to auto (WebView2 ignores those
+   rules otherwise). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+
 /* The popup window is transparent; only its panel is painted. */
 html.popup,
 html.popup body {

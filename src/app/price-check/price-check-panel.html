@@ -623,7 +623,7 @@
         }
       </span>
     } @else if (stat.roll; as roll) {
-      <app-num-input [value]="rollValue(stat, 'min')" [decimals]="roll.dp" [label]="'Minimum' | tr"
+      <app-num-input data-test="roll-min" [value]="rollValue(stat, 'min')" [decimals]="roll.dp" [label]="'Minimum' | tr"
         (valueChange)="setRoll(stat, 'min', $event)" (submit)="runSearch()" />
       <app-num-input [value]="rollValue(stat, 'max')" [decimals]="roll.dp" [label]="'Maximum' | tr" [placeholder]="'max' | tr"
         (valueChange)="setRoll(stat, 'max', $event)" (submit)="runSearch()" />

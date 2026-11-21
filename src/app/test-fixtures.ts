@@ -21,8 +21,9 @@ export function testReport(text: string): void {
 }
 
 /** The saved answer for a trade search or fetch URL, or null to ask the site. */
-export function testTradeResponse(url: string): Response | null {
+export function testTradeResponse(url: string, init?: RequestInit): Response | null {
   if (!trade) return null;
+  if (url.includes('/api/trade2/search/')) testReport(`[test] search query ${String(init?.body)}`);
   const body = url.includes('/api/trade2/search/') ? trade.search : url.includes('/api/trade2/fetch/') ? trade.fetch : null;
   return body == null ? null : new Response(body, { status: 200, headers: { 'content-type': 'application/json' } });
 }

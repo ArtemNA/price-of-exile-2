@@ -657,7 +657,7 @@ export class PriceCheckPanel {
         this.item(); // a new item: the theme may want another width (related items or not)
         const width = this.themeWindowWidth(size.width);
         this.fitAsked.set(width);
-        void host.fitPopup(width, PRICE_CHECK_FULL_HEIGHT).then((side) => {
+        void host.fitPopup('price-check', width, PRICE_CHECK_FULL_HEIGHT).then((side) => {
           this.popupSide.set(side);
           this.windowSize.set({ width: window.innerWidth, height: window.innerHeight });
           this.fitDone.set(width);
@@ -681,7 +681,7 @@ export class PriceCheckPanel {
         const height = Math.min(PRICE_CHECK_MAX_HEIGHT, Math.max(PRICE_CHECK_MIN_HEIGHT, wanted));
         if (height === lastHeight) return;
         lastHeight = height;
-        void host.fitPopup(width, height).then((side) => this.popupSide.set(side));
+        void host.fitPopup('price-check', width, height).then((side) => this.popupSide.set(side));
       });
     };
     const observer = new MutationObserver(fit);

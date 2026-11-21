@@ -259,11 +259,12 @@ fn popup_release_focus(app: AppHandle) {
     popup::release_focus(&app, true);
 }
 
-/// The popup page asks for a size that fits its content, in logical pixels; returns the popup's
-/// side of the game ("left", "right", "center") for a theme laying things out beside its column.
+/// The popup page asks for a size that fits its content, in logical pixels, for the check it
+/// measured (`target`); returns the popup's side of the game ("left", "right", "center") for a
+/// theme laying things out beside its column.
 #[tauri::command]
-fn fit_popup(app: AppHandle, width: f64, height: f64) -> &'static str {
-    popup::fit(&app, width, height)
+fn fit_popup(app: AppHandle, target: hotkeys::CheckTarget, width: f64, height: f64) -> &'static str {
+    popup::fit(&app, target, width, height)
 }
 
 /// Exiled Exchange 2's settings file (`%APPDATA%\exiled-exchange-2\apt-data\config.json`), for the

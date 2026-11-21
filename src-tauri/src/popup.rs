@@ -486,7 +486,7 @@ pub fn show(app: &AppHandle, game: Rect, cursor: Point, target: CheckTarget) {
 /// The page measured its content (the map check grows with the mods): resize the shown popup to it,
 /// keeping its side and anchor. Ignored once the popup is hidden. Returns the side the popup is on
 /// (see `side`); "center" when there is nothing to fit.
-pub fn fit(app: &AppHandle, width: f64, height: f64) -> &'static str {
+pub fn fit(app: &AppHandle, asked: CheckTarget, width: f64, height: f64) -> &'static str {
     let Some(window) = app.get_webview_window(LABEL) else {
         return "center";
     };
@@ -502,8 +502,15 @@ pub fn fit(app: &AppHandle, width: f64, height: f64) -> &'static str {
     if !state.popup_visible() {
         return "center";
     }
-    let scale = game_scale(&state);
     let centred = state.popup_centred();
+    // The page measured a check other than the one now shown: a map check's content reflowing in
+    // the window just widened for a price check whose item text has not reached the page yet.
+    // Its height would squeeze the price check.
+    if asked != target {
+        log::info!("[fit] ignored a size for another check than the one shown ({asked:?}, shown {target:?})");
+        return side(game, cursor, target, centred);
+    }
+    let scale = game_scale(&state);
     place(
         &window,
         state.popup_hwnd(),

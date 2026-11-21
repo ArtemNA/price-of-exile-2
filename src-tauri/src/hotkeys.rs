@@ -77,7 +77,7 @@ pub struct StashHotkey {
 
 /// Which popup a hotkey opens: a check of the hovered item (APT `copy-item` targets) or the
 /// stash search panel.
-#[derive(Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum CheckTarget {
     PriceCheck,

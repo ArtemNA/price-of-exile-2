@@ -41,6 +41,8 @@ Add-Type -Name Win -Namespace BgCheck -MemberDefinition @'
 [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out int pid);
 [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
 [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint msg, IntPtr w, IntPtr l);
+[DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr FindWindowEx(IntPtr parent, IntPtr after, string cls, string title);
+[DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetClassName(IntPtr h, System.Text.StringBuilder s, int n);
 [DllImport("user32.dll")] public static extern bool RegisterHotKey(IntPtr h, int id, uint mods, uint vk);
 [DllImport("user32.dll")] public static extern bool UnregisterHotKey(IntPtr h, int id);
 [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr hdc, uint flags);
@@ -381,6 +383,89 @@ if ([X.H]::RegisterHotKey([IntPtr]::Zero, 1, $MODS, $F20)) { Start-Sleep -Second
     $found = (WaitLog "\[test\] text \[data-test=ee2-import-$part-text\]: " 3000 $n).Line -replace '^.*-text\]: ', ''
     $expected = if (-not (Test-Path $ee2Config)) { 'not found' } elseif ($part -eq 'stash') { '\d+\D+\d+' } else { '\d+' } # counts, in any UI language
     Check "import from EE2 ($part): the summary of what EE2 has" ($found -match $expected) "$found"
+  }
+
+  # 8. A number field (a stat's minimum) keeps its number on focus, and Backspace erases one digit
+  # (PoE1 0.1.24: a click blanked it and Backspace did nothing). Keys go to the page's window by
+  # PostMessage; if they do not reach it there, the page erases as Backspace does (test command).
+  $jewel = Join-Path $root 'tests\fixtures\items\jewel.txt'
+  $min = '[data-test=roll-min] input'
+  function FieldValue {
+    $n = LogCount
+    Send @("value popup $min")
+    $line = (WaitLog ('\[test\] value ' + [regex]::Escape($min) + ': ') 3000 $n).Line
+    if ($line -match ': "(.*)"$') { $Matches[1] } elseif ($line) { '<none>' }
+  }
+  function SearchQuery {
+    $n = LogCount
+    Send @('click popup [data-test=search]')
+    (WaitLog '\[test\] search query ' 4000 $n).Line
+  }
+  Popup $jewel
+  $before = FieldValue
+  Send @("focus popup $min"); Start-Sleep -Milliseconds 400
+  $focused = FieldValue
+  Check 'number field: keeps its number on focus' ($before -match '^\d' -and $focused -eq $before) "before '$before', focused '$focused'"
+  $pop = Windows | Where-Object { $_.Title -like 'Price of Exile 2*popup' } | Select-Object -First 1
+  # WebView2's page window, a few levels down: the one Chromium reads keys from.
+  function FindChild([IntPtr]$Parent, [string]$Class, [int]$Depth = 0) {
+    $child = [IntPtr]::Zero
+    while (($child = [BgCheck.Win]::FindWindowEx($Parent, $child, $null, $null)) -ne [IntPtr]::Zero) {
+      $sb = New-Object System.Text.StringBuilder 256; [void][BgCheck.Win]::GetClassName($child, $sb, 256)
+      if ($sb.ToString() -eq $Class) { return $child }
+      if ($Depth -lt 6) { $found = FindChild $child $Class ($Depth + 1); if ($found -ne [IntPtr]::Zero) { return $found } }
+    }
+    [IntPtr]::Zero
+  }
+  $widget = if ($pop) { FindChild $pop.Hwnd 'Chrome_RenderWidgetHostHWND' } else { [IntPtr]::Zero }
+  if ($widget -ne [IntPtr]::Zero) {
+    [void][BgCheck.Win]::PostMessage($widget, 0x100, [IntPtr]0x08, [IntPtr]0x000E0001) # WM_KEYDOWN VK_BACK
+    [void][BgCheck.Win]::PostMessage($widget, 0x102, [IntPtr]0x08, [IntPtr]0x000E0001) # WM_CHAR
+    [void][BgCheck.Win]::PostMessage($widget, 0x101, [IntPtr]0x08, [IntPtr]([int64]0xC00E0001)) # WM_KEYUP
+    Start-Sleep -Milliseconds 400
+  }
+  $posted = FieldValue
+  $byKey = $posted -ne $focused
+  if (-not $byKey) { Send @("erase popup $min"); Start-Sleep -Milliseconds 400 }
+  $erased = FieldValue
+  $how = if ($byKey) { 'Backspace by PostMessage' } else { "PostMessage did not reach the page (widget $widget), erased by the page" }
+  Check 'number field: Backspace erases one digit' ($focused.Length -gt 0 -and $erased -eq $focused.Substring(0, [Math]::Max(0, $focused.Length - 1))) "$how; '$focused' -> '$erased'"
+  foreach ($i in 1..6) { if ((FieldValue) -ne '') { Send @("erase popup $min"); Start-Sleep -Milliseconds 200 } }
+  $empty = FieldValue
+  # One search only, after the edit: a search with the saved answers keeps fetching for a while,
+  # and a click meanwhile does nothing. Editing a stat's range turns its filter on; the first field
+  # is the first stat filter of the query.
+  $query = SearchQuery
+  $first = if ($query -match '"filters":\[(\{[^{}]*(\{[^{}]*\})?[^{}]*\})') { $Matches[1] } else { '<no query>' }
+  Check 'number field: erased to nothing, the search goes without that bound' ($empty -eq '' -and $first -match '"id"' -and $first -notmatch '"min"' -and $first -notmatch '"disabled":true') "field '$empty'; first stat filter $first"
+
+  # 9. A price check right after a map check is as tall as any price check (PoE1 0.1.24: the map
+  # check's late size squeezed it), and the fitted map check has its scrollbar back.
+  $waystone = Join-Path $root 'tests\fixtures\items\waystone.txt'
+  function PopupHeight {
+    $w = Windows | Where-Object { $_.Title -like 'Price of Exile 2*popup' } | Select-Object -First 1
+    $r = New-Object BgCheck.Win+RECT; if ($w) { [void][BgCheck.Win]::GetWindowRect($w.Hwnd, [ref]$r) }; $r.B - $r.T
+  }
+  Popup $itemFile
+  $normal = PopupHeight
+  $n9 = LogCount
+  $heights = foreach ($i in 1..7) {
+    Send @("front $game", "item $waystone", "hotkey $($keys.item)"); Start-Sleep -Milliseconds (150 + 100 * $i)
+    Send @("item $itemFile", "hotkey $($keys.price)"); Start-Sleep -Milliseconds 1800
+    PopupHeight
+  }
+  $ignored = @(NewLog | Select-Object -Skip $n9 | Where-Object { $_ -match '\[fit\] ignored' }).Count
+  Check 'price check after a map check: full size every time' (@($heights | Where-Object { [Math]::Abs($_ - $normal) -gt 2 }).Count -eq 0) "normal $normal; after a map check $($heights -join ','); '[fit] ignored' lines: $ignored"
+  $n = LogCount
+  Send @("front $game", "item $waystone", "hotkey $($keys.item)"); Start-Sleep -Milliseconds 1500
+  Send @('rect popup .overflow-hidden.flex-1', 'rect popup .overflow-y-auto.flex-1')
+  $hiddenLine = (WaitLog 'rect \.overflow-hidden\.flex-1: ' 3000 $n).Line
+  $autoLine = (WaitLog 'rect \.overflow-y-auto\.flex-1: ' 3000 $n).Line
+  Check 'map check: scrolls again once fitted' ($hiddenLine -match 'no such element' -and $autoLine -match ': -?\d') "$hiddenLine | $autoLine"
+  PopupShot "$shotPrefix-map-check"
+  if ($main) {
+    Send @('click main [data-test=section-map-check]'); Start-Sleep -Milliseconds 800
+    $p = Shot $main.Hwnd "$shotPrefix-settings-map-check"; Write-Host "  $p"
   }
 
   # The user may switch windows meanwhile: what matters is that none of ours came to the front.

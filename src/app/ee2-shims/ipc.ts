@@ -15,7 +15,7 @@ interface UserActionEvent {
 export const Host = {
   /** `url` is host + path without the scheme, e.g. `www.pathofexile.com/api/trade2/search/Standard`. */
   proxy: (url: string, init?: RequestInit): Promise<Response> => {
-    const saved = testTradeResponse(url);
+    const saved = testTradeResponse(url, init);
     return saved ? Promise.resolve(saved) : poeFetch(`https://${url}`, init);
   },
   /**

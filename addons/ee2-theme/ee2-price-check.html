@@ -393,7 +393,7 @@
           }
           @if (stat.roll && !stat.oils) {
             <div class="ee2-roll-inputs flex gap-x-px">
-              <app-num-input [value]="rollValue(stat, 'min')" [decimals]="stat.roll.dp" [label]="'Minimum' | tr" [placeholder]="'min' | tr"
+              <app-num-input data-test="roll-min" [value]="rollValue(stat, 'min')" [decimals]="stat.roll.dp" [label]="'Minimum' | tr" [placeholder]="'min' | tr"
                 (valueChange)="setRoll(stat, 'min', $event)" (submit)="runSearch()" />
               <app-num-input [value]="rollValue(stat, 'max')" [decimals]="stat.roll.dp" [label]="'Maximum' | tr" [placeholder]="'max' | tr"
                 (valueChange)="setRoll(stat, 'max', $event)" (submit)="runSearch()" />

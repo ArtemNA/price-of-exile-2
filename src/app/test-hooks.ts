@@ -31,6 +31,31 @@ export async function installTestHooks(): Promise<void> {
     const { left, top, right, bottom } = element.getBoundingClientRect();
     void log(`[test] rect ${payload}: ${[left, top, right, bottom].map(Math.round).join(' ')}`);
   });
+  // A field's own text ("[test] value <selector>: <text>"), focus on it, and an erase as Backspace
+  // makes it (`execCommand('delete')` edits the field and fires `input` as a key would): real keys
+  // reach a window on a hidden desktop only through PostMessage, which the test tries first.
+  const field = (selector: string) => document.querySelector<HTMLInputElement>(selector);
+  await current.listen<string>('test-value', ({ payload }) => {
+    const element = field(payload);
+    void log(`[test] value ${payload}: ${element ? JSON.stringify(element.value) : 'no such element'}`);
+  });
+  await current.listen<string>('test-focus', ({ payload }) => {
+    const element = field(payload);
+    if (!element) return void log(`[test] focus ${payload}: no such element`);
+    // A window on a hidden desktop never has the system focus, and then Chromium moves the focus
+    // without a `focus` event: send the one a click would give, as `hover` sends the mouse's.
+    let heard = false;
+    element.addEventListener('focus', () => (heard = true), { once: true });
+    element.focus();
+    if (!heard) element.dispatchEvent(new FocusEvent('focus'));
+    element.setSelectionRange(element.value.length, element.value.length);
+    void log(`[test] focus ${payload}: ${heard ? 'focus event from the page' : 'no focus event (window not focused), sent one'}`);
+  });
+  await current.listen<string>('test-erase', ({ payload }) => {
+    const element = field(payload);
+    if (!element) return void log(`[test] erase ${payload}: no such element`);
+    document.execCommand('delete');
+  });
   // The pointer over an element: what a real one sends, with Shift held or not (the mouse events
   // carry the modifier state, as Windows' own do).
   const pointer = (types: string[], shiftKey: boolean) => (selector: string) => {

@@ -35,6 +35,11 @@ import { ItemView, lacksModDetails, toItemView } from './item-view';
 })
 export class PopupWindow {
   protected readonly target = signal<CheckTarget>('price-check');
+  /**
+   * The window is still at the host's default size until the first fit: no scrollbar then, or it
+   * flashes for a frame while the content does not fit yet.
+   */
+  protected readonly fitting = signal(false);
   protected readonly parsed = signal<ParsedItem | null>(null);
   protected readonly item = signal<ItemView | null>(null);
   protected readonly error = signal<string | null>(null);
@@ -122,6 +127,7 @@ export class PopupWindow {
       this.error.set(null);
       this.languageMismatch.set(null);
       this.target.set(payload.target);
+      this.fitting.set(payload.target !== 'price-check');
       void this.leagues.refreshIfOld();
       if (payload.target === 'stash-search') {
         afterNextRender(() => this.fit(), { injector: this.injector });
@@ -130,6 +136,7 @@ export class PopupWindow {
       try {
         await dataReady;
       } catch {
+        this.fitting.set(false);
         return;
       }
       const result = parseClipboard(payload.text);
@@ -187,10 +194,14 @@ export class PopupWindow {
   private fit(): void {
     const content = this.fitContent()?.nativeElement;
     const section = content?.closest('section');
-    if (!content || !section || this.target() === 'price-check') return;
+    if (!content || !section || this.target() === 'price-check') return this.fitting.set(false);
     const chrome = section.offsetHeight - (content.parentElement?.clientHeight ?? 0);
     const width = this.target() === 'stash-search' ? STASH_PANEL_WIDTH : this.mapCheck() ? MAP_CHECK_WIDTH : ITEM_CHECK_WIDTH;
-    void host.fitPopup(width, Math.ceil(content.offsetHeight + chrome));
+    // Scrolling comes back once the window has its new size (two frames: resize, then layout).
+    void host
+      .fitPopup(this.target(), width, Math.ceil(content.offsetHeight + chrome))
+      .catch(() => undefined)
+      .finally(() => requestAnimationFrame(() => requestAnimationFrame(() => this.fitting.set(false))));
   }
 
   /** A click outside the number fields ends typing: keyboard back to the game (no-op otherwise). */

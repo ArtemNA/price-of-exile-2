@@ -412,7 +412,12 @@
   border: 4px solid var(--ee2-300);
 }
 
-/* Scrollbars of App.vue */
+/* Scrollbars of App.vue: the app-wide thin scrollbar (styles.css) set back to auto, or WebView2
+   ignores these ::-webkit-scrollbar rules. */
+.ee2-price-check .ee2-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
 .ee2-price-check .ee2-scroll::-webkit-scrollbar {
   width: 0.875rem;
 }

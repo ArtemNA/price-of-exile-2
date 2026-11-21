@@ -120,8 +120,11 @@ export const host = {
   /**
    * Resizes the shown popup to its content (logical pixels), keeping its side and anchor; a price
    * check height of PRICE_CHECK_FULL_HEIGHT or more takes the whole game height. Returns the side.
+   * `target` is the check that was measured: the host ignores a size for another check than the one
+   * it shows (a map check reflowing in a window just widened for a price check).
    */
-  fitPopup: (width: number, height: number) => invoke<PopupSide>('fit_popup', { width, height }),
+  fitPopup: (target: CheckTarget, width: number, height: number) =>
+    invoke<PopupSide>('fit_popup', { target, width, height }),
   /** The corner message (the start message unless given another), for a few seconds. */
   showToast: (message?: ToastMessage) => invoke<void>('show_toast', { message: message ?? null }),
   /** What the toast should show now (its page may load after it was asked). */

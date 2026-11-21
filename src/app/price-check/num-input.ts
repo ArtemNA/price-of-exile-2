@@ -8,6 +8,11 @@ import { host } from '../host';
  * not on blur: WebView2 fires blur events of its own while the window activates.
  * ↑ ↓ step by 1 (0.1 for decimals), Shift ×10; Enter searches; the mouse wheel also steps.
  */
+/** The field's text for a value: empty for none. */
+export function numText(value: number | '' | undefined): string {
+  return typeof value === 'number' ? String(value) : '';
+}
+
 @Component({
   selector: 'app-num-input',
   template: `
@@ -20,7 +25,7 @@ import { host } from '../host';
       [value]="shown()"
       class="h-5 w-10 border border-line-strong bg-well px-1 text-right text-xs text-bright tabular-nums outline-none placeholder:text-muted/70 focus:border-gold focus:shadow-[0_0_0_2px_var(--color-focus-ring)]"
       (mousedown)="takeFocus($event)"
-      (focus)="editing.set(true)"
+      (focus)="startEditing()"
       (input)="typed(field.value)"
       (keydown)="key($event)"
       (wheel)="wheel($event)"
@@ -40,11 +45,13 @@ export class NumInput {
   /** While typing, show the raw text ("0." stays "0."), not the parsed number. */
   protected readonly editing = signal(false);
   private readonly text = signal('');
-  protected readonly shown = computed(() => {
-    if (this.editing()) return this.text();
-    const value = this.value();
-    return typeof value === 'number' ? String(value) : '';
-  });
+  protected readonly shown = computed(() => (this.editing() ? this.text() : numText(this.value())));
+
+  /** Focus starts editing from the current number, so Backspace erases its digits (not blank or stale text). */
+  protected startEditing(): void {
+    this.text.set(numText(this.value()));
+    this.editing.set(true);
+  }
 
   protected takeFocus(event: MouseEvent): void {
     event.preventDefault();

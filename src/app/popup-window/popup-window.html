@@ -65,7 +65,7 @@
   }
 
   @if (target() === 'stash-search') {
-    <div class="min-h-0 flex-1 overflow-y-auto">
+    <div class="min-h-0 flex-1" [class.overflow-y-auto]="!fitting()" [class.overflow-hidden]="fitting()">
       <div #fitContent class="flex flex-col">
         <app-stash-panel />
       </div>
@@ -75,7 +75,7 @@
       <p class="flex-none border-b border-warn-line bg-warn-bg px-3 py-1.5 text-warn">{{ 'The game copied this item without its mod details, so its mods are missing here. Check the item copy keys in Settings → Hotkeys.' | tr }}</p>
     }
     @if (target() === 'item-check') {
-      <div class="min-h-0 flex-1 overflow-y-auto">
+      <div class="min-h-0 flex-1" [class.overflow-y-auto]="!fitting()" [class.overflow-hidden]="fitting()">
         <div #fitContent class="flex flex-col">
           @if (mapCheck()) {
             <app-map-check [item]="parsedItem" [view]="item()!" />
