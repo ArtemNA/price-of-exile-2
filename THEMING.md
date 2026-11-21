@@ -1,8 +1,16 @@
 # Theming Price of Exile 2
 
-Price of Exile 2 ships with two themes: its own and **Exiled Exchange 2** (`addons/ee2-theme`), picked
-in Settings → Overlay → Theme. Both are in every build; ours is the default. This page is for anyone
-who wants to make another one.
+Price of Exile 2 ships with three themes, picked in Settings → Overlay → Theme: **Graphite** (the default),
+**Exiled Exchange 2** (both in `addons/ee2-theme`) and the earlier two-column **Price of Exile 2** look.
+All are in every build. This page is for anyone who wants to make another one.
+
+Graphite and Exiled Exchange 2 are one layout with two palettes: the EE2 price check's own colours are
+variables (`--ee2-900` … `--ee2-200` for the gray scale, `--ee2-stripe` for odd listing rows,
+`--ee2-yellow` / `--ee2-yellow-ink` for tiers, optional `--ee2-tier1-bg` / `--ee2-tier2` when tier 1
+and tier 2 need their own shades, `--ee2-700-ink` for text on line-coloured tags), set under
+`html[data-theme='ee2']` and `html[data-theme='graphite']` in `addons/ee2-theme/theme.css`, and
+`GRAPHITE_THEME` is `EE2_THEME` with another id. A new palette for that layout is one more block of the
+same variables and one more such line in `theme.ts`.
 
 ## How a theme works
 

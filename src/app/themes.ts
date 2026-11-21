@@ -32,7 +32,8 @@ export interface Theme {
 
 export const BASE_THEME: Theme = { id: 'price-of-exile-2', label: 'Price of Exile 2' };
 
-export const THEMES: readonly Theme[] = [BASE_THEME, ...ADDON_THEMES];
+/** In Settings → Overlay → Theme: the addons first (the default among them), our older two-column look last. */
+export const THEMES: readonly Theme[] = [...ADDON_THEMES, BASE_THEME];
 
 /** The theme a fresh install starts with: an addon built in as the default, or ours. */
 export const DEFAULT_THEME = DEFAULT_THEME_ID ?? BASE_THEME.id;

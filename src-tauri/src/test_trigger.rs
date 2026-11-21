@@ -9,10 +9,13 @@
 //!                               RegisterHotKey: the same handler as a real press
 //!   click <window> <selector>   the page of that window (`popup`, `main`) clicks the element
 //!   text <window> <selector>    the page writes the elements' text into the log ("[test] text …")
+//!   rect <window> <selector>    the page writes where the element stands ("[test] rect …: left top right bottom")
 //!   hover <window> <selector>   the pointer enters the element (`mouseenter` + `mousemove` sent by the page)
 //!   hover-shift <window> <sel>  the same with Shift held (`shiftKey` of the mouse events)
 //!   unhover <window> <selector> the pointer leaves it (`mouseleave`)
 //!   trade <search.json> <fetch.json>  the popup takes these trade site answers instead of asking the site
+//!   backdrop <window> <file>    the page draws this picture (a `data:` URL in the file) under itself,
+//!                               where a real game would show through its transparent parts (screenshots)
 //! Each command is logged as "[test] <command>".
 
 use std::path::PathBuf;
@@ -65,7 +68,7 @@ fn run(app: &AppHandle, line: &str) -> Result<(), String> {
             let shortcut = Shortcut::from_str(arg).map_err(|e| e.to_string())?;
             hotkeys::on_hotkey(app, &shortcut);
         }
-        "click" | "text" | "hover" | "hover-shift" | "unhover" => {
+        "click" | "text" | "rect" | "hover" | "hover-shift" | "unhover" => {
             let (window, selector) = arg.split_once(' ').ok_or("expected: <window> <selector>")?;
             let event = format!("test-{command}");
             app.emit_to(window, &event, selector).map_err(|e| e.to_string())?;
@@ -75,6 +78,11 @@ fn run(app: &AppHandle, line: &str) -> Result<(), String> {
             let read = |path: &str| std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"));
             let payload = serde_json::json!({ "search": read(search)?, "fetch": read(fetch)? });
             app.emit_to(crate::constants::POPUP_WINDOW, "test-trade", payload).map_err(|e| e.to_string())?;
+        }
+        "backdrop" => {
+            let (window, path) = arg.split_once(' ').ok_or("expected: <window> <file>")?;
+            let url = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
+            app.emit_to(window, "test-backdrop", url.trim()).map_err(|e| e.to_string())?;
         }
         _ => return Err("unknown command".into()),
     }

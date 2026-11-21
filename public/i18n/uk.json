@@ -786,6 +786,14 @@
     "Hover": "Наведення",
     "Eye icon": "Значок ока",
     "Point at a listing (or its eye): its item as the game shows it, with mod tiers.": "Наведіть на лот (чи його око): його предмет, як у грі, з тирами модів.",
-    "Off": "Вимкнено"
+    "Off": "Вимкнено",
+    "Import from Exiled Exchange 2": "Імпорт з Exiled Exchange 2",
+    "Exiled Exchange 2 settings were not found on this computer.": "Налаштування Exiled Exchange 2 на цьому комп'ютері не знайдено.",
+    "Exiled Exchange 2 has no stash search groups.": "В Exiled Exchange 2 немає груп пошуку в схованці.",
+    "Exiled Exchange 2 has no map check settings.": "В Exiled Exchange 2 немає налаштувань перевірки мап.",
+    "Found {0} groups with {1} searches. They replace yours.": "Знайдено груп: {0}, пошуків: {1}. Вони замінять ваші.",
+    "Found {0} marked map mods (profile {1}). They replace yours.": "Знайдено позначених модів мап: {0} (профіль {1}). Вони замінять ваші.",
+    "Replace": "Замінити",
+    "Cancel": "Скасувати"
   }
 }

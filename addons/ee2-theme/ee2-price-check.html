@@ -10,7 +10,7 @@
 <div class="ee2-column flex min-h-0 w-[460px] flex-none flex-col">
 <ee2-title-bar />
 
-<div class="ee2-body relative flex min-h-0 grow flex-col bg-[#2d3748]">
+<div class="ee2-body relative flex min-h-0 grow flex-col bg-(--ee2-800)">
   @if (warning(); as note) {
     <div class="mx-4 mt-4">
       <ng-container *ngTemplateOutlet="errorBox; context: { name: 'Copied without mod details' | tr, text: note }" />
@@ -26,14 +26,14 @@
     <div class="flex min-h-0 grow flex-col p-4">
       <!-- Name bar (FilterName.vue) -->
       <div class="ee2-filter-name">
-        <button class="truncate rounded border px-2" [class]="nameExact() ? 'border-[#a0aec0]' : 'border-[#1a202c]'"
+        <button class="truncate rounded border px-2" [class]="nameExact() ? 'border-(--ee2-500)' : 'border-(--ee2-900)'"
           (click)="toggleNameAccuracy()">{{ nameLabel() }}</button>
         @if (preset.filters.corrupted) {
           <button class="px-2" (click)="toggleCorrupted()">
             @if (isCorrupted()) {
               <span class="text-[#f56565]">{{ 'item.corrupted' | t }}</span>
             } @else {
-              <span class="text-[#718096]">{{ 'item.not_corrupted' | t }}</span>
+              <span class="text-(--ee2-600)">{{ 'item.not_corrupted' | t }}</span>
             }
           </button>
         }
@@ -52,15 +52,15 @@
                   } @else if (trend.forecast === 'up') {
                     <ee2-icon name="angle-double-up" class="pr-1 text-[#48bb78]" />
                   } @else {
-                    <span class="ee2-sans pr-1 leading-none text-[#718096]">±</span>
+                    <span class="ee2-sans pr-1 leading-none text-(--ee2-600)">±</span>
                   }
                   <span>{{ trend.text }}</span>
                 </div>
-                <div class="text-xs leading-none text-[#a0aec0]">{{ 'trade_result.graph_7d' | t }}</div>
+                <div class="text-xs leading-none text-(--ee2-500)">{{ 'trade_result.graph_7d' | t }}</div>
               </div>
               <svg viewBox="0 0 48 32" class="h-8 w-12 overflow-visible" preserveAspectRatio="none">
-                <path [attr.d]="trend.path.area" fill="#4a5568" />
-                <path [attr.d]="trend.path.line" fill="none" stroke="#a0aec0" stroke-width="1" />
+                <path [attr.d]="trend.path.area" fill="var(--ee2-700)" />
+                <path [attr.d]="trend.path.line" fill="none" stroke="var(--ee2-500)" stroke-width="1" />
               </svg>
             </div>
           }
@@ -89,7 +89,7 @@
             <button class="ee2-chip flex items-center pr-2 pl-1" [class.ee2-chip-active]="chip.active" [class.cursor-default]="!chip.toggle" (click)="clickChip(chip)">
               <span class="pl-1">{{ chip.text }}</span>
               @if (chip.key === 'stats' && statsFolded()) {
-                <ee2-icon name="chevron-down" class="pl-2 text-xs text-[#cbd5e0]" />
+                <ee2-icon name="chevron-down" class="pl-2 text-xs text-(--ee2-400)" />
               }
             </button>
           }
@@ -97,12 +97,12 @@
         @if (editorKind(); as kind) {
           <!-- Item editor (FiltersBlock.vue → ItemEditorV2.vue in a popover) -->
           <span class="ee2-editor relative">
-            <button class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded border border-[#718096] bg-[#1a202c]"
+            <button class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded border border-(--ee2-600) bg-(--ee2-900)"
               [title]="(kind === 'augment' ? 'Sockets' : 'Quality') | tr" data-test="editor-button" (click)="toggleEditor($event)">
               @if (editorButtonIcon(); as icon) {
                 <img [src]="icon" alt="" class="max-h-full max-w-full" />
               } @else if (kind === 'catalyst') {
-                <ee2-icon name="question" class="text-xl text-[#a0aec0]" />
+                <ee2-icon name="question" class="text-xl text-(--ee2-500)" />
               } @else if (hasSocketed()) {
                 <span class="ee2-img-rune"></span>
               } @else {
@@ -118,13 +118,13 @@
         <div class="mb-4" [class]="ee2Presets().length > 1 ? 'mt-1' : 'mt-4'">
           @if (ee2Presets().length > 1) {
             <div class="flex">
-              <div class="w-5 border-b border-[#4a5568]"></div>
-              <div class="flex divide-x divide-[#4a5568] overflow-hidden rounded-t border-x border-t border-[#4a5568]">
+              <div class="w-5 border-b border-(--ee2-700)"></div>
+              <div class="flex divide-x divide-(--ee2-700) overflow-hidden rounded-t border-x border-t border-(--ee2-700)">
                 @for (p of ee2Presets(); track p.id) {
                   <button class="ee2-preset-btn" [class.ee2-preset-active]="p.id === presets()!.active" (click)="selectPreset(p.id)">{{ p.id | t }}</button>
                 }
               </div>
-              <div class="flex-1 border-b border-[#4a5568]"></div>
+              <div class="flex-1 border-b border-(--ee2-700)"></div>
             </div>
           }
           @for (stat of ee2Stats(); track $index) {
@@ -135,7 +135,7 @@
               <div class="flex min-w-0 flex-1 flex-col">
                 <div class="flex items-baseline pb-px">
                   <button class="flex min-w-0 items-baseline text-left" type="button" (click)="toggleUnrevealed(row)">
-                    <ee2-icon [name]="row.filter.disabled ? 'square' : 'check-square'" class="w-5 shrink-0" [class.text-[#a0aec0]]="row.filter.disabled" />
+                    <ee2-icon [name]="row.filter.disabled ? 'square' : 'check-square'" class="w-5 shrink-0" [class.text-(--ee2-500)]="row.filter.disabled" />
                     <span class="truncate" style="line-height: 1rem">{{ row.text }}</span>
                   </button>
                 </div>
@@ -147,10 +147,10 @@
             </div>
           }
           @if (!ee2Stats().length && !unknownMods().length && !unrevealed()) {
-            <div class="border-b border-[#4a5568] py-2">{{ 'filters.empty' | t }}</div>
+            <div class="border-b border-(--ee2-700) py-2">{{ 'filters.empty' | t }}</div>
           }
           @for (mod of unknownMods(); track $index) {
-            <div class="flex flex-col border-b border-[#4a5568] py-2">
+            <div class="flex flex-col border-b border-(--ee2-700) py-2">
               <div class="flex items-baseline pb-1">
                 <ee2-icon name="warning" class="w-5 shrink-0 text-[#f6ad55]" />
                 <div class="ee2-search-text relative mr-1 flex min-w-0" style="line-height: 1rem">
@@ -159,23 +159,23 @@
                 </div>
               </div>
               <div class="ml-5 text-xs leading-none">
-                <span class="text-[#718096]">{{ mod.type | t }} &mdash; </span>
+                <span class="text-(--ee2-600)">{{ mod.type | t }} &mdash; </span>
                 <span class="text-[#f6ad55]">{{ 'Not recognized modifier' | tr }}</span>
               </div>
             </div>
           }
           @if (missingFractured()) {
-            <div class="flex flex-col border-b border-[#4a5568] py-2">
+            <div class="flex flex-col border-b border-(--ee2-700) py-2">
               <div class="flex items-baseline pb-1">
                 <ee2-icon name="warning" class="w-5 shrink-0 text-[#f6ad55]" />
                 <div class="mr-1 flex min-w-0" style="line-height: 1rem">{{ 'Unable to determine fractured stat' | tr }}</div>
               </div>
-              <div class="ml-5 text-xs leading-none text-[#718096]">{{ 'filters.tag_explicit' | t }} &mdash;</div>
+              <div class="ml-5 text-xs leading-none text-(--ee2-600)">{{ 'filters.tag_explicit' | t }} &mdash;</div>
             </div>
           }
           <div class="flex gap-x-4">
-            <button class="w-40 rounded-b bg-[#4a5568] px-2 py-1 leading-none text-[#cbd5e0]" (click)="statsFolded.set(true)">
-              {{ 'filters.collapse' | t }} <ee2-icon name="chevron-up" class="pl-1 text-xs text-[#718096]" />
+            <button class="w-40 rounded-b bg-(--ee2-700) px-2 py-1 leading-none text-(--ee2-400)" (click)="statsFolded.set(true)">
+              {{ 'filters.collapse' | t }} <ee2-icon name="chevron-up" class="pl-1 text-xs text-(--ee2-600)" />
             </button>
             @if (anyHidden()) {
               <ng-container *ngTemplateOutlet="toggle; context: { on: showHidden(), key: hiddenLabel(), flip: showHidden, cls: 'pt-2' }" />
@@ -205,16 +205,16 @@
 
       <!-- Stack value (StackValue.vue) -->
       @if (stackValue(); as value) {
-        <div class="mt-2 rounded border border-dashed border-[#718096] p-2">
-          <div class="flex leading-none text-[#cbd5e0]">
+        <div class="mt-2 rounded border border-dashed border-(--ee2-600) p-2">
+          <div class="flex leading-none text-(--ee2-400)">
             <div class="w-1/2">
               {{ 'trade_result.you_have' | t }} <span class="ee2-sans">×</span> {{ value.have.amount }}
-              <ee2-icon name="arrow-right" class="px-1 text-xs text-[#718096]" /> {{ value.have.price }}
+              <ee2-icon name="arrow-right" class="px-1 text-xs text-(--ee2-600)" /> {{ value.have.price }}
             </div>
             @if (value.stack; as stack) {
               <div class="w-1/2 pl-2">
                 {{ 'trade_result.stack' | t }} <span class="ee2-sans">×</span> {{ stack.amount }}
-                <ee2-icon name="arrow-right" class="px-1 text-xs text-[#718096]" /> {{ stack.price }}
+                <ee2-icon name="arrow-right" class="px-1 text-xs text-(--ee2-600)" /> {{ stack.price }}
               </div>
             }
           </div>
@@ -236,7 +236,7 @@
       <!-- The item editor's popover (EE2: tippy placement "right"): beside the column at the button's height, over the related items -->
       <div class="ee2-editor ee2-tippy pointer-events-auto absolute z-30 p-0!" [style.top.px]="editorTop()" [class]="towards === 'left' ? 'right-2' : 'left-2'">
         <div class="ee2-tippy-arrow-side" [class]="towards === 'left' ? 'ee2-tippy-arrow-right' : 'ee2-tippy-arrow-left'"></div>
-        <div class="w-96 rounded bg-[#2d3748] p-2 text-[#e2e8f0]">
+        <div class="w-96 rounded bg-(--ee2-800) p-2 text-(--ee2-300)">
           <app-item-editor [item]="item()" [checked]="checkedItem()" [kind]="kind" [edits]="edits()" [startOpen]="true" (change)="setEdits($event)" />
         </div>
       </div>
@@ -248,7 +248,7 @@
       <button class="ee2-rate-tab pointer-events-auto" [class]="towards === 'left' ? 'right-0' : 'left-0'" [class.ee2-rate-limited]="isLimited()"
         (click)="showRateLimits.set(!showRateLimits())">Rate limiting</button>
       @if (showRateLimits()) {
-        <div class="ee2-sans pointer-events-auto absolute bottom-0 z-20 mb-8 border-4 border-[#1a202c] bg-[#2d3748] p-4 text-[#cbd5e0]"
+        <div class="ee2-sans pointer-events-auto absolute bottom-0 z-20 mb-8 border-4 border-(--ee2-900) bg-(--ee2-800) p-4 text-(--ee2-400)"
           [class]="towards === 'left' ? 'right-0' : 'left-0'">
           @for (limit of rateLimits(); track limit.policy) {
             <div [class.text-[#fc8181]]="limit.hasQueue">Policy: {{ limit.policy }}</div>
@@ -279,9 +279,9 @@
         @if (group.related.length) {
           <div class="w-1/2 flex-1 p-2">
             @for (entry of group.related; track entry.id) {
-              <div class="rounded px-1" [class.bg-[#4a5568]]="entry.highlight">
+              <div class="rounded px-1" [class.bg-(--ee2-700)]="entry.highlight">
                 <ng-container *ngTemplateOutlet="quickPrice; context: { price: relatedQuick(entry.div), img: entry.icon, base: false, size: 'w-8 h-8', icon: false }" />
-                <div class="mb-1 overflow-hidden text-left whitespace-nowrap text-[#718096]">{{ entry.name }}</div>
+                <div class="mb-1 overflow-hidden text-left whitespace-nowrap text-(--ee2-600)">{{ entry.name }}</div>
               </div>
             }
           </div>
@@ -291,7 +291,7 @@
             @for (entry of group.items; track entry.id) {
               <div>
                 <ng-container *ngTemplateOutlet="quickPrice; context: { price: relatedQuick(entry.div), img: entry.icon, base: false, size: 'w-8 h-8', icon: false }" />
-                <div class="mb-1 overflow-hidden text-left whitespace-nowrap text-[#718096]">{{ entry.name }}</div>
+                <div class="mb-1 overflow-hidden text-left whitespace-nowrap text-(--ee2-600)">{{ entry.name }}</div>
               </div>
             }
           </div>
@@ -305,7 +305,7 @@
 <ng-template #quickPrice let-price="price" let-img="img" let-base="base" let-size="size" let-icon="icon">
   <div class="flex items-center gap-x-1 text-base" [class.flex-1]="icon" [class.justify-center]="icon">
     @if (base) {
-      <span class="text-[#cbd5e0]">{{ 'trade_result.base_item' | t }}</span>
+      <span class="text-(--ee2-400)">{{ 'trade_result.base_item' | t }}</span>
     } @else {
       <div class="flex shrink-0 items-center justify-center" [class]="size">
         @if (img === '404') {
@@ -315,12 +315,12 @@
         }
       </div>
     }
-    <ee2-icon name="arrow-right" class="px-1 text-sm text-[#718096]" />
+    <ee2-icon name="arrow-right" class="px-1 text-sm text-(--ee2-600)" />
     <div class="overflow-hidden whitespace-nowrap">
       @if (price) {
         <span [class.ee2-golden]="price.div">{{ price.min }}</span>
         @if (price.max) {
-          <span class="ee2-sans text-[#718096]"> ~ </span><span [class.ee2-golden]="price.div">{{ price.max }}</span>
+          <span class="ee2-sans text-(--ee2-600)"> ~ </span><span [class.ee2-golden]="price.div">{{ price.max }}</span>
         }
         @if (icon) {
           <span class="ee2-sans" [class.ee2-golden]="price.div"> ×</span>
@@ -341,8 +341,8 @@
 
 <!-- UiToggle.vue -->
 <ng-template #toggle let-on="on" let-key="key" let-flip="flip" let-cls="cls">
-  <button class="flex items-center text-[#cbd5e0]" [class]="cls" style="height: 1.375rem" (click)="flip.set(!on)">
-    <ee2-icon [name]="on ? 'toggle-on' : 'toggle-off'" class="pr-1" [class]="on ? 'text-[#e2e8f0]' : 'text-[#718096]'" />
+  <button class="flex items-center text-(--ee2-400)" [class]="cls" style="height: 1.375rem" (click)="flip.set(!on)">
+    <ee2-icon [name]="on ? 'toggle-on' : 'toggle-off'" class="pr-1" [class]="on ? 'text-(--ee2-300)' : 'text-(--ee2-600)'" />
     {{ key | t }}
   </button>
 </ng-template>
@@ -350,7 +350,7 @@
 <!-- ItemModifierText.vue: the rolled numbers in Exo 2 white -->
 <ng-template #modText let-parts>
   @for (part of parts; track $index) {
-    <span [class]="part.roll ? 'ee2-roll text-white' : 'text-[#edf2f7]'">{{ part.text }}</span>
+    <span [class]="part.roll ? 'ee2-roll text-white' : 'text-(--ee2-200)'">{{ part.text }}</span>
   }
 </ng-template>
 
@@ -365,12 +365,12 @@
         @for (source of stat.sources; track $index) {
           @let info = sourceInfo(stat, source);
           <div class="py-1 pl-5">
-            <div class="ee2-italic text-[#a0aec0]">{{ info.title }}</div>
+            <div class="ee2-italic text-(--ee2-500)">{{ info.title }}</div>
             @for (line of info.lines; track $index) {
               <div class="flex items-baseline">
                 <span [class.line-through]="!line.contributes"><ng-container *ngTemplateOutlet="modText; context: { $implicit: line.parts }" /></span>
                 @if (line.contributes && line.contribution) {
-                  <div class="ml-auto w-12 shrink-0 rounded border border-[#4a5568] text-center">{{ line.contribution }}</div>
+                  <div class="ml-auto w-12 shrink-0 rounded border border-(--ee2-700) text-center">{{ line.contribution }}</div>
                 }
               </div>
             }
@@ -381,7 +381,7 @@
     <div class="flex min-w-0 flex-1 flex-col">
       <div class="flex items-baseline justify-between pb-px">
         <button class="flex min-w-0 items-baseline text-left" type="button" (click)="toggleStat(stat)">
-          <ee2-icon [name]="stat.disabled ? 'square' : 'check-square'" class="w-5 shrink-0" [class.text-[#a0aec0]]="stat.disabled" />
+          <ee2-icon [name]="stat.disabled ? 'square' : 'check-square'" class="w-5 shrink-0" [class.text-(--ee2-500)]="stat.disabled" />
           <div class="ee2-search-text relative mr-1 flex min-w-0 flex-1" style="line-height: 1rem">
             <span class="truncate"><ng-container *ngTemplateOutlet="modText; context: { $implicit: short }" /></span>
             <span class="ee2-search-text-full whitespace-pre-wrap"><ng-container *ngTemplateOutlet="modText; context: { $implicit: text }" /></span>
@@ -404,7 +404,7 @@
       <div class="flex">
         <div class="flex w-5 items-start">
           @if (stat.hidden) {
-            <span class="ee2-hidden-eye relative cursor-pointer text-xs leading-none text-[#718096]">
+            <span class="ee2-hidden-eye relative cursor-pointer text-xs leading-none text-(--ee2-600)">
               <ee2-icon name="eye-slash" />
               @if (hiddenReason(stat); as reason) {
                 <span class="ee2-tippy ee2-hidden-reason">{{ reason }}</span>
@@ -470,7 +470,7 @@
               <img class="size-8" [src]="oil.icon" [title]="oil.name" alt="" />
             }
           </div>
-          <ee2-icon name="arrow-right" class="px-1 text-sm text-[#718096]" />
+          <ee2-icon name="arrow-right" class="px-1 text-sm text-(--ee2-600)" />
           <div class="overflow-hidden whitespace-nowrap">
             @if (anoint.price; as price) {
               <span [class.ee2-golden]="price.div">{{ price.min }}</span><span [class.ee2-golden]="price.div">&nbsp;{{ price.currency }}</span>
@@ -495,13 +495,13 @@
 <ng-template #onlineFilter let-api="api">
   @if (active(); as preset) {
     <span class="ee2-online relative">
-      <button class="mr-1 truncate rounded px-2" [class]="onlineWarning() ? 'text-[#ed8936]' : 'text-[#a0aec0]'" (click)="onlineOpen.set(!onlineOpen())">
+      <button class="mr-1 truncate rounded px-2" [class]="onlineWarning() ? 'text-[#ed8936]' : 'text-(--ee2-500)'" (click)="onlineOpen.set(!onlineOpen())">
         <ee2-icon name="history" /> {{ onlineLabel() }}
       </button>
       @if (onlineOpen()) {
         <div class="ee2-tippy absolute top-full left-0 z-30 mt-2 p-0!">
           <div class="ee2-tippy-arrow left-6"></div>
-          <div class="flex gap-x-8 rounded bg-[#2d3748] p-2 text-[#cbd5e0]">
+          <div class="flex gap-x-8 rounded bg-(--ee2-800) p-2 text-(--ee2-400)">
             <div class="flex flex-col gap-y-1">
               @for (option of api === 'bulk' ? bulkListingTypes : tradeListingTypes; track option.value) {
                 <ng-container *ngTemplateOutlet="radio; context: { on: preset.filters.trade.listingType === option.value, text: option.ee2Key ? (option.ee2Key | t) : (option.label | tr), act: 'type', value: option.value }" />
@@ -542,12 +542,12 @@
   } @else {
     <div class="flex min-h-0 flex-col">
       <div class="mb-2 flex pl-2">
-        <div class="mr-2 flex items-baseline text-[#a0aec0]">
+        <div class="mr-2 flex items-baseline text-(--ee2-500)">
           <span class="mr-1">{{ 'trade_result.matched' | t: '' }}</span>
           @if (search.searchResult(); as list) {
             <span>{{ list.total }}{{ list.inexact ? '+' : '' }}</span>
           } @else {
-            <span class="text-[#718096]">...</span>
+            <span class="text-(--ee2-600)">...</span>
           }
         </div>
         @if (search.searchResult()) {
@@ -600,7 +600,7 @@
                   <td class="px-2 whitespace-nowrap">
                     <span>{{ listingPrice(row) }}</span>
                     @if (row.listedTimes > 2) {
-                      <span class="-mr-2 rounded bg-[#cbd5e0] px-1 text-[#2d3748]"><span class="ee2-sans">×</span> {{ row.listedTimes }}</span>
+                      <span class="-mr-2 rounded bg-(--ee2-400) px-1 text-(--ee2-800)"><span class="ee2-sans">×</span> {{ row.listedTimes }}</span>
                     } @else if (!row.hasNote) {
                       <ee2-icon name="question" />
                     }
@@ -626,10 +626,10 @@
                       <div class="ee2-sans ml-1 text-xs">{{ row.relativeDate }}</div>
                     </div>
                     @if (row.isMine) {
-                      <span class="ml-1 rounded bg-[#cbd5e0] px-1 text-[#2d3748]">{{ 'You' | tr }}</span>
+                      <span class="ml-1 rounded bg-(--ee2-400) px-1 text-(--ee2-800)">{{ 'You' | tr }}</span>
                     }
                     @if (row.inDemand) {
-                      <span class="ml-1 rounded bg-[#ecc94b] px-1 text-black">{{ 'in demand' | tr }}</span>
+                      <span class="ml-1 rounded bg-(--ee2-yellow) px-1 text-(--ee2-yellow-ink)">{{ 'in demand' | tr }}</span>
                     }
                     @if (row.gone) {
                       <span class="ml-1 rounded border border-[#f56565] px-1 text-[#f56565]">{{ 'Gone' | tr }}</span>
@@ -646,7 +646,7 @@
             @let socketed = ee2Money(value.socketed);
             @let orb = ee2Money(value.extraction);
             @let net = ee2Money(value.net);
-            <div class="mt-2 flex items-center gap-1 rounded border-2 border-[#f56565] p-2 text-[#cbd5e0]"
+            <div class="mt-2 flex items-center gap-1 rounded border-2 border-[#f56565] p-2 text-(--ee2-400)"
               [title]="'The cheapest listing costs less than what is socketed in it, minus the Orb of Extraction' | tr">
               <div class="text-2xl">Σ</div>
               <span class="ee2-img-rune h-6"></span> {{ socketed }}
@@ -658,8 +658,8 @@
           }
         }
         @if (likelyPriceFixed()) {
-          <div class="mt-2 rounded border-2 border-[#718096] p-2">
-            <div class="flex leading-none text-[#cbd5e0]">
+          <div class="mt-2 rounded border-2 border-(--ee2-600) p-2">
+            <div class="flex leading-none text-(--ee2-400)">
               <div class="mt-1">{{ 'trade_result.likely_price_fixed' | t }}</div>
               <div class="flex-1"></div>
               <div class="pl-2">
@@ -680,10 +680,10 @@
   } @else {
     <div class="flex min-h-0 flex-col">
       <div class="mb-2 flex items-baseline justify-between pl-2" style="min-height: 1.375rem">
-        <div class="flex items-center text-[#a0aec0]">
+        <div class="flex items-center text-(--ee2-500)">
           <span class="mr-1">{{ 'trade_result.matched' | t: '' }}</span>
           @if (!bulk.haves().length) {
-            <span class="text-[#718096]">...</span>
+            <span class="text-(--ee2-600)">...</span>
           } @else {
             <div class="flex items-center">
               @for (have of bulkCurrencies; track have) {
@@ -729,7 +729,7 @@
                   <td class="px-1 text-right">{{ row.stock }}</td>
                   <td class="px-1 text-right">
                     @if (row.stock < row.itemAmount) {
-                      <ee2-icon name="warning" class="mr-1 text-[#a0aec0]" />
+                      <ee2-icon name="warning" class="mr-1 text-(--ee2-500)" />
                     }
                     {{ floor(row.stock / row.itemAmount) }}
                   </td>
@@ -739,7 +739,7 @@
                       <div class="ee2-sans ml-1 text-xs">{{ row.relativeDate }}</div>
                     </div>
                     @if (row.isMine) {
-                      <span class="ml-1 rounded bg-[#cbd5e0] px-1 text-[#2d3748]">{{ 'You' | tr }}</span>
+                      <span class="ml-1 rounded bg-(--ee2-400) px-1 text-(--ee2-800)">{{ 'You' | tr }}</span>
                     }
                   </td>
                 </tr>

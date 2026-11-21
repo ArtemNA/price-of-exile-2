@@ -8,7 +8,8 @@
 # it to check another item without restarting. Each copy is logged in the window, so a test can see
 # which combination reached the "game".
 #
-#   powershell -STA -File scripts/fake-game.ps1 [-ItemFile <path>] [-X <left>] [-Y <top>]
+#   powershell -STA -File scripts/fake-game.ps1 [-ItemFile <path>] [-X <left>] [-Y <top>] [-Background <image>] [-HideText]
+#   (-Background and -HideText: a picture instead of the help and item text, for screenshots)
 #   then run the app with POE_GAME_TITLE="PoE Fake Game" and `npm run dev` (see src-tauri/src/constants.rs).
 
 param(
@@ -16,7 +17,9 @@ param(
   [int]$X = 100,
   [int]$Y = 100,
   [int]$Width = 1600,
-  [int]$Height = 900
+  [int]$Height = 900,
+  [string]$Background = '',
+  [switch]$HideText
 )
 
 # Hide our own console instead of starting hidden: -WindowStyle Hidden would hide the form too.
@@ -55,6 +58,11 @@ $chat.Visible = $false
 $form.Controls.Add($label)
 $form.Controls.Add($search)
 $form.Controls.Add($chat)
+if ($Background) {
+  $form.BackgroundImage = [Drawing.Image]::FromFile((Resolve-Path $Background))
+  $form.BackgroundImageLayout = 'Stretch'
+}
+if ($HideText) { $label.Visible = $false }
 $searched = ''
 $sent = @()
 $copied = ''

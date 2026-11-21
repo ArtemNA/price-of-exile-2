@@ -14,12 +14,12 @@ import { Ee2TitleBar } from './ee2-title-bar';
   template: `
     <div class="flex min-h-0 w-[460px] flex-none flex-col">
       <ee2-title-bar />
-      <div class="flex min-h-0 grow flex-col bg-[#2d3748]">
-        <div class="m-4 rounded bg-[#1a202c] px-2 py-1">{{ 'item.identification' | t: baseName() }}</div>
+      <div class="flex min-h-0 grow flex-col bg-(--ee2-800)">
+        <div class="m-4 rounded bg-(--ee2-900) px-2 py-1">{{ 'item.identification' | t: baseName() }}</div>
         <div class="grid grid-cols-2 gap-2 overflow-auto px-4 pb-4">
           @for (unique of variants(); track unique.refName) {
             <div class="flex">
-              <button class="flex w-full items-center gap-x-3 rounded bg-[#4a5568] p-2" (click)="pick()(unique)">
+              <button class="flex w-full items-center gap-x-3 rounded bg-(--ee2-700) p-2" (click)="pick()(unique)">
                 @if (unique.icon && unique.icon !== '%NOT_FOUND%') {
                   <img [src]="unique.icon" alt="" class="w-12" />
                 } @else {

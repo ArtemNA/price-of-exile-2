@@ -266,6 +266,15 @@ fn fit_popup(app: AppHandle, width: f64, height: f64) -> &'static str {
     popup::fit(&app, width, height)
 }
 
+/// Exiled Exchange 2's settings file (`%APPDATA%\exiled-exchange-2\apt-data\config.json`), for the
+/// "Import from Exiled Exchange 2" buttons; None when EE2 is not installed. Only read, never written.
+#[tauri::command]
+fn read_ee2_config() -> Option<String> {
+    let dir = std::env::var_os("APPDATA")?;
+    let path = std::path::Path::new(&dir).join(constants::EE2_CONFIG_PATH);
+    std::fs::read_to_string(path).ok()
+}
+
 /// A trade request through the built-in browser's page (its cookies, Cloudflare clearance).
 #[tauri::command]
 async fn browser_fetch(
@@ -404,6 +413,7 @@ pub fn run() {
             open_settings,
             browser_fetch,
             browser_open,
+            read_ee2_config,
             hide_popup,
             popup_focus_input,
             popup_release_focus,

@@ -786,6 +786,14 @@
     "Hover": "Наведение",
     "Eye icon": "Значок глаза",
     "Point at a listing (or its eye): its item as the game shows it, with mod tiers.": "Наведите на лот (или его глаз): его предмет, как в игре, с тирами модов.",
-    "Off": "Выключено"
+    "Off": "Выключено",
+    "Import from Exiled Exchange 2": "Импорт из Exiled Exchange 2",
+    "Exiled Exchange 2 settings were not found on this computer.": "Настройки Exiled Exchange 2 на этом компьютере не найдены.",
+    "Exiled Exchange 2 has no stash search groups.": "В Exiled Exchange 2 нет групп поиска в тайнике.",
+    "Exiled Exchange 2 has no map check settings.": "В Exiled Exchange 2 нет настроек проверки карт.",
+    "Found {0} groups with {1} searches. They replace yours.": "Найдено групп: {0}, поисков: {1}. Они заменят ваши.",
+    "Found {0} marked map mods (profile {1}). They replace yours.": "Найдено отмеченных модов карт: {0} (профиль {1}). Они заменят ваши.",
+    "Replace": "Заменить",
+    "Cancel": "Отмена"
   }
 }

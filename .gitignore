@@ -59,3 +59,6 @@ Thumbs.db
 /docs/EE2_THEME_PLAN.md
 /docs/GAME_SCENARIOS.md
 /docs/screenshots/
+
+# Local scratch output (screenshot backdrops and the like)
+/.scratch/

@@ -71,6 +71,9 @@ pub const BROWSER_POLL_DELAY: Duration = Duration::from_millis(25);
 pub const BROWSER_LOAD_TIMEOUT: Duration = Duration::from_secs(20);
 pub const BROWSER_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
+/// Exiled Exchange 2's settings file under %APPDATA%, read by "Import from Exiled Exchange 2".
+pub const EE2_CONFIG_PATH: &str = "exiled-exchange-2/apt-data/config.json";
+
 /// Log file size before it is started over (only the latest file is kept).
 pub const LOG_MAX_BYTES: u128 = 2 * 1024 * 1024;
 pub const TRAY_ID: &str = "main";

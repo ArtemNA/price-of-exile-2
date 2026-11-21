@@ -2,7 +2,8 @@
  * The "Exiled Exchange 2" theme: the colours and fonts of EE2 (APT's Tailwind v1 palette plus EE2's
  * additions, read off EE2 0.15.8 and its source, docs/screenshots/ee2/STYLE_NOTES.md) over our CSS
  * tokens (src/styles.css). Every window takes them; the price check also gets EE2's layout
- * (ee2-price-check.html).
+ * (ee2-price-check.html), whose own colours are the `--ee2-*` variables below.
+ * The "Graphite" theme is the same layout in another palette (the block after `ee2`).
  */
 
 /* The price check's own styles (the EE2 components' look). */
@@ -106,32 +107,110 @@ html[data-theme='ee2'] {
   --plate-currency-rule: #1a202c;
   --plate-divination-card-bg: #1a202c;
   --plate-divination-card-rule: #1a202c;
+
+  /* The EE2 layout's own palette (ee2-price-check.*), Tailwind v1 gray scale. */
+  --ee2-900: #1a202c;
+  --ee2-800: #2d3748;
+  --ee2-700: #4a5568;
+  --ee2-600: #718096;
+  --ee2-500: #a0aec0;
+  --ee2-400: #cbd5e0;
+  --ee2-300: #e2e8f0;
+  --ee2-200: #edf2f7;
+  --ee2-stripe: #353f52;
+  --ee2-yellow: #ecc94b;
+  --ee2-yellow-ink: #000;
+  --ee2-700-ink: #000;
+}
+
+/*
+ * "Graphite": the EE2 layout on a hueless dark gray with an ice-blue accent, the default theme. Its
+ * base has no hue of its own, so the red, orange and green signals (map check rows, price drops,
+ * warnings) are the only saturated colours on screen; it replaced the crimson "Vaal", which swallowed
+ * them. Chosen by the owner for the PoE1 app (21.11.2026, palette 10); the app tokens are that app's
+ * `graphite` block as it is.
+ */
+html[data-theme='graphite'] {
+  --font-sans: 'FontinSmallCaps', 'Alegreya SC', serif;
+  --font-display: 'FontinSmallCaps', 'Alegreya SC', serif;
+
+  --ee2-900: #141518; /* title bar, header bar, inputs, chips */
+  --ee2-800: #1d1f23; /* window body */
+  --ee2-700: #33363c; /* lines, buttons, tags */
+  --ee2-600: #8a8f98; /* dim text, icons */
+  --ee2-500: #a8adb6; /* muted text, active borders */
+  --ee2-400: #eef0f3; /* button text */
+  --ee2-300: #cfe8ff; /* input text */
+  --ee2-200: #e8eaee; /* text */
+  --ee2-stripe: #23252a; /* odd listing rows */
+  --ee2-yellow: #7cc4ff; /* accent: support tiers and the like */
+  --ee2-tier1-bg: #5b9fd6; /* tier 1 fill, toned down */
+  --ee2-tier2: #a9d8ff; /* tier 2 outline and text, brighter */
+  --ee2-yellow-ink: #141518;
+  --ee2-700-ink: #e8eaee;
+
+  --color-chrome: #141518;
+  --color-panel: #1d1f23;
+  --color-raised: #33363c;
+  --color-well: #141518;
+  --color-line: #33363c;
+  --color-line-strong: #4a4e56;
+  --color-frame: #4a4e56;
+  --color-bronze: #5a6270;
+  --color-gold: #7cc4ff;
+  --color-gold-soft: #b8e0ff;
+  --color-text: #e8eaee;
+  --color-bright: #f5f6f8;
+  --color-muted: #a8adb6;
+  --color-mod: #9aa8ff;
+  --color-mod-off: #8a8f98;
+  --color-good: #6fbf73;
+  --color-warn: #f6ad55;
+  --color-bad: #f56565;
+
+  --color-selected: #232a33;
+  --color-selected-hover: #2b3440;
+  --color-error-bg: #3a1a1a;
+  --color-gold-hover: #b8e0ff;
+  --color-warn-bg: #2a1f0e;
+  --color-warn-line: #5a3a12;
+  --color-row-line: #26282d;
+  --color-primary-from: #3b82c4;
+  --color-primary-to: #2c6aa3;
+  --color-primary-text: #ffffff;
+  --color-ink: #1d1f23;
+  --color-menu: #141518;
+  --color-unique: #af6025;
+  --color-tier1: #5b9fd6;
+  --color-tier1-text: #141518;
+  --color-tier2: #1d1f23;
+  --color-tier2-text: #a9d8ff;
 }
 
 /* EE2 rounds its buttons, fields and chips. */
-html[data-theme='ee2'] button,
-html[data-theme='ee2'] input,
-html[data-theme='ee2'] select {
+html:is([data-theme='ee2'], [data-theme='graphite']) button,
+html:is([data-theme='ee2'], [data-theme='graphite']) input,
+html:is([data-theme='ee2'], [data-theme='graphite']) select {
   border-radius: 0.25rem;
 }
 
 /* The price check brings EE2's own title bar (ee2-title-bar.ts) and has no window frame. */
-html[data-theme='ee2'] section:has(> app-ee2-price-check, > app-ee2-unidentified-picker, > app-ee2-price-check-message) {
+html:is([data-theme='ee2'], [data-theme='graphite']) section:has(> app-ee2-price-check, > app-ee2-unidentified-picker, > app-ee2-price-check-message) {
   border: 0;
   box-shadow: none;
   /* Transparent beside the column: related items and the rate limiting tab stand there, as in EE2. */
   background: transparent;
 }
-html[data-theme='ee2'] section:has(> app-ee2-price-check, > app-ee2-unidentified-picker, > app-ee2-price-check-message) > header {
+html:is([data-theme='ee2'], [data-theme='graphite']) section:has(> app-ee2-price-check, > app-ee2-unidentified-picker, > app-ee2-price-check-message) > header {
   display: none;
 }
 
 /* EE2 (Tailwind 3) shows a hand over everything clickable; Tailwind 4 does not by default. */
-html[data-theme='ee2'] button:not(:disabled),
-html[data-theme='ee2'] [role='button'],
-html[data-theme='ee2'] select:not(:disabled),
-html[data-theme='ee2'] input[type='checkbox']:not(:disabled),
-html[data-theme='ee2'] input[type='radio']:not(:disabled),
-html[data-theme='ee2'] label:has(> input[type='checkbox'], > input[type='radio']) {
+html:is([data-theme='ee2'], [data-theme='graphite']) button:not(:disabled),
+html:is([data-theme='ee2'], [data-theme='graphite']) [role='button'],
+html:is([data-theme='ee2'], [data-theme='graphite']) select:not(:disabled),
+html:is([data-theme='ee2'], [data-theme='graphite']) input[type='checkbox']:not(:disabled),
+html:is([data-theme='ee2'], [data-theme='graphite']) input[type='radio']:not(:disabled),
+html:is([data-theme='ee2'], [data-theme='graphite']) label:has(> input[type='checkbox'], > input[type='radio']) {
   cursor: pointer;
 }

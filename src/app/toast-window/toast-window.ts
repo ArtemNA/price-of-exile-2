@@ -17,11 +17,7 @@ import { hotkeyLabel } from '../settings/hotkey';
   template: `
     <button class="flex h-full w-full items-center gap-3 border border-frame bg-panel px-3.5 text-left font-sans text-text shadow-[0_0_0_1px_var(--color-frame-shadow)]"
       [class.cursor-default]="installing()" (click)="openSettings()">
-      <svg class="flex-none" width="30" height="30" viewBox="0 0 12 12" aria-hidden="true">
-        <path d="M6 0l6 6-6 6-6-6z" fill="var(--color-gold)" />
-        <path d="M6 3l3 3-3 3-3-3z" fill="var(--color-panel)" />
-        <path d="M6 4.3l1.7 1.7L6 7.7 4.3 6z" fill="var(--color-gold-soft)" />
-      </svg>
+      <svg class="flex-none" width="36" height="23" viewBox="0 0 64 40" aria-hidden="true"><path d="M3 20 Q32 -6 61 20 Q32 46 3 20 Z" fill="#e0b050" /><circle cx="32" cy="20" r="11" fill="var(--color-panel)" /><path d="M32 12 L40 20 L32 28 L24 20 Z" fill="#b33a3a" /></svg>
       @if (message(); as m) {
         @if (m.kind === 'update') {
           <span class="flex min-w-0 flex-col gap-0.5">

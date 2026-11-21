@@ -69,7 +69,7 @@ describe('settings', () => {
   });
 
   it('moves the PoE1 map marks of version 2 to PoE2 mods and adds the PoE2 defaults', () => {
-    expect(SETTINGS_VERSION).toBe(4);
+    expect(SETTINGS_VERSION).toBe(5);
     const mine = { matcher: 'Monsters are Armoured', decision: '-g-' };
     const mapCheck = {
       profile: 2,
@@ -138,7 +138,7 @@ describe('settings', () => {
   });
 
   it('reads the copy key from the game config unless the settings choose one', () => {
-    expect(SETTINGS_VERSION).toBe(4);
+    expect(SETTINGS_VERSION).toBe(5);
     expect(defaultSettings().copyKey).toBeNull();
     // Version 3 files from before the field get the default without a new version.
     expect(upgradeSettings({ configVersion: 3, gameTitle: 'Path of Exile 2' }).copyKey).toBeNull();
@@ -146,19 +146,47 @@ describe('settings', () => {
     for (const key of ['alt', 'Z', 18, true, {}]) expect(upgradeSettings({ configVersion: 3, copyKey: key }).copyKey).toBeNull();
   });
 
-  it('keeps the theme id without a new version and falls back to the build default when unusable', () => {
+  it('keeps the theme id from version 5 on and falls back to the build default when unusable', () => {
     expect(defaultSettings().theme).toBe('');
-    // Version 4 files from before the field get the build's default.
-    expect(upgradeSettings({ configVersion: 4, gameTitle: 'Path of Exile 2' }).theme).toBe('');
-    expect(upgradeSettings({ configVersion: 4, theme: 'price-of-exile-2' }).theme).toBe('price-of-exile-2');
-    for (const theme of [null, 7, true, {}, ['ee2']]) expect(upgradeSettings({ configVersion: 4, theme }).theme).toBe('');
+    // Files without the field get the build's default.
+    expect(upgradeSettings({ configVersion: 5, gameTitle: 'Path of Exile 2' }).theme).toBe('');
+    expect(upgradeSettings({ configVersion: 5, theme: 'price-of-exile-2' }).theme).toBe('price-of-exile-2');
+    for (const theme of [null, 7, true, {}, ['ee2']]) expect(upgradeSettings({ configVersion: 5, theme }).theme).toBe('');
     // An id this build does not have stays stored (another build may have it) and shows the default.
-    expect(upgradeSettings({ configVersion: 4, theme: 'no-such-theme' }).theme).toBe('no-such-theme');
-    expect(themeById('no-such-theme')).toBe(BASE_THEME);
-    expect(themeById('')).toBe(BASE_THEME);
+    expect(upgradeSettings({ configVersion: 5, theme: 'no-such-theme' }).theme).toBe('no-such-theme');
+    // The default is Graphite: the EE2 layout in its own palette; EE2's and our older look stay to pick,
+    // in this order. An unknown id (the dropped development theme `vaal` too) shows the default.
+    expect(DEFAULT_THEME).toBe('graphite');
+    expect(themeById('no-such-theme').id).toBe('graphite');
+    expect(themeById('vaal').id).toBe('graphite');
+    expect(themeById('').id).toBe('graphite');
+    expect(themeById('graphite').priceCheck).toBe(themeById('ee2').priceCheck);
     expect(themeById(BASE_THEME.id)).toBe(BASE_THEME);
-    expect(DEFAULT_THEME).toBe('price-of-exile-2');
-    expect(THEMES[0]).toBe(BASE_THEME);
+    expect(THEMES.map((theme) => theme.id)).toEqual(['graphite', 'ee2', 'price-of-exile-2']);
+  });
+
+  it('starts settings older than version 5 once on the default theme, keeping everything else', () => {
+    const v4 = {
+      configVersion: 4,
+      theme: 'ee2',
+      leagueId: 'Rise of the Abyssal',
+      accountName: 'someone#1234',
+      hotkeys: { ...DEFAULT_HOTKEYS, 'price-check': 'Ctrl+KeyD' },
+      stashSearch: [{ id: 1, title: 'Mine', enableHotkeys: true, entries: [{ id: 1, name: 'x', text: '"Pack Size"', hotkey: 'Ctrl+Digit1' }] }],
+      mapCheck: { ...DEFAULT_MAP_CHECK, profile: 2 },
+    };
+    const upgraded = upgradeSettings(v4);
+    expect(upgraded.theme).toBe('');
+    expect(upgraded).toMatchObject({
+      configVersion: SETTINGS_VERSION,
+      leagueId: v4.leagueId,
+      accountName: v4.accountName,
+      hotkeys: v4.hotkeys,
+      stashSearch: v4.stashSearch,
+      mapCheck: v4.mapCheck,
+    });
+    // A theme chosen after the reset stays: the saved file is version 5 now.
+    expect(upgradeSettings({ ...upgraded, theme: 'ee2' }).theme).toBe('ee2');
   });
 
   it('installs new versions automatically by default and keeps only a yes or no', () => {

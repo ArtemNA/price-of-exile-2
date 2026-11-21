@@ -422,7 +422,12 @@ export const SETTINGS_FILE = 'settings.json';
 /** Key of the whole settings object inside the store file. */
 export const SETTINGS_STORE_KEY = 'settings';
 /** Current settings format; `upgradeSettings` brings older files up to it. */
-export const SETTINGS_VERSION = 4;
+export const SETTINGS_VERSION = 5;
+/**
+ * Settings older than this get the build's default theme once (the Graphite look became the default);
+ * a theme chosen afterwards stays.
+ */
+export const THEME_RESET_VERSION = 5;
 /** Event the window that changed the settings sends to the other windows. */
 export const SETTINGS_CHANGED_EVENT = 'settings-changed';
 

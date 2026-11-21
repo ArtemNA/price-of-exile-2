@@ -23,12 +23,13 @@ import {
   UI_LANGS,
   UiLang,
 } from '../constants';
-import { TrErrorPipe, TrPipe } from '../core/i18n';
+import { TrErrorPipe, TrPipe, tr } from '../core/i18n';
 import { Leagues } from '../core/leagues';
 import { type ChatCommand, isFirstStart, type PriceCheckSettings, settings, type StashSearchGroup, updateSettings } from '../core/settings';
 import { updates } from '../core/updates';
 import { CopyKeysSource, CopyKeysStatus, ForegroundEvent, host, hostConfig } from '../host';
 import { MapModsEditor } from '../map-check/map-mods-editor';
+import { ee2MapCheck, ee2StashGroups, parseEe2Config } from './ee2-import';
 import { hotkeyConflicts } from './hotkey';
 import { HotkeyInput } from './hotkey-input';
 import { THEMES, themeById } from '../themes';
@@ -91,6 +92,8 @@ export class SettingsWindow {
     { value: 'keybind', label: 'Shift + hover' },
     { value: 'always', label: 'Hover' },
   ];
+  /** What "Import from Exiled Exchange 2" found: a summary, and Replace when there is something to take. */
+  protected readonly ee2Import = signal<{ kind: 'stash' | 'map'; text: string; apply?: () => void } | null>(null);
   protected readonly statRangeMax = SEARCH_STAT_RANGE_MAX;
   protected readonly positions: Array<{ value: PopupPosition; label: string }> = [
     { value: 'center', label: 'Centre of the game' },
@@ -294,6 +297,36 @@ export class SettingsWindow {
 
   protected removeGroup(groupId: number): void {
     updateSettings({ stashSearch: settings().stashSearch.filter((group) => group.id !== groupId) });
+  }
+
+  /** Reads EE2's settings and shows what would be imported; Replace applies it. */
+  protected async importFromEe2(kind: 'stash' | 'map'): Promise<void> {
+    const config = parseEe2Config(await host.readEe2Config().catch(() => null));
+    if (!config) {
+      this.ee2Import.set({ kind, text: tr('Exiled Exchange 2 settings were not found on this computer.') });
+      return;
+    }
+    if (kind === 'stash') {
+      const groups = ee2StashGroups(config);
+      const searches = groups.reduce((n, group) => n + group.entries.length, 0);
+      this.ee2Import.set(
+        groups.length
+          ? { kind, text: tr('Found {0} groups with {1} searches. They replace yours.', groups.length, searches), apply: () => updateSettings({ stashSearch: groups }) }
+          : { kind, text: tr('Exiled Exchange 2 has no stash search groups.') },
+      );
+    } else {
+      const maps = ee2MapCheck(config);
+      this.ee2Import.set(
+        maps
+          ? { kind, text: tr('Found {0} marked map mods (profile {1}). They replace yours.', maps.selectedStats.length, maps.profile), apply: () => updateSettings({ mapCheck: maps }) }
+          : { kind, text: tr('Exiled Exchange 2 has no map check settings.') },
+      );
+    }
+  }
+
+  protected applyEe2Import(): void {
+    this.ee2Import()?.apply?.();
+    this.ee2Import.set(null);
   }
 
   /** The log file of the host, in the app's log folder (tauri-plugin-log names it after the app). */

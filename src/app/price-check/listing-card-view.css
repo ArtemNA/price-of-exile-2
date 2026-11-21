@@ -31,7 +31,9 @@
 .art {
   position: relative;
   flex: none;
-  background: rgb(75 85 99 / 0.5);
+  /* EE2's half-transparent gray over black, made solid: the card may lie over the related items,
+     whose text must not show through it (the PoE1 app's 0.1.21 fix). */
+  background: #262b32;
 }
 .art > img {
   display: block;

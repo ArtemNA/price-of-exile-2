@@ -1,7 +1,7 @@
 <main class="flex h-full bg-panel font-sans text-[13px] text-text">
   <nav class="flex w-48 flex-none flex-col border-r border-line bg-chrome">
     <div class="flex items-center gap-2 border-b border-line px-4 py-3.5">
-      <svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0l6 6-6 6-6-6z" fill="var(--color-gold)" /></svg>
+      <svg width="22" height="14" viewBox="0 0 64 40" aria-hidden="true"><path d="M3 20 Q32 -6 61 20 Q32 46 3 20 Z" fill="#e0b050" /><circle cx="32" cy="20" r="11" fill="var(--color-chrome)" /><path d="M32 12 L40 20 L32 28 L24 20 Z" fill="#b33a3a" /></svg>
       <span class="font-display text-[17px] leading-none text-bright">Price of Exile 2</span>
     </div>
     <ul class="flex flex-col py-2">
@@ -312,6 +312,18 @@
               </section>
             }
             <button class="h-8 self-start border border-line-strong bg-raised px-3 hover:border-gold" (click)="addGroup()">{{ 'Add group' | tr }}</button>
+            <div class="flex flex-wrap items-center gap-2">
+              <button data-test="ee2-import-stash" class="h-8 border border-line-strong bg-raised px-3 hover:border-gold" (click)="importFromEe2('stash')">{{ 'Import from Exiled Exchange 2' | tr }}</button>
+              @if (ee2Import(); as found) {
+                @if (found.kind === 'stash') {
+                  <span data-test="ee2-import-stash-text" class="text-[12px] text-muted">{{ found.text }}</span>
+                  @if (found.apply) {
+                    <button data-test="ee2-import-stash-replace" class="h-7 border border-gold bg-selected px-3 text-gold-soft" (click)="applyEe2Import()">{{ 'Replace' | tr }}</button>
+                  }
+                  <button class="h-7 px-2 text-[12px] text-muted hover:text-bright" (click)="ee2Import.set(null)">{{ 'Cancel' | tr }}</button>
+                }
+              }
+            </div>
           </div>
         }
 
@@ -401,6 +413,20 @@
         }
 
         @case ('map-check') {
+          <div class="mb-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <button data-test="ee2-import-map" class="h-8 border border-line-strong bg-raised px-3 hover:border-gold" (click)="importFromEe2('map')">{{ 'Import from Exiled Exchange 2' | tr }}</button>
+              @if (ee2Import(); as found) {
+                @if (found.kind === 'map') {
+                  <span data-test="ee2-import-map-text" class="text-[12px] text-muted">{{ found.text }}</span>
+                  @if (found.apply) {
+                    <button data-test="ee2-import-map-replace" class="h-7 border border-gold bg-selected px-3 text-gold-soft" (click)="applyEe2Import()">{{ 'Replace' | tr }}</button>
+                  }
+                  <button class="h-7 px-2 text-[12px] text-muted hover:text-bright" (click)="ee2Import.set(null)">{{ 'Cancel' | tr }}</button>
+                }
+              }
+            </div>
+          </div>
           <app-map-mods-editor />
         }
 

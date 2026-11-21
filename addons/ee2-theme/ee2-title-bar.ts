@@ -35,7 +35,7 @@ import { Ee2Icon } from './ee2-icon';
         <div class="ee2-tippy-arrow left-4"></div>
         <div class="flex items-center gap-x-1 text-base">
           <div class="flex size-8 flex-none items-center justify-center"><app-currency tag="divine" [size]="32" /></div>
-          <ee2-icon name="arrow-right" class="px-1 text-sm text-[#718096]" />
+          <ee2-icon name="arrow-right" class="px-1 text-sm text-(--ee2-600)" />
           <span class="whitespace-nowrap">{{ round(rate) }}<span class="ee2-sans"> ×</span></span>
           <div class="flex size-8 flex-none items-center justify-center"><app-currency tag="exalted" [size]="32" /></div>
         </div>
@@ -49,7 +49,7 @@ import { Ee2Icon } from './ee2-icon';
       <div class="ee2-tippy absolute top-[30px] left-1/2 z-30 min-w-40 -translate-x-1/2 px-0! py-1!">
         <div class="ee2-tippy-arrow left-1/2 -translate-x-1/2"></div>
         @for (league of leagues.list(); track league.id) {
-          <button class="block w-full px-3 py-0.5 text-left whitespace-nowrap hover:bg-[#e2e8f0]" [class.font-bold]="league.id === settings().leagueId"
+          <button class="block w-full px-3 py-0.5 text-left whitespace-nowrap hover:bg-(--ee2-300)" [class.font-bold]="league.id === settings().leagueId"
             (click)="selectLeague(league.id)">{{ league.id }}</button>
         } @empty {
           <span class="block px-3 py-0.5 whitespace-nowrap">{{ leagues.error() ?? ('Loading leagues…' | tr) }}</span>

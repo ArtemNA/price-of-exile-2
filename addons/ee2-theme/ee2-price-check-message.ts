@@ -16,9 +16,9 @@ import { Ee2TitleBar } from './ee2-title-bar';
   template: `
     <div class="flex min-h-0 w-[460px] flex-none flex-col">
       <ee2-title-bar />
-      <div class="flex min-h-0 grow flex-col bg-[#2d3748]">
+      <div class="flex min-h-0 grow flex-col bg-(--ee2-800)">
         @if (tone() === 'info') {
-          <div class="m-4 rounded bg-[#1a202c] px-2 py-1">{{ message() }}</div>
+          <div class="m-4 rounded bg-(--ee2-900) px-2 py-1">{{ message() }}</div>
         } @else {
           <div class="ee2-error-box m-4">
             <h4 class="text-[#fc8181]">{{ tone() === 'error' ? ('item.parse_error' | t) : ('Wrong game language' | tr) }}</h4>

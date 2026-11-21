@@ -24,6 +24,13 @@ export async function installTestHooks(): Promise<void> {
     const texts = elements.map((element) => element.innerText.replace(/\s+/g, ' ').trim());
     void log(`[test] text ${payload}: ${elements.length ? texts.join(' | ') : 'no such element'}`);
   });
+  // Where an element stands in the window (CSS px): "[test] rect <selector>: left top right bottom".
+  await current.listen<string>('test-rect', ({ payload }) => {
+    const element = document.querySelector<HTMLElement>(payload);
+    if (!element) return void log(`[test] rect ${payload}: no such element`);
+    const { left, top, right, bottom } = element.getBoundingClientRect();
+    void log(`[test] rect ${payload}: ${[left, top, right, bottom].map(Math.round).join(' ')}`);
+  });
   // The pointer over an element: what a real one sends, with Shift held or not (the mouse events
   // carry the modifier state, as Windows' own do).
   const pointer = (types: string[], shiftKey: boolean) => (selector: string) => {
@@ -39,6 +46,11 @@ export async function installTestHooks(): Promise<void> {
   await current.listen<string>('test-hover', ({ payload }) => hover(payload));
   await current.listen<string>('test-hover-shift', ({ payload }) => hoverShift(payload));
   await current.listen<string>('test-unhover', ({ payload }) => unhover(payload));
+  // The game's picture under the page, for screenshots of a theme with transparent parts.
+  await current.listen<string>('test-backdrop', ({ payload }) => {
+    document.documentElement.style.background = payload ? `url("${payload}") 0 0 / 100% 100% no-repeat` : '';
+    void log(payload ? '[test] backdrop drawn' : '[test] backdrop removed');
+  });
   await current.listen<{ search: string; fetch: string }>('test-trade', ({ payload }) => {
     setTestTrade(payload);
     void log('[test] trade answers from files');

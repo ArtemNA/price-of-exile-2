@@ -30,6 +30,7 @@ import {
   SETTINGS_FILE,
   SETTINGS_STORE_KEY,
   SETTINGS_VERSION,
+  THEME_RESET_VERSION,
   MAIN_WINDOW_LABEL,
 } from '../constants';
 
@@ -142,6 +143,7 @@ export function defaultSettings(): Settings {
  * types: on means instant buyout, off meant online sellers.
  * Version 2 had the PoE1 map marks and stash search presets: version 3 has PoE2 ones (`upgradeMapCheck`,
  * `upgradeStashSearch`). Version 3 had the default map marks of the English game only.
+ * Version 5 starts everyone once on the build's default theme (`THEME_RESET_VERSION`, the Graphite look).
  * Fields added later (`copyKey`, `theme`) get their defaults without a new version. Unknown or missing
  * fields fall back to the defaults, so a damaged file still loads; so do values the app cannot use
  * (a game language without data, a listing type the trade site does not know, a hotkey that is
@@ -170,7 +172,7 @@ export function upgradeSettings(raw: unknown): Settings {
     hotkeys: upgradeHotkeys(stored.hotkeys, defaults.hotkeys),
     copyKey: COPY_KEYS.includes(stored.copyKey as CopyKey) ? (stored.copyKey as CopyKey) : null,
     // A theme id this build does not have stays (another build may have it); themeById falls back.
-    theme: typeof stored.theme === 'string' ? stored.theme : defaults.theme,
+    theme: typeof stored.theme === 'string' && version >= THEME_RESET_VERSION ? stored.theme : defaults.theme,
     autoUpdate: typeof stored.autoUpdate === 'boolean' ? stored.autoUpdate : defaults.autoUpdate,
     commands: Array.isArray(stored.commands) ? stored.commands.filter(isChatCommand) : defaults.commands,
     stashSearch: poe1 ? upgradeStashSearch(withValidEntries(stashSearch)) : withValidEntries(stashSearch),

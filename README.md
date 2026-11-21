@@ -10,6 +10,11 @@ version updates itself (Settings → About).
 
 ## Screenshots
 
+The default Graphite look: point at the eye next to a listing and its item shows as the game draws it,
+with mod tiers.
+
+![Price check in the Graphite look with a listed item's card](docs/readme/graphite-listing-card.png)
+
 A rare item: the base, item level and corrupted switches in the header, pseudo totals and mods with
 their tiers, trade listings with currency icons.
 
@@ -31,8 +36,9 @@ The message in the screen corner when the overlay starts:
 
 ![Start message](docs/readme/start-message.png)
 
-Two themes ship with the app (ours and Exiled Exchange 2's look, Settings → Overlay → Theme); how to make
-your own: [THEMING.md](THEMING.md).
+Three themes ship with the app (Settings → Overlay → Theme): Graphite, the default, which is Exiled
+Exchange 2's price check layout on a neutral dark gray with an ice-blue accent; Exiled Exchange 2's own
+look; and the earlier two-column Price of Exile 2 look. How to make your own: [THEMING.md](THEMING.md).
 
 ![The Exiled Exchange 2 theme](docs/readme/ee2-theme.png)
 

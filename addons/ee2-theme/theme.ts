@@ -14,3 +14,6 @@ export const EE2_THEME: Theme = {
   priceCheckSize: { width: 460, fullHeight: true },
   // The popup position setting applies as in our theme; "Opposite the cursor" is EE2's own.
 };
+
+/** The EE2 layout on hueless graphite with an ice-blue accent (theme.css `graphite`); the default theme. */
+export const GRAPHITE_THEME: Theme = { ...EE2_THEME, id: 'graphite', label: 'Graphite' };

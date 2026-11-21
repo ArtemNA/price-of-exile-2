@@ -8,18 +8,30 @@
 # keys reaching the game) is a separate check with the user's permission (CLAUDE.md).
 #
 #   npx tauri build --debug --no-bundle --config src-tauri/tauri.dev.conf.json
-#   powershell -NoProfile -ExecutionPolicy Bypass -File tools/bg-check.ps1 [-Out <folder for screenshots>] [-Theme ee2]
+#   powershell -NoProfile -ExecutionPolicy Bypass -File tools/bg-check.ps1 [-Out <folder for screenshots>] [-Theme graphite|ee2|price-of-exile-2]
 #
 # Uses the dev settings (%APPDATA%\com.artemna.price-of-exile-2.dev\settings.json): backs them up,
 # puts test hotkeys there and restores them at the end.
 
 param(
   [string]$Out = (Join-Path $env:TEMP 'poe2-bg-check'),
-  # 'ee2': the Exiled Exchange 2 theme (the item editor in its popover; screenshots only for it).
-  [string]$Theme = ''
+  # The theme to check: '' = the build's default (Graphite), 'ee2', or 'price-of-exile-2' (ours, two columns).
+  # Graphite and EE2 share the EE2 layout (the item editor in its popover).
+  [string]$Theme = '',
+  # A picture for the fake game instead of its text (README screenshots): the card's screenshot is
+  # then also taken over it, as the overlay stands over the game ("<name>-scene.png").
+  [string]$Backdrop = '',
+  # The popup position setting ('center' or 'opposite-cursor') and the item whose listings get the
+  # card: with 'opposite-cursor' and a unique that has related items, they stand beside the column
+  # and the card must still touch the listings (the PoE1 app's bug in 0.1.20).
+  [string]$Position = '',
+  [string]$CardItem = ''
 )
 
 $ErrorActionPreference = 'Stop'
+# The EE2 layout (Graphite, EE2) or ours; screenshots are named after the theme.
+$ee2Layout = $Theme -ne 'price-of-exile-2'
+$shotPrefix = if ($Theme) { $Theme } else { 'graphite' }
 $root = Split-Path $PSScriptRoot -Parent
 . (Join-Path $PSScriptRoot 'hidden-desktop.ps1')
 
@@ -33,6 +45,7 @@ Add-Type -Name Win -Namespace BgCheck -MemberDefinition @'
 [DllImport("user32.dll")] public static extern bool UnregisterHotKey(IntPtr h, int id);
 [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr hdc, uint flags);
 [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+[DllImport("user32.dll")] public static extern bool GetClientRect(IntPtr h, out RECT r);
 [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
 public delegate bool EnumProc(IntPtr h, IntPtr l);
 [DllImport("user32.dll")] public static extern bool EnumDesktopWindows(IntPtr desk, EnumProc fn, IntPtr l);
@@ -91,6 +104,43 @@ function Windows {
       $found.Add([pscustomobject]@{ Hwnd = $h; Title = $sb.ToString(); Visible = [BgCheck.Win]::IsWindowVisible($h) }); $true }, [IntPtr]::Zero)
   $found
 }
+# The overlay over the game, as the user sees it (PrintWindow gives a window's transparent parts in
+# black): the page draws the part of the game's picture it covers under itself (test command
+# `backdrop`), then its snapshot goes onto the game's, cropped to the overlay and some of the scene.
+function SceneShot([string]$Name, [int]$Margin = 80, [int[]]$Span = $null) {
+  $game = WindowNamed 'PoE Fake Game'
+  $pop = Windows | Where-Object { $_.Title -like 'Price of Exile 2*popup' } | Select-Object -First 1
+  if (-not $game -or -not $pop) { return }
+  $g = New-Object BgCheck.Win+RECT; [void][BgCheck.Win]::GetWindowRect($game.Hwnd, [ref]$g)
+  $p = New-Object BgCheck.Win+RECT; [void][BgCheck.Win]::GetWindowRect($pop.Hwnd, [ref]$p)
+  $gamePng = Shot $game.Hwnd "$Name-game"
+  $scene = [Drawing.Bitmap]::FromFile($gamePng)
+  # The part of the game under the popup, as a data: URL for the page.
+  $under = $scene.Clone([Drawing.Rectangle]::new($p.L - $g.L, $p.T - $g.T, $p.R - $p.L, $p.B - $p.T), $scene.PixelFormat)
+  $ms = New-Object IO.MemoryStream; $under.Save($ms, [Drawing.Imaging.ImageFormat]::Jpeg); $under.Dispose()
+  $urlFile = Join-Path $work 'backdrop.txt'
+  [IO.File]::WriteAllText($urlFile, 'data:image/jpeg;base64,' + [Convert]::ToBase64String($ms.ToArray()))
+  $n = LogCount
+  Send @("backdrop popup $urlFile"); [void](WaitLog 'backdrop drawn' 3000 $n); Start-Sleep -Milliseconds 500
+  $popPng = Shot $pop.Hwnd "$Name-popup"
+  $over = [Drawing.Bitmap]::FromFile($popPng)
+  $gr = [Drawing.Graphics]::FromImage($scene); $gr.DrawImage($over, $p.L - $g.L, $p.T - $g.T, $over.Width, $over.Height); $gr.Dispose(); $over.Dispose()
+  # The EE2 layout's window is mostly transparent: keep `$Span` (left and right in the page: the
+  # column and the card) and some scene around it; ours: the window and a margin. Never the game's
+  # title bar.
+  $client = New-Object BgCheck.Win+RECT; [void][BgCheck.Win]::GetClientRect($game.Hwnd, [ref]$client)
+  $caption = ($g.B - $g.T) - $client.B - [int](($g.R - $g.L - $client.R) / 2)
+  $left = if ($ee2Layout -and $Span) { $p.L - $g.L + $Span[0] - $Margin } else { $p.L - $g.L - $Margin }
+  $right = if ($ee2Layout -and $Span) { $p.L - $g.L + $Span[1] + $Margin } else { $p.R - $g.L + $Margin }
+  $x = [int][Math]::Max(0, $left); $y = [Math]::Max($caption, $p.T - $g.T - $Margin)
+  $w = [int][Math]::Min($scene.Width - $x, $right - $x); $h = [Math]::Min($scene.Height - $y, $p.B - $g.T + $Margin - $y)
+  $crop = $scene.Clone([Drawing.Rectangle]::new($x, $y, $w, $h), $scene.PixelFormat); $scene.Dispose()
+  $path = Join-Path $Out "$Name-scene.png"; $crop.Save($path); $crop.Dispose()
+  Remove-Item $gamePng, $popPng -ErrorAction SilentlyContinue
+  [IO.File]::WriteAllText($urlFile, ''); Send @("backdrop popup $urlFile"); Start-Sleep -Milliseconds 300
+  Write-Host "  $path"
+}
+
 function WindowNamed([string]$Title) { Windows | Where-Object { $_.Title -eq $Title } | Select-Object -First 1 }
 function Shot([IntPtr]$Hwnd, [string]$Name) {
   $r = New-Object BgCheck.Win+RECT; [void][BgCheck.Win]::GetWindowRect($Hwnd, [ref]$r)
@@ -110,14 +160,20 @@ try {
   $hk = [ordered]@{ 'price-check' = $keys.price; 'item-check' = $keys.item; wiki = $null; poedb = $null; 'craft-of-exile' = $null
     'stash-search' = $null; 'stash-panel' = $null; browser = $null; settings = $keys.settings }
   $json.settings | Add-Member -Force -NotePropertyName hotkeys -NotePropertyValue ([pscustomobject]$hk)
-  if ($Theme) { $json.settings | Add-Member -Force -NotePropertyName theme -NotePropertyValue $Theme }
+  if ($Theme) { $json.settings | Add-Member -Force -NotePropertyName theme -NotePropertyValue $Theme } else { $json.settings.PSObject.Properties.Remove('theme') }
+  if ($Position) { $json.settings | Add-Member -Force -NotePropertyName popupPosition -NotePropertyValue $Position }
+  # At the current settings version, so an older dev file's one-time theme reset (THEME_RESET_VERSION)
+  # does not undo the theme picked here.
+  $version = [int]([regex]::Match((Get-Content (Join-Path $root 'src\app\constants.ts') -Raw), 'SETTINGS_VERSION = (\d+)').Groups[1].Value)
+  $json.settings | Add-Member -Force -NotePropertyName configVersion -NotePropertyValue $version
   # The listed item's card starts from the default (the eye), whatever the dev settings had.
   if ($json.settings.priceCheck) { $json.settings.priceCheck.PSObject.Properties.Remove('listingCard') }
   New-Item -ItemType Directory -Force (Split-Path $settingsFile) | Out-Null
   [IO.File]::WriteAllText($settingsFile, ($json | ConvertTo-Json -Depth 32))
 
   $ps = (Get-Command powershell).Source
-  $procs += Start-BgHidden -Exe $ps -Arguments "-NoProfile -STA -ExecutionPolicy Bypass -File `"$root\scripts\fake-game.ps1`" -X 0 -Y 0" -WorkingDirectory $root
+  $gameArgs = if ($Backdrop) { ' -Background "' + $Backdrop + '" -HideText' } else { '' }
+  $procs += Start-BgHidden -Exe $ps -Arguments "-NoProfile -STA -ExecutionPolicy Bypass -File `"$root\scripts\fake-game.ps1`" -X 0 -Y 0$gameArgs" -WorkingDirectory $root
   $env:POE_TEST_INSTANCE = '1'; $env:POE_TEST_TRIGGER = $trigger; $env:POE_GAME_TITLE = $game; $env:POE_KEEP_POPUP = '1'
   $procs += Start-BgHidden -Exe $exe -Arguments '' -WorkingDirectory $root
   Remove-Item Env:POE_TEST_INSTANCE, Env:POE_TEST_TRIGGER, Env:POE_GAME_TITLE, Env:POE_KEEP_POPUP
@@ -203,26 +259,26 @@ if ([X.H]::RegisterHotKey([IntPtr]::Zero, 1, $MODS, $F20)) { Start-Sleep -Second
     if ($w) { $p = Shot $w.Hwnd $Name; Write-Host "  $p" }
   }
   Popup $bow
-  if ($Theme -eq 'ee2') {
+  if ($ee2Layout) {
     Send @('click popup [data-test=editor-button]'); Start-Sleep -Milliseconds 800
-    PopupShot 'ee2-editor-bow'
+    PopupShot "$shotPrefix-editor-bow"
     Send @('click popup [data-test=socket-0]'); Start-Sleep -Milliseconds 400; Send @('click popup [data-test="augment-Greater Adept Rune"]'); Start-Sleep -Milliseconds 1200
     Send @('click popup [data-test=editor-button]'); Start-Sleep -Milliseconds 800
-    PopupShot 'ee2-editor-bow-edited'
+    PopupShot "$shotPrefix-editor-bow-edited"
     Popup $itemFile
     Send @('click popup [data-test=editor-button]'); Start-Sleep -Milliseconds 300
     Send @('click popup [data-test="catalyst-Adaptive Catalyst"]'); Start-Sleep -Milliseconds 1200
-    PopupShot 'ee2-editor-ring-catalyst'
+    PopupShot "$shotPrefix-editor-ring-catalyst"
   } else {
     $n = LogCount
     $before = Filters $n
     Check 'bow: no Dexterity before the edit' ($before -match 'Physical Damage' -and $before -notmatch 'Dexterity') "$before"
-    PopupShot 'editor-bow'
+    PopupShot "$shotPrefix-editor-bow"
     $n = LogCount
     Send @('click popup [data-test=socket-0]'); Start-Sleep -Milliseconds 400; Send @('click popup [data-test="augment-Greater Adept Rune"]'); Start-Sleep -Milliseconds 1200
     $after = Filters $n
     Check 'bow: Greater Adept Rune in socket 1 gives a Dexterity filter' ($after -match 'Dexterity') "$after"
-    PopupShot 'editor-bow-edited'
+    PopupShot "$shotPrefix-editor-bow-edited"
     $n = LogCount
     Send @('click popup [data-test=editor-reset]'); Start-Sleep -Milliseconds 1000
     $reset = Filters $n
@@ -234,7 +290,7 @@ if ([X.H]::RegisterHotKey([IntPtr]::Zero, 1, $MODS, $F20)) { Start-Sleep -Second
     $n = LogCount
     $quality = Filters $n
     Check 'ring: 20% Adaptive Catalyst raises Strength from 12 to 14' ($ring -match '12 total to Strength' -and $quality -match '14 total to Strength') "$quality"
-    PopupShot 'editor-ring-catalyst'
+    PopupShot "$shotPrefix-editor-ring-catalyst"
   }
 
   # 6. The listed item's card: the listings come from saved trade answers (no request to the site),
@@ -243,10 +299,17 @@ if ([X.H]::RegisterHotKey([IntPtr]::Zero, 1, $MODS, $F20)) { Start-Sleep -Second
   # settings window as the user picks it.
   $search = Join-Path $root 'tests\fixtures\trade2-search-listing-card.json'
   $fetch = Join-Path $root 'tests\fixtures\trade2-fetch-listing-card.json'
-  Popup $itemFile
+  # The saved answers first: a unique searches as soon as it opens.
   $n = LogCount
   Send @("trade $search $fetch"); [void](WaitLog 'trade answers from files' 3000 $n)
+  Popup $(if ($CardItem) { $CardItem } else { $itemFile })
   Send @('click popup [data-test=search]'); Start-Sleep -Milliseconds 2500
+  function Rect([string]$Selector) {
+    $n = LogCount
+    Send @("rect popup $Selector")
+    $line = (WaitLog ('\[test\] rect ' + [regex]::Escape($Selector) + ': ') 3000 $n).Line
+    if ($line -match ': (-?\d+) (-?\d+) (-?\d+) (-?\d+)$') { @([int]$Matches[1], [int]$Matches[2], [int]$Matches[3], [int]$Matches[4]) }
+  }
   function CardText([string]$Pointer, [string]$Target = 'listing-row') {
     if ($Pointer) { Send @("$Pointer popup [data-test=$Target]"); Start-Sleep -Milliseconds 600 }
     $n = LogCount
@@ -258,12 +321,22 @@ if ([X.H]::RegisterHotKey([IntPtr]::Zero, 1, $MODS, $F20)) { Start-Sleep -Second
   Check 'card (eye): Shift + hover on the row alone shows no card' ($plain -eq 'no such element') "$plain"
   $card = CardText 'hover' 'listing-eye'
   Check 'card (eye): pointing at the eye, no key, shows the listed item with tiers' ($card -match 'Item Level' -and $card -match '\b[PS]\d\b') "$card"
-  PopupShot $(if ($Theme -eq 'ee2') { 'ee2-listing-card-eye' } else { 'listing-card-eye' })
+  # The card stands right beside the listings, its arrow in the 10 px gap: not beyond what else
+  # stands beside the column (related items, the rate limiting tab).
+  $cardBox = Rect '[data-test=listing-card]'; $rowBox = Rect '[data-test=listing-row]'
+  $gap = if ($cardBox -and $rowBox) { if ($cardBox[2] -le $rowBox[0]) { $rowBox[0] - $cardBox[2] } else { $cardBox[0] - $rowBox[2] } } else { $null }
+  Check 'card (eye): right beside the listings (gap 0-20 px)' ($null -ne $gap -and $gap -ge 0 -and $gap -le 20) "card $($cardBox -join ','); row $($rowBox -join ','); gap $gap"
+  PopupShot "$shotPrefix-listing-card-eye"
+  if ($Backdrop) {
+    # The column is about 16 px wider than its rows on each side.
+    $span = if ($cardBox -and $rowBox) { @([Math]::Min($cardBox[0], $rowBox[0] - 16), [Math]::Max($cardBox[2], $rowBox[2] + 16)) } else { $null }
+    SceneShot "$shotPrefix-listing-card-eye" -Span $span
+  }
   $gone = CardText 'unhover' 'listing-eye'
   Check 'card (eye): gone when the pointer leaves the eye' ($gone -eq 'no such element') "$gone"
   # The delay from the pointer on the eye to the frame with the card (the page reports it once per
   # showing, with the window's width then). The EE2 theme widens its window for the card: the card
-  # must wait for it (844 px without the card centred, 1500 with it), never show squeezed.
+  # must wait for it (844 px without the card centred, 1500 with it; beside the game's side 980), never show squeezed.
   $ms = @(); $widths = @(); $reports = @()
   foreach ($i in 1..7) {
     $n = LogCount
@@ -277,8 +350,10 @@ if ([X.H]::RegisterHotKey([IntPtr]::Zero, 1, $MODS, $F20)) { Start-Sleep -Second
   $range = if ($ms.Count) { "$(($ms | Measure-Object -Minimum).Minimum)-$(($ms | Measure-Object -Maximum).Maximum)" } else { 'none' }
   Write-Host "  card delay: median $(Median $ms) ms ($range), window $($widths -join ','), reports per hover $($reports -join ',')"
   Check 'card (eye): drawn once per hover, within 100 ms of the pointer (median)' ((@($reports | Where-Object { $_ -ne 1 }).Count -eq 0) -and (Median $ms) -le 100) "ms $($ms -join ','); reports $($reports -join ',')"
-  if ($Theme -eq 'ee2') {
-    Check 'card (eye, EE2): first drawn in the widened window, never squeezed' ($widths.Count -eq 7 -and ($widths | Measure-Object -Minimum).Minimum -gt 1000) "widths $($widths -join ',')"
+  if ($ee2Layout) {
+    # The column (460 px) and the card's room (520 px) at least: centred 1500, beside the column 980; squeezed
+    # it was 844 or less.
+    Check 'card (eye, EE2): first drawn in the widened window, never squeezed' ($widths.Count -eq 7 -and ($widths | Measure-Object -Minimum).Minimum -ge 980) "widths $($widths -join ',')"
   }
   Send @('click main [data-test=section-price-check]'); Start-Sleep -Milliseconds 600
   Send @('click main [data-test=listing-card-keybind]'); Start-Sleep -Milliseconds 1500
@@ -290,9 +365,23 @@ if ([X.H]::RegisterHotKey([IntPtr]::Zero, 1, $MODS, $F20)) { Start-Sleep -Second
   Check 'card (Shift): no card on hover without Shift' ($plain -eq 'no such element') "$plain"
   $card = CardText 'hover-shift'
   Check 'card (Shift): Shift + hover shows the listed item with tiers' ($card -match 'Item Level' -and $card -match '\b[PS]\d\b') "$card"
-  PopupShot $(if ($Theme -eq 'ee2') { 'ee2-listing-card' } else { 'listing-card' })
+  PopupShot "$shotPrefix-listing-card"
   $gone = CardText 'unhover'
   Check 'card (Shift): gone when the pointer leaves the row' ($gone -eq 'no such element') "$gone"
+
+  # 7. Import from Exiled Exchange 2: the button reads EE2's settings file and shows what it found
+  # (counts only in the log); Replace is not pressed, so nothing of the user's EE2 setup is taken.
+  $ee2Config = Join-Path $env:APPDATA 'exiled-exchange-2\apt-data\config.json'
+  foreach ($part in 'stash', 'map') {
+    $section = if ($part -eq 'stash') { 'stash-search' } else { 'map-check' }
+    Send @("click main [data-test=section-$section]"); Start-Sleep -Milliseconds 600
+    Send @("click main [data-test=ee2-import-$part]"); Start-Sleep -Milliseconds 1000
+    $n = LogCount
+    Send @("text main [data-test=ee2-import-$part-text]")
+    $found = (WaitLog "\[test\] text \[data-test=ee2-import-$part-text\]: " 3000 $n).Line -replace '^.*-text\]: ', ''
+    $expected = if (-not (Test-Path $ee2Config)) { 'not found' } elseif ($part -eq 'stash') { '\d+\D+\d+' } else { '\d+' } # counts, in any UI language
+    Check "import from EE2 ($part): the summary of what EE2 has" ($found -match $expected) "$found"
+  }
 
   # The user may switch windows meanwhile: what matters is that none of ours came to the front.
   $front = [BgCheck.Win]::GetForegroundWindow(); $frontPid = 0; [void][BgCheck.Win]::GetWindowThreadProcessId($front, [ref]$frontPid)

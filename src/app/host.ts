@@ -100,6 +100,8 @@ export type ToastMessage = { kind: 'start' } | { kind: 'update'; version: string
 
 export const host = {
   getStatus: () => invoke<Status>('get_status'),
+  /** Exiled Exchange 2's settings file as text, or null when it is not on this computer. */
+  readEe2Config: () => invoke<string | null>('read_ee2_config'),
   /** Game window title, hotkeys and copy key from the settings; returns a message per unusable hotkey. */
   setHostConfig: (config: HostConfig) => invoke<string[]>('set_host_config', { ...config }),
   /** Reads the copy keys again (from the game config unless the settings set them). */
