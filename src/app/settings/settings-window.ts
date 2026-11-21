@@ -11,6 +11,7 @@ import {
   CopyKey,
   DEFAULT_CURRENCY_OPTIONS,
   LISTING_TYPES,
+  type ListingCardMode,
   GAME_LANGS,
   HotkeyAction,
   Lang,
@@ -84,6 +85,12 @@ export class SettingsWindow {
   protected readonly hotkeyRows = HOTKEYS;
   protected readonly currencies = DEFAULT_CURRENCY_OPTIONS;
   protected readonly listingTypes = LISTING_TYPES;
+  protected readonly listingCardModes: Array<{ value: ListingCardMode; label: string }> = [
+    { value: 'off', label: 'Off' },
+    { value: 'eye', label: 'Eye icon' },
+    { value: 'keybind', label: 'Shift + hover' },
+    { value: 'always', label: 'Hover' },
+  ];
   protected readonly statRangeMax = SEARCH_STAT_RANGE_MAX;
   protected readonly positions: Array<{ value: PopupPosition; label: string }> = [
     { value: 'center', label: 'Centre of the game' },

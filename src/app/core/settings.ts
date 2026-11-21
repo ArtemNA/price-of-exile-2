@@ -16,7 +16,9 @@ import {
   HOTKEY_ACTIONS,
   HotkeyAction,
   Lang,
+  LISTING_CARD_MODES,
   LISTING_TYPES,
+  ListingCardMode,
   ListingType,
   UI_LANGS,
   UiLang,
@@ -41,6 +43,8 @@ export interface PriceCheckSettings {
   defaultCurrency: string | null;
   smartInitialSearch: boolean;
   builtinBrowser: boolean;
+  /** The card of a listed item when the pointer is over its row (EE2 `itemHoverTooltip`). */
+  listingCard: ListingCardMode;
 }
 
 /** A chat command (APT `Config.commands`): `text` is typed into the chat, `send` presses Enter. */
@@ -100,6 +104,7 @@ export function defaultSettings(): Settings {
     defaultCurrency,
     smartInitialSearch,
     builtinBrowser,
+    listingCard,
   } = PRICE_CHECK_DEFAULTS;
   return {
     configVersion: SETTINGS_VERSION,
@@ -124,6 +129,7 @@ export function defaultSettings(): Settings {
       defaultCurrency,
       smartInitialSearch,
       builtinBrowser,
+      listingCard,
     },
     mapCheck: DEFAULT_MAP_CHECK,
   };
@@ -147,6 +153,7 @@ export function upgradeSettings(raw: unknown): Settings {
   const stored = raw as Partial<Settings>;
   const { merchantOnly, ...priceCheck } = (stored.priceCheck ?? {}) as Partial<PriceCheckSettings> & { merchantOnly?: boolean };
   if (!LISTING_TYPES.some((type) => type.value === priceCheck.listingType)) delete priceCheck.listingType;
+  if (!LISTING_CARD_MODES.includes(priceCheck.listingCard as ListingCardMode)) delete priceCheck.listingCard;
   if (priceCheck.listingType == null && typeof merchantOnly === 'boolean') {
     priceCheck.listingType = merchantOnly ? 'securable' : 'online';
   }

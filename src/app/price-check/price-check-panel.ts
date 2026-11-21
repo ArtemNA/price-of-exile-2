@@ -28,6 +28,8 @@ import {
 import { currencyRates, requestNinjaPrices, toDivine } from '../core/currency-rates';
 import { applyEdits, editorKind, editorPriceIds, extractionValue, type ItemEdits, NO_EDITS } from './item-editor';
 import { ItemEditorView } from './item-editor-view';
+import { cardPlace, cardShown, type CardPlace } from './listing-card';
+import { ListingCardView, ListingEye } from './listing-card-view';
 import {
   autoCurrency,
   currencyTag,
@@ -106,7 +108,7 @@ const TABS = [
  */
 @Component({
   selector: 'app-price-check',
-  imports: [NgTemplateOutlet, TranslatePipe, TrPipe, TrErrorPipe, NumInput, ItemCheckPanel, Currency, ItemEditorView],
+  imports: [NgTemplateOutlet, TranslatePipe, TrPipe, TrErrorPipe, NumInput, ItemCheckPanel, Currency, ItemEditorView, ListingCardView, ListingEye],
   templateUrl: './price-check-panel.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
@@ -140,6 +142,85 @@ export class PriceCheckPanel {
   /** The item the filters and the search are made from: the copied one with the edits. */
   protected readonly checkedItem = computed(() => applyEdits(this.item(), this.edits()));
   protected readonly editorKind = computed(() => editorKind(this.item()));
+
+  // The card of a listed item (EE2 `TradeItem` tooltip, `listing-card.ts`): the row under the
+  // pointer, Shift, whether the pointer is on the row's eye, and the window's size the card is placed in.
+  private readonly cardRow = signal<{ id: string; element: HTMLElement } | null>(null);
+  private readonly shiftHeld = signal(false);
+  private readonly onEye = signal(false);
+  /** When the pointer came onto the row or eye (`performance.now()`), for the test's timing. */
+  private cardAskedAt = 0;
+  /** The eye icon at the start of each listing: shown in the "eye" mode only. */
+  protected readonly listingEye = computed(() => settings().priceCheck.listingCard === 'eye');
+  private readonly windowSize = signal({ width: window.innerWidth, height: window.innerHeight });
+  /**
+   * The width a full-height theme last asked the window for, and the last one the host has set:
+   * while they differ (a theme widening its window for the card) the card waits, so no frame
+   * shows it squeezed into the old width.
+   */
+  private readonly fitAsked = signal(0);
+  private readonly fitDone = signal(0);
+  /** The listed item whose card shows now, if any. */
+  protected readonly cardItem = computed(() => {
+    const row = this.cardRow();
+    if (!row || !cardShown(settings().priceCheck.listingCard, { shift: this.shiftHeld(), eye: this.onEye() })) return null;
+    return this.search.rows().find((listing) => listing.id === row.id)?.displayItem ?? null;
+  });
+  /** Where the card stands: beside its row, on the side with more room (EE2 tippy `placement: left`, flipping). */
+  protected readonly cardPlace = computed<CardPlace | null>(() => {
+    const item = this.cardItem();
+    const row = untracked(this.cardRow);
+    const size = this.windowSize();
+    if (!item || !row?.element.isConnected || this.fitAsked() !== this.fitDone()) return null;
+    return { ...cardPlace(item, row.element.getBoundingClientRect(), size), askedAt: this.cardAskedAt };
+  });
+
+  /** The pointer came onto a listing: the mouse event says whether Shift is held, focused or not. */
+  protected rowEnter(id: string, event: MouseEvent): void {
+    this.cardAskedAt = performance.now();
+    this.cardRow.set({ id, element: event.currentTarget as HTMLElement });
+    this.shiftHeld.set(event.shiftKey);
+  }
+
+  protected rowMove(event: MouseEvent): void {
+    this.shiftHeld.set(event.shiftKey);
+  }
+
+  protected rowLeave(): void {
+    this.cardRow.set(null);
+    this.onEye.set(false);
+  }
+
+  /** The pointer came onto a listing's eye: the card stands beside the whole row, as for the row. */
+  protected eyeEnter(id: string, event: MouseEvent): void {
+    const row = (event.currentTarget as HTMLElement).closest<HTMLElement>('[data-test=listing-row]');
+    this.cardAskedAt = performance.now();
+    if (row) this.cardRow.set({ id, element: row });
+    this.onEye.set(true);
+  }
+
+  protected eyeLeave(): void {
+    this.onEye.set(false);
+  }
+
+  /** Shift pressed or let go over a still pointer (only heard while the window has the keyboard). */
+  private watchCardKeys(): void {
+    const key = (event: KeyboardEvent) => {
+      if (event.key === 'Shift') this.shiftHeld.set(event.type === 'keydown');
+    };
+    const blur = () => this.shiftHeld.set(false);
+    const resize = () => this.windowSize.set({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('keydown', key);
+    window.addEventListener('keyup', key);
+    window.addEventListener('blur', blur);
+    window.addEventListener('resize', resize);
+    inject(DestroyRef).onDestroy(() => {
+      window.removeEventListener('keydown', key);
+      window.removeEventListener('keyup', key);
+      window.removeEventListener('blur', blur);
+      window.removeEventListener('resize', resize);
+    });
+  }
 
   /** The editor changed the item: the filters are made again from it, the user searches. */
   protected setEdits(edits: ItemEdits): void {
@@ -313,7 +394,7 @@ export class PriceCheckPanel {
 
   /** Listing grid columns: price, the "≈" columns, item level or stack, listed. */
   protected readonly listingColumns = computed(() =>
-    ['minmax(0,1fr)', ...this.equivalentColumns().map(() => '62px'), '48px', '76px'].join(' '),
+    [...(this.listingEye() ? ['18px'] : []), 'minmax(0,1fr)', ...this.equivalentColumns().map(() => '62px'), '48px', '76px'].join(' '),
   );
 
   protected readonly limits = computed(() => {
@@ -541,6 +622,7 @@ export class PriceCheckPanel {
       if (this.editorKind()) requestNinjaPrices(editorPriceIds(this.item(), this.edits()));
     });
     this.fitHeightToFilters();
+    this.watchCardKeys();
   }
 
   /** The side of the game the popup is on, for a theme laying things out beside its column. */
@@ -574,7 +656,12 @@ export class PriceCheckPanel {
       effect(() => {
         this.item(); // a new item: the theme may want another width (related items or not)
         const width = this.themeWindowWidth(size.width);
-        void host.fitPopup(width, PRICE_CHECK_FULL_HEIGHT).then((side) => this.popupSide.set(side));
+        this.fitAsked.set(width);
+        void host.fitPopup(width, PRICE_CHECK_FULL_HEIGHT).then((side) => {
+          this.popupSide.set(side);
+          this.windowSize.set({ width: window.innerWidth, height: window.innerHeight });
+          this.fitDone.set(width);
+        });
       });
       return;
     }

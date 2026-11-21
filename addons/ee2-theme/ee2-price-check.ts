@@ -26,6 +26,7 @@ import { NumInput } from '../../src/app/price-check/num-input';
 import { PriceCheckPanel } from '../../src/app/price-check/price-check-panel';
 import { currentCatalyst } from '../../src/app/price-check/item-editor';
 import { ItemEditorView } from '../../src/app/price-check/item-editor-view';
+import { ListingCardView, ListingEye } from '../../src/app/price-check/listing-card-view';
 import type { BulkHave } from '../../src/app/price-check/bulk-search';
 import { Currency } from '../../src/app/shared/currency';
 import { Ee2Icon } from './ee2-icon';
@@ -37,6 +38,8 @@ const EE2_RELATED_WIDTH = 384;
 const EE2_RATE_TAB_WIDTH = 192;
 /** The item editor's popover beside the column: w-96 and its gap to the column. */
 const EE2_EDITOR_WIDTH = 400;
+/** A listed item's card beside the column while it shows: art and text as wide as most items need. */
+const EE2_CARD_WIDTH = 520;
 
 /** One part of a mod text: the rolled number is drawn in Exo 2 white (EE2 `ItemModifierText`). */
 export interface TextPart {
@@ -100,7 +103,7 @@ export function isLikelyPriceFixed(rows: ReadonlyArray<{ priceCurrency: string; 
  */
 @Component({
   selector: 'app-ee2-price-check',
-  imports: [NgTemplateOutlet, TranslatePipe, TrPipe, TrErrorPipe, NumInput, Currency, Ee2Icon, Ee2TitleBar, ItemEditorView],
+  imports: [NgTemplateOutlet, TranslatePipe, TrPipe, TrErrorPipe, NumInput, Currency, Ee2Icon, Ee2TitleBar, ItemEditorView, ListingCardView, ListingEye],
   templateUrl: './ee2-price-check.html',
   host: { class: 'ee2-price-check relative flex min-h-0 flex-1 flex-row', '(mousedown)': 'backdropDown($event)', '(document:mousedown)': 'closeOnline($event)' },
 })
@@ -121,6 +124,7 @@ export class Ee2PriceCheck extends PriceCheckPanel {
     const beside = Math.max(
       this.relatedBeside() || this.showRateLimits() ? EE2_RELATED_WIDTH : EE2_RATE_TAB_WIDTH,
       this.editorOpen() ? EE2_EDITOR_WIDTH : 0,
+      this.cardItem() ? EE2_CARD_WIDTH : 0,
     );
     return this.popupSide() === 'center' ? width + 2 * beside : width + beside;
   }

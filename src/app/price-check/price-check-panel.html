@@ -240,6 +240,7 @@
           class="h-8 w-full border text-[13px] font-semibold disabled:cursor-default"
           [class]="stale() ? 'border-gold bg-linear-to-b from-primary-from to-primary-to text-primary-text' : 'border-line-strong bg-raised text-text hover:border-gold'"
           [disabled]="isSearching()"
+          data-test="search"
           (click)="runSearch()"
         >
           {{ (isSearching() ? 'Searching…' : searchedOnce() ? 'Search again' : 'Search') | tr }}
@@ -319,6 +320,9 @@
     @let rows = search.rows();
     @let columns = listingColumns();
     <div class="grid items-center gap-2 border-b border-line px-3 py-1 text-[11px] text-muted" [style.grid-template-columns]="columns">
+      @if (listingEye()) {
+        <span></span>
+      }
       <span>{{ 'Price' | tr }}</span>
       @for (currency of equivalentColumns(); track currency) {
         <span class="flex items-center justify-end gap-1" [title]="'Worth in this currency at the poe.ninja rate' | tr">≈ <app-currency [tag]="currency" [size]="14" /></span>
@@ -333,7 +337,19 @@
           [class.bg-white/[0.015]]="odd"
           [class.opacity-60]="row.accountStatus === 'offline'"
           [class.text-gold-soft]="row.isMine"
+          data-test="listing-row"
+          (mouseenter)="rowEnter(row.id, $event)"
+          (mousemove)="rowMove($event)"
+          (mouseleave)="rowLeave()"
         >
+          @if (listingEye()) {
+            <span class="listing-eye -my-1 flex h-[26px] items-center justify-center"
+              data-test="listing-eye" (mouseenter)="eyeEnter(row.id, $event)" (mouseleave)="eyeLeave()">
+              @if (row.displayItem) {
+                <app-listing-eye />
+              }
+            </span>
+          }
           <span class="flex min-w-0 items-center gap-1.5 text-bright">
             <span class="size-[9px] flex-none rounded-full" [style.background]="dot(row)"></span>
             @if (row.priceCurrency === noPrice) {
@@ -625,3 +641,8 @@
     </div>
   }
 </ng-template>
+
+<!-- The listed item's card beside the hovered row (EE2 TradeItem tooltip) -->
+@if (cardPlace(); as place) {
+  <app-listing-card [place]="place" />
+}

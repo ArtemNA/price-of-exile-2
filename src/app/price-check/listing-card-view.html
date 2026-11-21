@@ -1,0 +1,46 @@
+@let view = card();
+@let at = place();
+<div class="arrow" [class]="'arrow-' + at.side" [style.top.px]="at.rowMiddle - 7"
+  [style.right.px]="at.side === 'left' ? at.x - 8 : null" [style.left.px]="at.side === 'right' ? at.x - 8 : null"></div>
+<div class="card" data-test="listing-card">
+  @if (view.icon; as icon) {
+    <div class="art" [style.width.px]="icon.w * 48">
+      <img [src]="icon.url" alt="" />
+      @if (view.sockets.length) {
+        <div class="sockets" [style.grid-template-columns]="'repeat(' + socketColumns() + ', 2rem)'">
+          @for (socket of view.sockets; track $index) {
+            <img [src]="socketImage(socket)" alt="" />
+          }
+        </div>
+      }
+    </div>
+  }
+  <div class="text">
+    <div class="header" [class]="view.header ?? 'plain'">
+      @for (title of view.title; track $index) {
+        <div>{{ title }}</div>
+      }
+    </div>
+    <div class="body">
+      @for (section of view.sections; track $index; let last = $last) {
+        @for (line of section; track $index) {
+          <div class="line">
+            <span class="line-text">
+              @if (line.value != null) {
+                <span class="label">{{ line.label }}</span><span [class]="'color-' + line.color">{{ line.value }}</span>
+              } @else {
+                <span [class]="'color-' + line.color">{{ line.label }}</span>
+              }
+            </span>
+            @if (line.tier) {
+              <span class="tier" [class]="tierClass(line.tier)">{{ line.tier }}</span>
+            }
+          </div>
+        }
+        @if (!last) {
+          <div class="separator" [class]="view.separator ? 'separator-' + view.separator : 'separator-plain'"></div>
+        }
+      }
+    </div>
+  </div>
+</div>

@@ -15,14 +15,18 @@ Files: `theme.ts` (registration), `theme.css` (palette over our tokens, fonts, g
 `ee2-price-check-message.ts` (an item that cannot be read), `ee2-icon.ts` (the Font Awesome glyphs
 EE2 uses, drawn as SVG), `images/` and `fonts/`.
 
-Not reproduced (yet): the poe.ninja volume block ("N /hr", "Highest volume"), the listing tooltip on
-Shift + hover, the Tip and
+Not reproduced (yet): the poe.ninja volume block ("N /hr", "Highest volume"), the Tip and
 support boxes, the "Reload fallback data" button (our trade data is built in), leagues in the
 online filter (the league menu is in the title bar).
 
 The item editor (runes, soul cores, idols, catalysts) is our `app-item-editor` in EE2's popover: its button
 next to the stats chip, the popover beside the column (the window widens for it), level with the button; ExtractionValue shows under the listings when the cheapest one costs less than what is
 socketed in it minus the Orb of Extraction, as in EE2.
+
+The listed item's card (EE2's listing tooltip, Settings → Price check: off / eye icon / Shift + hover /
+hover) is our `app-listing-card`, shared with our theme: beside the hovered row, centred on it, left of
+the column when there is room. The window widens for it while it shows, and the card waits for the
+wider window. The eye at the start of each listing (the default) is ours, not EE2's: no key needed.
 
 Credits: the look, `images/404.png`, `images/rune.png`, `images/empty-socket.png`, `images/extractor.png` and the font files (Fontin SmallCaps, Exo 2 SemiBold) come from Exiled Exchange 2,
 MIT © 2020 Alexander Drozdov and the Exiled Exchange 2 contributors (fork by Kvan7,

@@ -780,6 +780,12 @@
     "Legacy": "Застарілі",
     "The cheapest listing costs less than what is socketed in it, minus the Orb of Extraction": "Найдешевша пропозиція коштує менше, ніж вставлене в неї, мінус сфера вилучення",
     "What is socketed in it, minus the Orb of Extraction, at poe.ninja prices": "Вставлене в предмет мінус сфера вилучення, за цінами poe.ninja",
-    "Extraction": "Вилучення"
+    "Extraction": "Вилучення",
+    "Show the listed item over its price": "Показувати предмет лота при наведенні на ціну",
+    "Shift + hover": "Shift + наведення",
+    "Hover": "Наведення",
+    "Eye icon": "Значок ока",
+    "Point at a listing (or its eye): its item as the game shows it, with mod tiers.": "Наведіть на лот (чи його око): його предмет, як у грі, з тирами модів.",
+    "Off": "Вимкнено"
   }
 }

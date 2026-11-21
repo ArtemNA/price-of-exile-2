@@ -1,0 +1,168 @@
+/* The listed item's card, after EE2 `TooltipItem.vue` / `UiDetailedItemImg.vue` (Tailwind 3 colours as hex). */
+:host {
+  position: fixed;
+  z-index: 60;
+  display: block;
+  font-family: 'FontinSmallCaps', serif;
+  font-size: 15px;
+  line-height: 1.35;
+  pointer-events: none;
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  max-height: inherit;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.6);
+}
+
+/* Points at the row from the gap beside it. */
+.arrow {
+  position: fixed;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+}
+.arrow-left { border-left: 8px solid #000; }
+.arrow-right { border-right: 8px solid #000; }
+
+.art {
+  position: relative;
+  flex: none;
+  background: rgb(75 85 99 / 0.5);
+}
+.art > img {
+  display: block;
+  width: 100%;
+}
+.sockets {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+.sockets img {
+  width: 2rem;
+  height: 2rem;
+}
+
+.text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  background: #000;
+  text-align: center;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2rem;
+  font-size: 16px;
+  white-space: nowrap;
+  background-position: top left, top right, top center;
+  background-repeat: no-repeat, no-repeat, repeat-x;
+}
+.plain {
+  padding: 0.25rem 2rem;
+  color: #c8c8c8;
+}
+.Normal-title, .Magic-title, .Normal-runic, .Magic-runic {
+  height: 34px;
+  background-size: 29px auto, 29px auto, 29px auto;
+}
+.Rare-title, .Unique-title, .Rare-runic, .Unique-runic {
+  height: 56px;
+  background-size: 46px auto, 46px auto, 46px auto;
+}
+.Normal-title, .Normal-runic { color: #c8c8c8; }
+.Magic-title, .Magic-runic { color: #8888ff; }
+.Rare-title, .Rare-runic { color: #ffff77; }
+.Unique-title, .Unique-runic { color: #af6025; }
+.Normal-title, .Normal-runic {
+  background-image: url('/images/item-display/normal-left.png'), url('/images/item-display/normal-right.png'), url('/images/item-display/normal-middle.png');
+}
+.Magic-title {
+  background-image: url('/images/item-display/magic-left.png'), url('/images/item-display/magic-right.png'), url('/images/item-display/magic-middle.png');
+}
+.Rare-title {
+  background-image: url('/images/item-display/rare-double-left.png'), url('/images/item-display/rare-double-right.png'), url('/images/item-display/rare-double-middle.png');
+}
+.Unique-title {
+  background-image: url('/images/item-display/unique-double-left.png'), url('/images/item-display/unique-double-right.png'), url('/images/item-display/unique-double-middle.png');
+}
+.Magic-runic {
+  background-image: url('/images/item-display/runic-magic-left.png'), url('/images/item-display/runic-magic-right.png'), url('/images/item-display/runic-magic-middle.png');
+}
+.Rare-runic {
+  background-image: url('/images/item-display/runic-rare-double-left.png'), url('/images/item-display/runic-rare-double-right.png'), url('/images/item-display/runic-rare-double-middle.png');
+}
+.Unique-runic {
+  background-image: url('/images/item-display/runic-unique-double-left.png'), url('/images/item-display/runic-unique-double-right.png'), url('/images/item-display/runic-unique-double-middle.png');
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem;
+}
+.line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+}
+.line-text {
+  flex-grow: 1;
+  text-align: center;
+}
+.label {
+  color: #9ca3af;
+}
+.tier {
+  flex: none;
+  color: #9ca3af;
+}
+/* P red, S blue, as the PoE1 app has them. */
+.tier-suffix { color: #7fa8ff; }
+.tier-prefix { color: #e0806a; }
+
+.separator {
+  height: 4px;
+  margin: 2px 0;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.separator-Magic { background-image: url('/images/item-display/separator-magic.png'); }
+.separator-Rare { background-image: url('/images/item-display/separator-rare.png'); }
+.separator-Unique { background-image: url('/images/item-display/separator-unique.png'); }
+.separator-plain {
+  height: 2px;
+  margin: 0.25rem 0;
+  background: linear-gradient(to right, transparent, #9ca3af, transparent);
+}
+
+/* Trade API colour indexes (EE2 `TradeNumberColors`). */
+.color-0, .color-3, .color-11 { color: #fff; }
+.color-1, .color-25 { color: #6366f1; }
+.color-2 { color: #ef4444; }
+.color-4 { color: #b91c1c; }
+.color-5 { color: #1d4ed8; }
+.color-6 { color: #eab308; }
+.color-7 { color: #9d174d; }
+.color-8 { color: #c2410c; }
+.color-9, .color-13 { color: #6b7280; }
+.color-10 { color: #d1d5db; }
+.color-12 { color: #93c5fd; }
+.color-14 { color: #d8b4fe; }
+.color-15 { color: #fbcfe8; }
+.color-8729 { color: #a5b4fc; }
+.color-8730, .color-8732 { color: #fdba74; }
+.color-8731 { color: #166534; }
+.color-8733 { color: #881337; }

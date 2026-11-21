@@ -4,6 +4,7 @@
  */
 import { poeFetch } from '../core/http';
 import { host } from '../host';
+import { testTradeResponse } from '../test-fixtures';
 
 /** The only main-process event ported code sends (`item-check/hotkeyable-actions.ts`). */
 interface UserActionEvent {
@@ -13,7 +14,10 @@ interface UserActionEvent {
 
 export const Host = {
   /** `url` is host + path without the scheme, e.g. `www.pathofexile.com/api/trade2/search/Standard`. */
-  proxy: (url: string, init?: RequestInit): Promise<Response> => poeFetch(`https://${url}`, init),
+  proxy: (url: string, init?: RequestInit): Promise<Response> => {
+    const saved = testTradeResponse(url);
+    return saved ? Promise.resolve(saved) : poeFetch(`https://${url}`, init);
+  },
   /**
    * EE2 receives item hotkeys from its main process here. Ours come from the Rust host as Tauri
    * events (popup-window.ts), so nothing is ever delivered.

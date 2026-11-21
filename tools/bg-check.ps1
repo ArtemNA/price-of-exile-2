@@ -111,6 +111,8 @@ try {
     'stash-search' = $null; 'stash-panel' = $null; browser = $null; settings = $keys.settings }
   $json.settings | Add-Member -Force -NotePropertyName hotkeys -NotePropertyValue ([pscustomobject]$hk)
   if ($Theme) { $json.settings | Add-Member -Force -NotePropertyName theme -NotePropertyValue $Theme }
+  # The listed item's card starts from the default (the eye), whatever the dev settings had.
+  if ($json.settings.priceCheck) { $json.settings.priceCheck.PSObject.Properties.Remove('listingCard') }
   New-Item -ItemType Directory -Force (Split-Path $settingsFile) | Out-Null
   [IO.File]::WriteAllText($settingsFile, ($json | ConvertTo-Json -Depth 32))
 
@@ -234,6 +236,63 @@ if ([X.H]::RegisterHotKey([IntPtr]::Zero, 1, $MODS, $F20)) { Start-Sleep -Second
     Check 'ring: 20% Adaptive Catalyst raises Strength from 12 to 14' ($ring -match '12 total to Strength' -and $quality -match '14 total to Strength') "$quality"
     PopupShot 'editor-ring-catalyst'
   }
+
+  # 6. The listed item's card: the listings come from saved trade answers (no request to the site),
+  # the pointer is sent by the page itself (mouseenter/mousemove with or without shiftKey). First
+  # the default setting, the eye at the start of each row; then "Shift + hover", picked in the
+  # settings window as the user picks it.
+  $search = Join-Path $root 'tests\fixtures\trade2-search-listing-card.json'
+  $fetch = Join-Path $root 'tests\fixtures\trade2-fetch-listing-card.json'
+  Popup $itemFile
+  $n = LogCount
+  Send @("trade $search $fetch"); [void](WaitLog 'trade answers from files' 3000 $n)
+  Send @('click popup [data-test=search]'); Start-Sleep -Milliseconds 2500
+  function CardText([string]$Pointer, [string]$Target = 'listing-row') {
+    if ($Pointer) { Send @("$Pointer popup [data-test=$Target]"); Start-Sleep -Milliseconds 600 }
+    $n = LogCount
+    Send @('text popup [data-test=listing-card]')
+    $line = (WaitLog '\[test\] text \[data-test=listing-card\]: ' 3000 $n).Line
+    if ($line) { $line -replace '^.*\[data-test=listing-card\]: ', '' }
+  }
+  $plain = CardText 'hover-shift'
+  Check 'card (eye): Shift + hover on the row alone shows no card' ($plain -eq 'no such element') "$plain"
+  $card = CardText 'hover' 'listing-eye'
+  Check 'card (eye): pointing at the eye, no key, shows the listed item with tiers' ($card -match 'Item Level' -and $card -match '\b[PS]\d\b') "$card"
+  PopupShot $(if ($Theme -eq 'ee2') { 'ee2-listing-card-eye' } else { 'listing-card-eye' })
+  $gone = CardText 'unhover' 'listing-eye'
+  Check 'card (eye): gone when the pointer leaves the eye' ($gone -eq 'no such element') "$gone"
+  # The delay from the pointer on the eye to the frame with the card (the page reports it once per
+  # showing, with the window's width then). The EE2 theme widens its window for the card: the card
+  # must wait for it (844 px without the card centred, 1500 with it), never show squeezed.
+  $ms = @(); $widths = @(); $reports = @()
+  foreach ($i in 1..7) {
+    $n = LogCount
+    Send @('hover popup [data-test=listing-eye]'); Start-Sleep -Milliseconds 1200
+    $lines = @(NewLog | Select-Object -Skip $n | ForEach-Object { [regex]::Match($_, '\[card\] drawn in (\d+) ms, window (\d+) px') } | Where-Object { $_.Success })
+    $reports += $lines.Count
+    if ($lines.Count) { $ms += [int]$lines[0].Groups[1].Value; $widths += [int]$lines[0].Groups[2].Value }
+    Send @('unhover popup [data-test=listing-eye]'); Start-Sleep -Milliseconds 400
+  }
+  function Median($xs) { $s = @($xs | Sort-Object); if ($s.Count) { $s[[int][math]::Floor($s.Count / 2)] } else { -1 } }
+  $range = if ($ms.Count) { "$(($ms | Measure-Object -Minimum).Minimum)-$(($ms | Measure-Object -Maximum).Maximum)" } else { 'none' }
+  Write-Host "  card delay: median $(Median $ms) ms ($range), window $($widths -join ','), reports per hover $($reports -join ',')"
+  Check 'card (eye): drawn once per hover, within 100 ms of the pointer (median)' ((@($reports | Where-Object { $_ -ne 1 }).Count -eq 0) -and (Median $ms) -le 100) "ms $($ms -join ','); reports $($reports -join ',')"
+  if ($Theme -eq 'ee2') {
+    Check 'card (eye, EE2): first drawn in the widened window, never squeezed' ($widths.Count -eq 7 -and ($widths | Measure-Object -Minimum).Minimum -gt 1000) "widths $($widths -join ',')"
+  }
+  Send @('click main [data-test=section-price-check]'); Start-Sleep -Milliseconds 600
+  Send @('click main [data-test=listing-card-keybind]'); Start-Sleep -Milliseconds 1500
+  $n = LogCount
+  Send @('text popup [data-test=listing-eye]')
+  $eye = (WaitLog '\[test\] text \[data-test=listing-eye\]: ' 3000 $n).Line
+  Check 'card (Shift): the eyes are gone with the setting' ($eye -match 'no such element') "$eye"
+  $plain = CardText 'hover'
+  Check 'card (Shift): no card on hover without Shift' ($plain -eq 'no such element') "$plain"
+  $card = CardText 'hover-shift'
+  Check 'card (Shift): Shift + hover shows the listed item with tiers' ($card -match 'Item Level' -and $card -match '\b[PS]\d\b') "$card"
+  PopupShot $(if ($Theme -eq 'ee2') { 'ee2-listing-card' } else { 'listing-card' })
+  $gone = CardText 'unhover'
+  Check 'card (Shift): gone when the pointer leaves the row' ($gone -eq 'no such element') "$gone"
 
   # The user may switch windows meanwhile: what matters is that none of ours came to the front.
   $front = [BgCheck.Win]::GetForegroundWindow(); $frontPid = 0; [void][BgCheck.Win]::GetWindowThreadProcessId($front, [ref]$frontPid)

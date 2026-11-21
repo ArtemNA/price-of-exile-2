@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The listed item over its price, as in Exiled Exchange 2: point at the eye next to a listing and its item shows as the game draws it, with mod tiers (P1, S3), centred on the listing. No key needed, so the game keeps its Shift. Settings → Price check: off, eye icon (default), Shift + hover or hover.
+
 ## v0.0.5
 
 - Item data from the current game build, ahead of Exiled Exchange 2: Soul Core of Vizoma, seven new stats (rune skill gem levels, Spirit per corrupted item, Expedition chance), rune and fractured trade filters for two more stats, updated Russian wording.

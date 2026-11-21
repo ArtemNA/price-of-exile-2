@@ -9,7 +9,7 @@
         <li>
           <button class="w-full border-l-2 px-4 py-2 text-left"
             [class]="section() === item.id ? 'border-gold bg-raised text-gold-soft' : 'border-transparent text-text hover:bg-raised hover:text-bright'"
-            [attr.aria-current]="section() === item.id ? 'page' : null" (click)="section.set(item.id)">{{ item.label | tr }}</button>
+            [attr.aria-current]="section() === item.id ? 'page' : null" [attr.data-test]="'section-' + item.id" (click)="section.set(item.id)">{{ item.label | tr }}</button>
         </li>
       }
     </ul>
@@ -352,6 +352,19 @@
                 }
               </div>
               <span class="text-[12px] text-muted">{{ 'Instant buyout: merchant tabs only, no whispers. The price check can change it for one search.' | tr }}</span>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <span class="text-bright">{{ 'Show the listed item over its price' | tr }}</span>
+              <div class="flex gap-1">
+                @for (option of listingCardModes; track option.value) {
+                  <button class="h-8 border px-3"
+                    [class]="settings().priceCheck.listingCard === option.value ? 'border-gold bg-selected text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [attr.aria-pressed]="settings().priceCheck.listingCard === option.value" [attr.data-test]="'listing-card-' + option.value"
+                    (click)="setPriceCheck({ listingCard: option.value })">{{ option.label | tr }}</button>
+                }
+              </div>
+              <span class="text-[12px] text-muted">{{ 'Point at a listing (or its eye): its item as the game shows it, with mod tiers.' | tr }}</span>
             </div>
 
             <div class="flex flex-col gap-3">

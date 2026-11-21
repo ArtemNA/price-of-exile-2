@@ -195,7 +195,7 @@
       } @else {
         <div class="flex items-center justify-between">
           <div class="flex w-40">
-            <button class="ee2-btn" style="min-width: 5rem" (click)="runSearch()">{{ 'Search' | tr }}</button>
+            <button class="ee2-btn" style="min-width: 5rem" data-test="search" (click)="runSearch()">{{ 'Search' | tr }}</button>
           </div>
           @if (activeTab() !== 'bulk') {
             <ng-container *ngTemplateOutlet="tradeLinks" />
@@ -562,6 +562,9 @@
         <table class="ee2-table w-full">
           <thead>
             <tr class="text-left">
+              @if (listingEye()) {
+                <th></th>
+              }
               <th><div class="px-2">{{ 'trade_result.price' | t }}</div></th>
               @if (item().stackSize) {
                 <th><div class="px-2">{{ 'trade_result.stock' | t }}</div></th>
@@ -586,7 +589,14 @@
               @if (!row) {
                 <tr><td colspan="100" class="text-transparent">***</td></tr>
               } @else {
-                <tr>
+                <tr data-test="listing-row" (mouseenter)="rowEnter(row.id, $event)" (mousemove)="rowMove($event)" (mouseleave)="rowLeave()">
+                  @if (listingEye()) {
+                    <td class="listing-eye w-6 pl-1" data-test="listing-eye" (mouseenter)="eyeEnter(row.id, $event)" (mouseleave)="eyeLeave()">
+                      @if (row.displayItem) {
+                        <app-listing-eye />
+                      }
+                    </td>
+                  }
                   <td class="px-2 whitespace-nowrap">
                     <span>{{ listingPrice(row) }}</span>
                     @if (row.listedTimes > 2) {
@@ -768,3 +778,8 @@
     }
   </div>
 </ng-template>
+
+<!-- The listed item's card beside the hovered row (EE2 TradeItem tooltip) -->
+@if (cardPlace(); as place) {
+  <app-listing-card [place]="place" />
+}

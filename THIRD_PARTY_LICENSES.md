@@ -27,6 +27,10 @@ Used parts (`src/lib/ee2` mirrors EE2 `renderer/src`; changed lines are marked `
   exljbris free font licence) and Exo 2 SemiBold (Natanael Gama, SIL OFL) from EE2; credits and EE2's
   licence in `addons/ee2-theme/README.md` and `LICENSE-exiled-exchange-2.txt`. EE2's Cyrillic font
   (FrizQuadrata ITC, commercial) is not included.
+- `public/images/item-display/*`, `public/images/sockets/*`: EE2's item tooltip header and separator art and
+  socket images (`renderer/public/images/item-display`, `images/augments`), from Path of Exile 2 game art, which
+  belongs to Grinding Gear Games; used by the listing card (`src/app/price-check/listing-card*`), whose
+  layout follows EE2 `trade/TooltipItem.vue` and `ui/UiDetailedItemImg.vue`.
 
 ## Awakened PoE Trade
 

@@ -99,7 +99,16 @@ export const PRICE_CHECK_DEFAULTS = {
   smartInitialSearch: true,
   /** Trade requests through the built-in browser's page, with its login and Cloudflare clearance (APT `builtinBrowser`). */
   builtinBrowser: false,
+  /** The card of a listed item over the listings (EE2 `itemHoverTooltip`): on the eye at the row's start, no Shift needed. */
+  listingCard: 'eye' as ListingCardMode,
 };
+
+/**
+ * When the card of a listed item shows (EE2 `itemHoverTooltip` plus our eye): never, on the eye
+ * icon of a row, on the row while Shift is held, on the row.
+ */
+export type ListingCardMode = 'off' | 'eye' | 'keybind' | 'always';
+export const LISTING_CARD_MODES: readonly ListingCardMode[] = ['off', 'eye', 'keybind', 'always'];
 
 /** pathofexile.com hosts: rate limits, Cloudflare checks and the built-in browser apply to them (F-45, F-60). */
 export const POE_OFFICIAL_HOSTS: readonly string[] = ['www.pathofexile.com', 'ru.pathofexile.com'];
