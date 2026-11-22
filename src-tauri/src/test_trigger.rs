@@ -4,6 +4,7 @@
 //!   front <window title>        that window is now in front, and the app hears of it
 //!   front-missed <window title> the same, but the foreground event is lost (the watchdog must notice)
 //!   front none | front-missed none
+//!   cursor <x> <y>              the pointer is here (screen px) for the next checks: the popup's side
 //!   item <path>                 the item text the next check takes instead of copying it
 //!   hotkey <shortcut>           the hotkey was pressed (`Ctrl+Alt+Shift+F20`, `Shift+Space`), past
 //!                               RegisterHotKey: the same handler as a real press
@@ -13,6 +14,8 @@
 //!   hover <window> <selector>   the pointer enters the element (`mouseenter` + `mousemove` sent by the page)
 //!   hover-shift <window> <sel>  the same with Shift held (`shiftKey` of the mouse events)
 //!   unhover <window> <selector> the pointer leaves it (`mouseleave`)
+//!   press <window> <x> <y>      the page presses the mouse at that point (CSS px): mousedown, mouseup
+//!                               and click on whatever a real click there would hit (`elementFromPoint`)
 //!   value <window> <selector>   the page writes the field's text into the log ("[test] value …")
 //!   focus <window> <selector>   the page focuses the field, the caret at its end
 //!   erase <window> <selector>   the page erases one character before the caret, as Backspace does
@@ -63,6 +66,11 @@ fn run(app: &AppHandle, line: &str) -> Result<(), String> {
                 on_foreground(app, platform::current_foreground());
             }
         }
+        "cursor" => {
+            let (x, y) = arg.split_once(' ').ok_or("expected: <x> <y>")?;
+            let parse = |v: &str| v.parse::<i32>().map_err(|e| e.to_string());
+            platform::set_test_cursor(platform::Point { x: parse(x)?, y: parse(y)? });
+        }
         "item" => {
             let text = std::fs::read_to_string(arg).map_err(|e| e.to_string())?;
             app.state::<AppState>().set_test_item_text(text);
@@ -71,7 +79,7 @@ fn run(app: &AppHandle, line: &str) -> Result<(), String> {
             let shortcut = Shortcut::from_str(arg).map_err(|e| e.to_string())?;
             hotkeys::on_hotkey(app, &shortcut);
         }
-        "click" | "text" | "rect" | "hover" | "hover-shift" | "unhover" | "value" | "focus" | "erase" => {
+        "click" | "text" | "rect" | "hover" | "hover-shift" | "unhover" | "value" | "focus" | "erase" | "press" => {
             let (window, selector) = arg.split_once(' ').ok_or("expected: <window> <selector>")?;
             let event = format!("test-{command}");
             app.emit_to(window, &event, selector).map_err(|e| e.to_string())?;

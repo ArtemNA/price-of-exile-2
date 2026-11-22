@@ -108,6 +108,13 @@ pub fn set_test_foreground(raw: RawHwnd) {
     *TEST_FOREGROUND.lock().unwrap() = raw;
 }
 
+/// Test instance only: where `cursor_pos` says the pointer is (the user's real pointer would pick
+/// the popup's side; a test may not move it).
+static TEST_CURSOR: Mutex<Option<Point>> = Mutex::new(None);
+pub fn set_test_cursor(point: Point) {
+    *TEST_CURSOR.lock().unwrap() = Some(point);
+}
+
 /// The top-level window with exactly this title on our desktop, if any.
 pub fn find_window(title: &str) -> Option<RawHwnd> {
     let wide: Vec<u16> = title.encode_utf16().chain([0]).collect();
@@ -369,6 +376,9 @@ pub fn documents_dir() -> Option<PathBuf> {
 }
 
 pub fn cursor_pos() -> Point {
+    if let Some(p) = *TEST_CURSOR.lock().unwrap() {
+        return p;
+    }
     let mut p = POINT::default();
     let _ = unsafe { GetCursorPos(&mut p) };
     Point { x: p.x, y: p.y }

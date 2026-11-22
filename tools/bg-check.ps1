@@ -74,12 +74,24 @@ function Check([string]$Name, [bool]$Ok, [string]$Detail = '') {
   Write-Host ("{0}  {1}  {2}" -f ($(if ($Ok) { 'PASS' } else { 'FAIL' })), $Name, $Detail)
 }
 
-$logStart = if (Test-Path $logFile) { (Get-Item $logFile).Length } else { 0 }
+# The app's log lines since the start, gathered here: the app keeps one log file and starts it anew
+# past LOG_MAX_BYTES (rotation), which can happen in the middle of a run; reading from a fixed offset
+# then saw nothing more.
+$script:logPos = if (Test-Path $logFile) { (Get-Item $logFile).Length } else { 0 }
+$script:logText = New-Object Text.StringBuilder
 function NewLog {
-  if (-not (Test-Path $logFile)) { return @() }
-  $fs = [IO.File]::Open($logFile, 'Open', 'Read', 'ReadWrite')
-  try { [void]$fs.Seek($logStart, 'Begin'); $text = (New-Object IO.StreamReader($fs)).ReadToEnd() } finally { $fs.Close() }
-  $text -split "`r?`n"
+  if (Test-Path $logFile) {
+    $fs = [IO.File]::Open($logFile, 'Open', 'Read', 'ReadWrite')
+    try {
+      if ($fs.Length -lt $script:logPos) { $script:logPos = 0 } # rotated: the new file from its start
+      [void]$fs.Seek($script:logPos, 'Begin')
+      $reader = New-Object IO.StreamReader($fs)
+      $chunk = $reader.ReadToEnd()
+      $script:logPos = $fs.Position
+      [void]$script:logText.Append($chunk)
+    } finally { $fs.Close() }
+  }
+  $script:logText.ToString() -split "`r?`n"
 }
 function WaitLog([string]$Pattern, [int]$TimeoutMs = 3000, [int]$From = 0) {
   $sw = [Diagnostics.Stopwatch]::StartNew()
@@ -483,6 +495,75 @@ if ([X.H]::RegisterHotKey([IntPtr]::Zero, 1, $MODS, $F20)) { Start-Sleep -Second
     $short = @($tall | Where-Object { [int]($_ -split ':')[1] -lt 0.9 * $gameHeight })
     $lost = @(NewLog | Select-Object -Skip $n10 | Where-Object { $_ -match '\[fit\] ignored a size while the popup is hidden' }).Count
     Check 'full-height price check: as tall as the game, popup hidden or shown before it' ($short.Count -eq 0 -and $lost -eq 0 -and @($tall -match '^hidden').Count -gt 0 -and @($tall -match '^shown').Count -gt 0) "game $gameHeight; before:height $($tall -join ','); sizes ignored while hidden: $lost"
+  }
+
+  # 11. A click on an empty spot beside the column closes the popup, as a click into the game there
+  # would; a click on what stands there (related items, the rate limiting tab, the editor) does not
+  # (PoE1 0.1.26: a plain spacer left of a centred column took the click). `press` clicks whatever a
+  # real click at that point hits, and the log names it.
+  if ($ee2Layout) {
+    function PopupShown { [BgCheck.Win]::IsWindowVisible((Windows | Where-Object { $_.Title -like 'Price of Exile 2*popup' } | Select-Object -First 1).Hwnd) }
+    function Press([int]$X, [int]$Y) {
+      $n = LogCount
+      Send @("press popup $X $Y")
+      $hit = ((WaitLog "\[test\] press $X ${Y}: " 3000 $n).Line -replace '^.*\[test\] press \S+ \S+: ', '')
+      Start-Sleep -Milliseconds 400
+      [pscustomobject]@{ Hit = $hit; Shown = (PopupShown) }
+    }
+    function Spots([string]$Name, [string]$Item, [string]$Side) {
+      Popup $Item
+      $box = Rect '.ee2-price-check'; $col = Rect '.ee2-column'; $rel = Rect '.ee2-related'
+      if (-not $box -or -not $col) { Check "${Name}: popup drawn" $false "host $box column $col"; return }
+      $xs = @()
+      if ($col[0] - $box[0] -gt 20) { $xs += [int](($box[0] + $col[0]) / 2) }
+      if ($box[2] - $col[2] -gt 20) { $xs += [int](($col[2] + $box[2]) / 2) }
+      $sideOk = switch ($Side) { 'center' { $xs.Count -eq 2 } 'right' { $xs.Count -eq 1 -and $xs[0] -lt $col[0] } }
+      Check "${Name}: the column stands $Side" $sideOk "window $($box -join ','); column $($col -join ','); related $($rel -join ',')"
+      # Above the related items, below them, and lower still (above the rate limiting tab).
+      $ys = if ($rel) { @(10, ($rel[3] + 20), [int](($rel[3] + $box[3]) / 2)) } else { @(10, [int]($box[1] + 0.75 * ($box[3] - $box[1]))) }
+      $kept = foreach ($x in $xs) {
+        foreach ($y in $ys) {
+          if (-not (PopupShown)) { Popup $Item }
+          $r = Press $x $y
+          if ($r.Shown) { "($x,$y) $($r.Hit)" }
+        }
+      }
+      Check "${Name}: a click on an empty spot beside the column closes it ($($xs.Count * $ys.Count) spots)" (@($kept).Count -eq 0) "kept open by: $($kept -join '; ')"
+      # What stands beside the column keeps it open.
+      if (-not (PopupShown)) { Popup $Item }
+      $targets = @()
+      if ($rel) { $targets += , @('related items', [int](($rel[0] + $rel[2]) / 2), [int]($rel[1] + 12)) }
+      $tab = Rect '.ee2-rate-tab'
+      if ($tab) { $targets += , @('rate limiting tab', [int](($tab[0] + $tab[2]) / 2), [int](($tab[1] + $tab[3]) / 2)) }
+      $closed = foreach ($t in $targets) {
+        if (-not (PopupShown)) { Popup $Item }
+        $r = Press $t[1] $t[2]
+        if (-not $r.Shown) { "$($t[0]) ($($r.Hit))" }
+        # A second click on the tab closes its panel: the tab may have moved meanwhile.
+        if ($t[0] -eq 'rate limiting tab' -and $r.Shown) {
+          $tab2 = Rect '.ee2-rate-tab'
+          $r2 = Press ([int](($tab2[0] + $tab2[2]) / 2)) ([int](($tab2[1] + $tab2[3]) / 2))
+          if (-not $r2.Shown) { "rate limiting tab again (tab $($tab -join ',') -> $($tab2 -join ','); $($r2.Hit))" }
+        }
+      }
+      Check "${Name}: a click on $(($targets | ForEach-Object { $_[0] }) -join ', ') keeps it open" ($targets.Count -gt 0 -and @($closed).Count -eq 0) "closed by: $($closed -join '; ')"
+    }
+    $splinter = Join-Path $root 'tests\fixtures\bg-check\breach-splinter.txt' # written by hand, not copied from the game: an item with related items (its set and what it drops)
+    Spots 'centred price check' $splinter 'center'
+    # The editor's popover, beside the column of a rare.
+    Popup $bow
+    Send @('click popup [data-test=editor-button]'); Start-Sleep -Milliseconds 800
+    $ed = Rect '.ee2-editor.ee2-tippy'
+    $r = if ($ed) { Press ([int](($ed[0] + $ed[2]) / 2)) ([int]($ed[1] + 20)) }
+    Check 'centred price check: a click in the editor popover keeps it open' ($ed -and $r.Shown) "editor $($ed -join ','); hit $($r.Hit)"
+    if ($main) {
+      Send @('click main [data-test=section-overlay]'); Start-Sleep -Milliseconds 500
+      Send @('click main [data-test=position-opposite-cursor]'); Start-Sleep -Milliseconds 800
+      $wr = New-Object BgCheck.Win+RECT; [void][BgCheck.Win]::GetWindowRect($gameWin.Hwnd, [ref]$wr)
+      Send @("cursor $([int](($wr.L + 3 * $wr.R) / 4)) $([int](($wr.T + $wr.B) / 2))")
+      Spots 'price check on the right' $splinter 'right'
+      Send @('click main [data-test=position-center]'); Start-Sleep -Milliseconds 500
+    }
   }
 
   # The user may switch windows meanwhile: what matters is that none of ours came to the front.

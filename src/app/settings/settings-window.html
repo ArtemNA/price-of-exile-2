@@ -141,7 +141,7 @@
               <span class="text-bright">{{ 'Popup position' | tr }}</span>
               <div class="flex gap-1">
                 @for (option of positions; track option.value) {
-                  <button class="h-8 border px-3"
+                  <button class="h-8 border px-3" [attr.data-test]="'position-' + option.value"
                     [class]="settings().popupPosition === option.value ? 'border-gold bg-selected text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
                     [attr.aria-pressed]="settings().popupPosition === option.value" (click)="setPopupPosition(option.value)">{{ option.label | tr }}</button>
                 }

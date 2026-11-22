@@ -56,6 +56,20 @@ export async function installTestHooks(): Promise<void> {
     if (!element) return void log(`[test] erase ${payload}: no such element`);
     document.execCommand('delete');
   });
+  // A mouse press at a point (CSS px, "x y"): the events go to whatever a real click there would hit
+  // (`elementFromPoint` skips `pointer-events: none`), and the log names it:
+  // "[test] press x y: <tag>.<classes> [data-test]".
+  await current.listen<string>('test-press', ({ payload }) => {
+    const [x, y] = payload.split(' ').map(Number);
+    const element = document.elementFromPoint(x, y);
+    if (!element) return void log(`[test] press ${payload}: nothing there`);
+    const classes = typeof element.className === 'string' ? element.className.trim().split(/\s+/).filter(Boolean).slice(0, 4) : [];
+    const tag = [element.tagName.toLowerCase(), ...classes].join('.');
+    const testId = element.closest('[data-test]')?.getAttribute('data-test');
+    void log(`[test] press ${payload}: ${tag}${testId ? ` [${testId}]` : ''}`);
+    const init = { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 };
+    for (const type of ['mousedown', 'mouseup', 'click']) element.dispatchEvent(new MouseEvent(type, init));
+  });
   // The pointer over an element: what a real one sends, with Shift held or not (the mouse events
   // carry the modifier state, as Windows' own do).
   const pointer = (types: string[], shiftKey: boolean) => (selector: string) => {
