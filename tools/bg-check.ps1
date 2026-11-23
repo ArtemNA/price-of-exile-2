@@ -451,6 +451,41 @@ if ([X.H]::RegisterHotKey([IntPtr]::Zero, 1, $MODS, $F20)) { Start-Sleep -Second
   $first = if ($query -match '"filters":\[(\{[^{}]*(\{[^{}]*\})?[^{}]*\})') { $Matches[1] } else { '<no query>' }
   Check 'number field: erased to nothing, the search goes without that bound' ($empty -eq '' -and $first -match '"id"' -and $first -notmatch '"min"' -and $first -notmatch '"disabled":true') "field '$empty'; first stat filter $first"
 
+  # 8b. The first click into a number field selects its whole number, so typing replaces it, and
+  # Ctrl+A selects it again (PoE1 0.1.27). The press is the page's own mousedown at the field; the
+  # popup counts as in front ("front-missed": no foreground event, which would hide it), so the host
+  # gives it the keyboard. Typing and Ctrl+A are sent by the page: real keys do not reach the page
+  # on a hidden desktop (8.). A second click's caret and a drag over part of the number are the
+  # field's native behaviour and need real mouse input: not checked here.
+  function FieldSelection {
+    $n = LogCount
+    Send @("selection popup $min")
+    $line = (WaitLog ('\[test\] selection ' + [regex]::Escape($min) + ': ') 3000 $n).Line
+    if ($line -match ': (\d+) (\d+) "(.*)"$') { @([int]$Matches[1], [int]$Matches[2], $Matches[3]) }
+  }
+  # The field above was left focused, and on a hidden desktop no blur ends its editing (a real
+  # window loses the focus when the popup hides): end it as that would. Then the jewel again, its
+  # number back. It must have 2+ digits, so a digit typed after the caret ("107") or before it
+  # ("710") cannot pass for one typed over a selection.
+  Send @("blur popup $min"); Start-Sleep -Milliseconds 200
+  Popup $jewel
+  $old = FieldValue
+  $pop = Windows | Where-Object { $_.Title -like 'Price of Exile 2*popup' } | Select-Object -First 1
+  Send @("front-missed $($pop.Title)")
+  $box = Rect $min
+  if ($box) { Send @("press popup $([int](($box[0] + $box[2]) / 2)) $([int](($box[1] + $box[3]) / 2))") }
+  Start-Sleep -Milliseconds 600
+  $sel = FieldSelection
+  Check 'number field: the first click selects the whole number' ($old -match '^\d{2,}$' -and $sel -and $sel[2] -eq $old -and $sel[0] -eq 0 -and $sel[1] -eq $old.Length) "number '$old'; selection $($sel -join ' ')"
+  Send @('type popup 7'); Start-Sleep -Milliseconds 300
+  $typed = FieldValue
+  Check 'number field: a digit typed after that click replaces the number' ($old -match '^\d{2,}$' -and $typed -eq '7') "'$old' -> '$typed'"
+  Send @('type popup 123'); Start-Sleep -Milliseconds 300
+  Send @('key popup ctrl+KeyA'); Start-Sleep -Milliseconds 300
+  $all = FieldSelection
+  Check 'number field: Ctrl+A selects the whole number' ($all -and $all[2] -eq '7123' -and $all[0] -eq 0 -and $all[1] -eq 4) "selection $($all -join ' ')"
+  Send @("front-missed $game")
+
   # 9. A price check right after a map check is as tall as any price check (PoE1 0.1.24: the map
   # check's late size squeezed it), and the fitted map check has its scrollbar back.
   $waystone = Join-Path $root 'tests\fixtures\items\waystone.txt'

@@ -53,16 +53,25 @@ export class NumInput {
     this.editing.set(true);
   }
 
+  /**
+   * The first click selects the whole number, so typing replaces it. Once the field has the
+   * keyboard, clicks and drags are the field's own: a caret, a part selected, a double-click.
+   */
   protected takeFocus(event: MouseEvent): void {
+    const field = this.field().nativeElement;
+    if (document.activeElement === field && document.hasFocus()) return;
     event.preventDefault();
     // Focus the field only once the window really has the keyboard: otherwise typing
     // would reach the game. If refused, the mouse wheel still works.
     void host.popupFocusInput().then((focused) => {
       if (!focused) return;
-      const field = this.field().nativeElement;
-      field.focus();
+      const focusAll = () => {
+        field.focus();
+        field.select();
+      };
+      focusAll();
       // WebView2 moves focus around while the window activates: put it back once settled.
-      setTimeout(() => document.activeElement !== field && field.focus(), 50);
+      setTimeout(() => document.activeElement !== field && focusAll(), 50);
     });
   }
 
@@ -88,6 +97,10 @@ export class NumInput {
     if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault();
       this.step(event.key === 'ArrowUp' ? 1 : -1, event.shiftKey);
+    } else if ((event.ctrlKey || event.metaKey) && event.code === 'KeyA') {
+      // Not selected natively in the popup (cause unknown, PoE1 0.1.27): select it here.
+      event.preventDefault();
+      this.field().nativeElement.select();
     } else if (event.key === 'Enter') {
       event.preventDefault();
       this.submit.emit();

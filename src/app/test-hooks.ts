@@ -51,10 +51,38 @@ export async function installTestHooks(): Promise<void> {
     element.setSelectionRange(element.value.length, element.value.length);
     void log(`[test] focus ${payload}: ${heard ? 'focus event from the page' : 'no focus event (window not focused), sent one'}`);
   });
+  // The field loses the focus; as with `focus`, the page sends the event itself when Chromium does not.
+  await current.listen<string>('test-blur', ({ payload }) => {
+    const element = field(payload);
+    if (!element) return void log(`[test] blur ${payload}: no such element`);
+    let heard = false;
+    element.addEventListener('blur', () => (heard = true), { once: true });
+    element.blur();
+    if (!heard) element.dispatchEvent(new FocusEvent('blur'));
+  });
   await current.listen<string>('test-erase', ({ payload }) => {
     const element = field(payload);
     if (!element) return void log(`[test] erase ${payload}: no such element`);
     document.execCommand('delete');
+  });
+  // What is selected in a field: "[test] selection <selector>: <start> <end> <text>".
+  await current.listen<string>('test-selection', ({ payload }) => {
+    const element = field(payload);
+    if (!element) return void log(`[test] selection ${payload}: no such element`);
+    void log(`[test] selection ${payload}: ${element.selectionStart} ${element.selectionEnd} ${JSON.stringify(element.value)}`);
+  });
+  // Typing into the focused element as a key would (replaces the selection, fires `input`).
+  await current.listen<string>('test-type', ({ payload }) => {
+    document.execCommand('insertText', false, payload);
+  });
+  // A key press on the focused element, without its default action: "ctrl+KeyA" (modifiers, then
+  // the key's `code`). Only the page's own handlers see it.
+  await current.listen<string>('test-key', ({ payload }) => {
+    const parts = payload.split('+');
+    const code = parts.pop() ?? '';
+    const key = code.startsWith('Key') ? code.slice(3).toLowerCase() : code;
+    const init = { bubbles: true, cancelable: true, code, key, ctrlKey: parts.includes('ctrl'), shiftKey: parts.includes('shift') };
+    (document.activeElement ?? document.body).dispatchEvent(new KeyboardEvent('keydown', init));
   });
   // A mouse press at a point (CSS px, "x y"): the events go to whatever a real click there would hit
   // (`elementFromPoint` skips `pointer-events: none`), and the log names it:

@@ -19,6 +19,11 @@
 //!   value <window> <selector>   the page writes the field's text into the log ("[test] value …")
 //!   focus <window> <selector>   the page focuses the field, the caret at its end
 //!   erase <window> <selector>   the page erases one character before the caret, as Backspace does
+//!   blur <window> <selector>    the field loses the focus (the page sends `blur` if Chromium does not)
+//!   selection <window> <sel>   the page writes what the field has selected ("[test] selection …: start end text")
+//!   type <window> <text>        the page types the text into the focused field, replacing its selection
+//!   key <window> <combo>        the page sends a keydown (`ctrl+KeyA`) to the focused element, for its
+//!                               own handlers only: no default action
 //!   trade <search.json> <fetch.json>  the popup takes these trade site answers instead of asking the site
 //!   backdrop <window> <file>    the page draws this picture (a `data:` URL in the file) under itself,
 //!                               where a real game would show through its transparent parts (screenshots)
@@ -79,8 +84,8 @@ fn run(app: &AppHandle, line: &str) -> Result<(), String> {
             let shortcut = Shortcut::from_str(arg).map_err(|e| e.to_string())?;
             hotkeys::on_hotkey(app, &shortcut);
         }
-        "click" | "text" | "rect" | "hover" | "hover-shift" | "unhover" | "value" | "focus" | "erase" | "press" => {
-            let (window, selector) = arg.split_once(' ').ok_or("expected: <window> <selector>")?;
+        "click" | "text" | "rect" | "hover" | "hover-shift" | "unhover" | "value" | "focus" | "erase" | "blur" | "press" | "selection" | "type" | "key" => {
+            let (window, selector) = arg.split_once(' ').ok_or("expected: <window> <argument>")?;
             let event = format!("test-{command}");
             app.emit_to(window, &event, selector).map_err(|e| e.to_string())?;
         }
